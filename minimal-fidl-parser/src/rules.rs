@@ -10,7 +10,7 @@ impl From<u32> for Rules {
     }
 }
 #[allow(dead_code)]
-pub static RULES_SIZE: u32 =  43;
+pub static RULES_SIZE: u32 =  40;
 #[allow(clippy::upper_case_acronyms)] // Again due to generation -> Might solve eventually
 #[derive(PartialEq, Eq, Hash, FromPrimitive, Clone, Copy, Debug, Ord, PartialOrd)]
 
@@ -29,13 +29,10 @@ pub enum Rules {
 	enum_value,
 	enumeration,
 	exponent,
-	file_fragment,
-	file_name,
 	file_path,
 	float,
 	fraction,
 	hex,
-	import,
 	import_model,
 	import_namespace,
 	input_params,
@@ -50,7 +47,7 @@ pub enum Rules {
 	package,
 	sign,
 	structure,
-	type_collections,
+	type_collection,
 	type_dec,
 	type_ref,
 	typedef,

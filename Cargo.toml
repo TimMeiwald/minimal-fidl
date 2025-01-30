@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["minimal-fidl-parser"]
+members = ["minimal-fidl-parser", "test-grammar-proc-macro"]
 
 [profile.dev]
 panic = "unwind"

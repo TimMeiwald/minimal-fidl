@@ -35,15 +35,13 @@
 <type_ref> = <type_name>, ('.', <type_name>)*, <array>?;
 <variable_name> = <type_name>; 
 
-<file_name> = '"', <file_fragment>, ".fidl", '"';
-<file_fragment> = (<type_char>/'-')+;
-<file_path> = <file_fragment>, ('.', (<file_name>/<file_fragment>))*;
+
+<file_path> = '"', (!'"', <ascii>)* ,'"';
 <wildcard> = ".*";
 
-<package> = "package", <ws>, <file_path>, <ws>, '\n'; #Describes the package import#
-<import_namespace> = "import" , <ws>, <file_path>, <ws>, "from", <ws>, <file_name>, <wildcard>?, <wsn>;
-<import_model> = "import", <ws>,  "model", <ws>, <file_name> ,<wsn>;
-<import> = <import_model>/<import_namespace>;
+<package> = "package", <ws>, <type_ref>, <ws>, '\n', <wsn>; #Describes the package import#
+<import_namespace> = "import" , <ws>, <type_ref>, <wildcard>, <ws>, "from", <ws>, <file_path>, <wsn>;
+<import_model> = "import", <ws>,  "model", <ws>, <file_path> ,<wsn>;
 
 <attribute> =   <annotation_block>?, <wsn>,
                 "attribute", <ws_atlone>, 
@@ -110,5 +108,13 @@
                 <version>?, <wsn>, 
                 ((<method>/<typedef>/<structure>/<attribute>/<enumeration>), <wsn>)*, 
                 <wsn>, '}', <wsn>;
-<type_collections> = ''; # Needed? #
-<Grammar> = '';
+<type_collection> = <annotation_block>?, <wsn>, 
+                    "typeCollection", <ws>, 
+                    <variable_name>?, <wsn>, 
+                    '{', <wsn>, <version>?, <wsn>,
+                    ((<typedef>/<structure>/<enumeration>), <wsn>)*,
+                    '}', <wsn>;
+<Grammar> = <wsn>, <package>, 
+            <wsn>, (<import_model>/<import_namespace>)*, 
+            <wsn>, (<interface>/<type_collection>)*, 
+            <wsn>;

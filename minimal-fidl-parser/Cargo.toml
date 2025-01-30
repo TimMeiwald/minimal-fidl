@@ -10,3 +10,4 @@ clap = { version = "4.5.27", features = ["derive"] }
 num = "0.4.3"
 num-derive = "0.4.2"
 num-traits = "0.2.19"
+test-grammar-proc-macro = {path = "../test-grammar-proc-macro"}
