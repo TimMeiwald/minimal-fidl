@@ -31,7 +31,7 @@
 <type_char_with_num> Inline = <digit>/<type_char>;
 <type_name> Inline = <type_char>, <type_char_with_num>*;
 <type_dec> = <type_name>;
-<array> = '[', <ws>,']';
+<array> = <ws>,'[', <ws>,']';
 <type_ref> = <type_name>, ('.', <type_name>)*, <array>?;
 <variable_name> = <type_name>; 
 

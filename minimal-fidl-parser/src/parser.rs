@@ -308,12 +308,14 @@ pub fn type_dec<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, 
 } #[allow(dead_code)]
 pub fn array<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
 
-	let closure_1 = _terminal(b'[');
-	let closure_2 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_1 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_2 = _terminal(b'[');
 	let closure_3 = _sequence(&closure_1, &closure_2);
-	let closure_4 = _terminal(b']');
+	let closure_4 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
 	let closure_5 = _sequence(&closure_3, &closure_4);
-	closure_5(parent, source, position)
+	let closure_6 = _terminal(b']');
+	let closure_7 = _sequence(&closure_5, &closure_6);
+	closure_7(parent, source, position)
 
 } #[allow(dead_code)]
 pub fn type_ref<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {

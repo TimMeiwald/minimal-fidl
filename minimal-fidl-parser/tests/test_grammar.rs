@@ -1,11 +1,10 @@
 use test_grammar_proc_macro::test_grammar_files_in_dir;
-use std::{
-    fs::{self, File},
-    io::Read,
-};
 mod shared;
 use shared::shared;
 use minimal_fidl_parser::{grammar, BasicContext, Rules};
+use std::fs;
+
+
 #[test]
 fn test_grammar_1() {
     let src = "package org.javaohjavawhyareyouso
