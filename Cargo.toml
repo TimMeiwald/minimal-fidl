@@ -1,0 +1,14 @@
+[workspace]
+resolver = "2"
+members = ["minimal-fidl-parser"]
+
+[profile.dev]
+panic = "unwind"
+debug = true
+
+[profile.release]
+# strip = true  # Automatically strip symbols from the binary.
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
