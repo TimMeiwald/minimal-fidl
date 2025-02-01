@@ -12,7 +12,14 @@ fn test_grammar_1() {
     let result = shared(src, grammar::<BasicContext>, Rules::Grammar);
     assert_eq!(result, (true, src.len() as u32));
 }
-
+#[test]
+fn test_grammar_2() {
+    let src = "package org.javaohjavawhyareyouso // This do be a comment\n
+        interface endOfPlaylist { }	// This do be a comment\n
+        interface endOfPlaylist { }	// This do be a comment\n";
+    let result = shared(src, grammar::<BasicContext>, Rules::Grammar);
+    assert_eq!(result, (true, src.len() as u32));
+}
 
 
 

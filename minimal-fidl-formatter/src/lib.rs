@@ -27,12 +27,24 @@ pub fn parse(input: &str) -> Option<BasicPublisher> {
 
 
 #[test]
-fn test_parser(){
+fn test_formatter(){
     let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist { }	";
     let publisher = parse(src).unwrap();
     publisher.print(Key(0), Some(true));
     let fmt = formatter::Formatter::new(src, &publisher);
     let output = fmt.format();
-    println!("Formatted:\n {:?}", output);
+    println!("Formatted:\n\n{}", output.unwrap());
+}
+
+#[test]
+fn test_formatter2(){
+    let src = "// This do be a comment\npackage org.javaohjavawhyareyouso        // This do be a comment2\n
+	interface endOfPlaylist { }	// This do be a comment\n
+    interface endOfPlaylist { }	// This do be a comment\n";
+    let publisher = parse(src).unwrap();
+    publisher.print(Key(0), Some(true));
+    let fmt = formatter::Formatter::new(src, &publisher);
+    let output = fmt.format();
+    println!("Formatted:\n\n{}", output.unwrap());
 }

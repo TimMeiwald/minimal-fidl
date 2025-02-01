@@ -39,7 +39,7 @@
 <file_path> = '"', (!'"', <ascii>)* ,'"';
 <wildcard> = ".*";
 
-<package> = "package", <ws>, <type_ref>, <ws>, '\n', <wsn>; #Describes the package import#
+<package> = "package", <ws>, <type_ref>, <ws>, <wsn>; #Describes the package import#
 <import_namespace> = "import" , <ws>, <type_ref>, <wildcard>, <ws>, "from", <ws>, <file_path>, <wsn>;
 <import_model> = "import", <ws>,  "model", <ws>, <file_path> ,<wsn>;
 
@@ -55,22 +55,20 @@
                 '{', 
                 <wsn>, 
                 <variable_declaration>*, 
-                '}', 
-                <wsn>;
+                '}';
 <output_params> = <annotation_block>?, <wsn>,
                 "out", <wsn>, 
                 '{', 
                 <wsn>,
                 <variable_declaration>*, 
-                '}', 
-                <wsn>;
+                '}';
 <method> =  <annotation_block>?, <wsn>, 
             "method", <wsn>, 
             <variable_name>, <wsn>, 
             '{', <wsn>, 
             <input_params>?, <wsn>, 
             <output_params>?, <wsn>,
-            '}', <wsn>;
+            '}';
 
 <typedef> = <annotation_block>?, <wsn>, 
             "typedef", <ws>,
@@ -83,7 +81,7 @@
                 <type_dec>, <wsn>,
                 '{', <wsn>, 
                 <variable_declaration>*,
-                '}', <wsn>;
+                '}';
 
 <enumeration> = <annotation_block>?, <wsn>, 
                 "enumeration", <ws>, 
@@ -91,7 +89,7 @@
                 '{', 
                 <wsn>,
                 (<enum_value>, <wsn>)*, 
-                '}', <wsn>;
+                '}';
 <enum_value> =  <annotation_block>?, <wsn>, 
                 <variable_name>, <ws>, 
                 ('=', <ws>, <number>)?, 
@@ -107,14 +105,14 @@
                 '{', <wsn>, 
                 <version>?, <wsn>, 
                 ((<method>/<typedef>/<structure>/<attribute>/<enumeration>), <wsn>)*, 
-                <wsn>, '}', <wsn>;
+                <wsn>, '}';
 <type_collection> = <annotation_block>?, <wsn>, 
                     "typeCollection", <ws>, 
                     <variable_name>?, <wsn>, 
                     '{', <wsn>, <version>?, <wsn>,
                     ((<typedef>/<structure>/<enumeration>), <wsn>)*,
-                    '}', <wsn>;
+                    '}';
 <Grammar> = <wsn>, <package>, 
             <wsn>, (<import_model>/<import_namespace>)*, 
-            <wsn>, (<interface>/<type_collection>)*, 
+            <wsn>, ((<interface>/<type_collection>), <wsn>)*, 
             <wsn>;
