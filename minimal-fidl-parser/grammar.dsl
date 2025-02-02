@@ -39,9 +39,9 @@
 <file_path> = '"', (!'"', <ascii>)* ,'"';
 <wildcard> = ".*";
 
-<package> = "package", <ws>, <type_ref>, <ws>, <wsn>; #Describes the package import#
-<import_namespace> = "import" , <ws>, <type_ref>, <wildcard>, <ws>, "from", <ws>, <file_path>, <wsn>;
-<import_model> = "import", <ws>,  "model", <ws>, <file_path> ,<wsn>;
+<package> = "package", <ws>, <type_ref>, <ws>, <ws>; #Describes the package import#
+<import_namespace> = "import" , <ws>, <type_ref>, <wildcard>, <ws>, "from", <ws>, <file_path>, <ws>;
+<import_model> = "import", <ws>,  "model", <ws>, <file_path> ,<ws>;
 
 <attribute> =   <annotation_block>?, <wsn>,
                 "attribute", <ws_atlone>, 
@@ -113,6 +113,6 @@
                     ((<typedef>/<structure>/<enumeration>), <wsn>)*,
                     '}';
 <Grammar> = <wsn>, <package>, 
-            <wsn>, (<import_model>/<import_namespace>)*, 
+            <wsn>, ((<import_model>/<import_namespace>), <wsn>)*, 
             <wsn>, ((<interface>/<type_collection>), <wsn>)*, 
             <wsn>;

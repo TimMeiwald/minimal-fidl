@@ -369,7 +369,7 @@ pub fn package<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, p
 	let closure_5 = _sequence(&closure_3, &closure_4);
 	let closure_6 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
 	let closure_7 = _sequence(&closure_5, &closure_6);
-	let closure_8 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_8 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
 	let closure_9 = _sequence(&closure_7, &closure_8);
 	closure_9(parent, source, position)
 
@@ -391,7 +391,7 @@ pub fn import_namespace<T: Context>(parent: Key, context: &RefCell<T>, source: &
 	let closure_13 = _sequence(&closure_11, &closure_12);
 	let closure_14 = _var_name(Rules::file_path, context, file_path);
 	let closure_15 = _sequence(&closure_13, &closure_14);
-	let closure_16 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_16 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
 	let closure_17 = _sequence(&closure_15, &closure_16);
 	closure_17(parent, source, position)
 
@@ -407,7 +407,7 @@ pub fn import_model<T: Context>(parent: Key, context: &RefCell<T>, source: &Sour
 	let closure_7 = _sequence(&closure_5, &closure_6);
 	let closure_8 = _var_name(Rules::file_path, context, file_path);
 	let closure_9 = _sequence(&closure_7, &closure_8);
-	let closure_10 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_10 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
 	let closure_11 = _sequence(&closure_9, &closure_10);
 	closure_11(parent, source, position)
 
@@ -769,21 +769,24 @@ pub fn grammar<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, p
 	let closure_7 = _var_name(Rules::import_namespace, context, import_namespace);
 	let closure_8 = _ordered_choice(&closure_6, &closure_7);
 	let closure_9 = _subexpression(&closure_8);
-	let closure_10 = _zero_or_more(&closure_9);
-	let closure_11 = _sequence(&closure_5, &closure_10);
-	let closure_12 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
-	let closure_13 = _sequence(&closure_11, &closure_12);
-	let closure_14 = _var_name(Rules::interface, context, interface);
-	let closure_15 = _var_name(Rules::type_collection, context, type_collection);
-	let closure_16 = _ordered_choice(&closure_14, &closure_15);
-	let closure_17 = _subexpression(&closure_16);
-	let closure_18 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
-	let closure_19 = _sequence(&closure_17, &closure_18);
+	let closure_10 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_11 = _sequence(&closure_9, &closure_10);
+	let closure_12 = _subexpression(&closure_11);
+	let closure_13 = _zero_or_more(&closure_12);
+	let closure_14 = _sequence(&closure_5, &closure_13);
+	let closure_15 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_16 = _sequence(&closure_14, &closure_15);
+	let closure_17 = _var_name(Rules::interface, context, interface);
+	let closure_18 = _var_name(Rules::type_collection, context, type_collection);
+	let closure_19 = _ordered_choice(&closure_17, &closure_18);
 	let closure_20 = _subexpression(&closure_19);
-	let closure_21 = _zero_or_more(&closure_20);
-	let closure_22 = _sequence(&closure_13, &closure_21);
-	let closure_23 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
-	let closure_24 = _sequence(&closure_22, &closure_23);
-	closure_24(parent, source, position)
+	let closure_21 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_22 = _sequence(&closure_20, &closure_21);
+	let closure_23 = _subexpression(&closure_22);
+	let closure_24 = _zero_or_more(&closure_23);
+	let closure_25 = _sequence(&closure_16, &closure_24);
+	let closure_26 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_27 = _sequence(&closure_25, &closure_26);
+	closure_27(parent, source, position)
 
 } 
