@@ -74,7 +74,7 @@
             "typedef", <ws>,
             <type_dec>, <ws>, 
             "is", <ws>, 
-            <type_ref>, <wsn>;
+            <type_ref>;
 
 <structure> =   <annotation_block>?, <wsn>, 
                 "struct", <ws>, 
@@ -93,7 +93,7 @@
 <enum_value> =  <annotation_block>?, <wsn>, 
                 <variable_name>, <ws>, 
                 ('=', <ws>, <number>)?, 
-                <ws>, ','?, <wsn>;
+                <ws>, ','?;
 <version> = "version", <wsn>, 
             '{', <wsn>, 
             <major>, <wsn>, 

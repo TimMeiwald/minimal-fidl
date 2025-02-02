@@ -547,9 +547,7 @@ pub fn typedef<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, p
 	let closure_16 = _sequence(&closure_14, &closure_15);
 	let closure_17 = _var_name(Rules::type_ref, context, type_ref);
 	let closure_18 = _sequence(&closure_16, &closure_17);
-	let closure_19 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
-	let closure_20 = _sequence(&closure_18, &closure_19);
-	closure_20(parent, source, position)
+	closure_18(parent, source, position)
 
 } #[allow(dead_code)]
 pub fn structure<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
@@ -630,9 +628,7 @@ pub fn enum_value<T: Context>(parent: Key, context: &RefCell<T>, source: &Source
 	let closure_19 = _terminal(b',');
 	let closure_20 = _optional(&closure_19);
 	let closure_21 = _sequence(&closure_18, &closure_20);
-	let closure_22 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
-	let closure_23 = _sequence(&closure_21, &closure_22);
-	closure_23(parent, source, position)
+	closure_21(parent, source, position)
 
 } #[allow(dead_code)]
 pub fn version<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {

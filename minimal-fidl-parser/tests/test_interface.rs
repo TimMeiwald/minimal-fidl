@@ -4,7 +4,7 @@ use minimal_fidl_parser::{interface, BasicContext, Rules};
 #[test]
 fn test_interface_1() {
     let src = "<** @description: Indicate end of playlist. **>
-	interface endOfPlaylist { }	";
+	interface endOfPlaylist { }";
     let result = shared(src, interface::<BasicContext>, Rules::interface);
     assert_eq!(result, (true, src.len() as u32));
 }
@@ -14,8 +14,7 @@ fn test_interface_1() {
 fn test_interface_2() {
     let src = "interface DerivedInterface  {
 
-        }
-    ";
+    }";
     let result = shared(src, interface::<BasicContext>, Rules::interface);
     assert_eq!(result, (true, src.len() as u32));
 }
@@ -111,8 +110,7 @@ fn test_interface_3() {
             Duration trackLength
         }
     
-    }
-    ";
+    }";
     let result = shared(src, interface::<BasicContext>, Rules::interface);
     assert_eq!(result, (true, src.len() as u32));
 

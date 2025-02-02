@@ -29,7 +29,7 @@ fn test_method_2() {
 #[test]
 fn test_method_3() {
     let src = r#"<** @description: Switch to the next track (if any). **>
-     	method nextTrack { } "#;
+     	method nextTrack { }"#;
     let result = shared(src, method::<BasicContext>, Rules::method); 
     assert_eq!(result, (true, src.len() as u32));
 }
@@ -60,8 +60,7 @@ method selectValueListEntry {
     out {
         TInputState inputState
     }
-}
-"#;
+}"#;
     let result = shared(src, method::<BasicContext>, Rules::method); 
     assert_eq!(result, (true, src.len() as u32));
 }
@@ -78,8 +77,7 @@ fn test_method_6() {
         out {
             String job // huijo
         }
-    }
-"#;
+    }"#;
     let result = shared(src, method::<BasicContext>, Rules::method); 
     assert_eq!(result, (true, src.len() as u32));
 }

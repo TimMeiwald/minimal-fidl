@@ -20,8 +20,7 @@ fn test_structure_2() {
 		UInt8 hours
 		UInt8 minutes
 		UInt8 seconds
-	}
-    "#;
+	}"#;
     let result = shared(src, structure::<BasicContext>, Rules::structure);
     assert_eq!(result, (true, src.len() as u32));
 }
@@ -32,8 +31,7 @@ fn test_structure_3() {
 		UInt8 hours
 		UInt8 minutes
 		UInt8[] seconds
-	}
-    "#;
+	}"#;
     let result = shared(src, structure::<BasicContext>, Rules::structure);
     assert_eq!(result, (true, src.len() as u32));
 }
@@ -41,8 +39,7 @@ fn test_structure_3() {
 #[test]
 fn test_structure_4() {
     let src = r#"	// empty struct (only allowed if polymorphic)
-	struct MyStruct03 { }
-    "#;
+	struct MyStruct03 { }"#;
     let result = shared(src, structure::<BasicContext>, Rules::structure);
     assert_eq!(result, (true, src.len() as u32));
 }

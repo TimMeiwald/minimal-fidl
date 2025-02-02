@@ -53,7 +53,7 @@ interface CoverageInterface {
 
 
 	enumeration aEnum {
-		A B C D E
+		A=3 B C D E =10
 	}
 
 	struct aStruct {
