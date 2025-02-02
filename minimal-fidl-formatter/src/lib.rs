@@ -136,4 +136,48 @@ fn test_formatter_9(){
     let output = fmt.format();
     println!("Formatted:\n\n{}", output.unwrap());
 }
+
+#[test]
+fn test_formatter_10(){
+    let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist { version {major 25 minor 60}method thing {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param}  out {param2 param2 org.param3 param3}}}	";
+    let publisher = parse(src).unwrap();
+    publisher.print(Key(0), Some(true));
+    let fmt = formatter::Formatter::new(src, &publisher);
+    let output = fmt.format();
+    println!("Formatted:\n\n{}", output.unwrap());
+}
+
+#[test]
+fn test_formatter_11(){
+    let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{param20 param20}attribute uint8 thing\n method thing {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param}  out {param2 param2 org.param3 param3}}}	";
+    let publisher = parse(src).unwrap();
+    publisher.print(Key(0), Some(true));
+    let fmt = formatter::Formatter::new(src, &publisher);
+    let output = fmt.format();
+    println!("Formatted:\n\n{}", output.unwrap());
+}
+
+#[test]
+fn test_formatter_12(){
+    let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{}attribute uint8 thing\n method thing {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param}  out {param2 param2 org.param3 param3}}}	";
+    let publisher = parse(src).unwrap();
+    publisher.print(Key(0), Some(true));
+    let fmt = formatter::Formatter::new(src, &publisher);
+    let output = fmt.format();
+    println!("Formatted:\n\n{}", output.unwrap());
+}
+
+#[test]
+fn test_formatter_13(){
+    let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param}  out {param2 param2 org.param3 param3}}}	";
+    let publisher = parse(src).unwrap();
+    publisher.print(Key(0), Some(true));
+    let fmt = formatter::Formatter::new(src, &publisher);
+    let output = fmt.format();
+    println!("Formatted:\n\n{}", output.unwrap());
+}
 }
