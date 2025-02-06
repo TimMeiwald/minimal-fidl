@@ -4,7 +4,7 @@
 <cwsn> = <multiline_comment>/<comment>/<wsn>;
 <ascii> Inline = [0x00..0xFF];
 <multiline_comment> = "/*", (!"*/", <ascii>)*, "*/";
-<comment> = "//", (!'\n', <ascii>)*, '\n';
+<comment> = "//", (!'\n', <ascii>)*;
 
 <digit> Inline = ['0'..'9'];
 <digits> = <digit>+;
@@ -39,9 +39,9 @@
 <file_path> = '"', (!'"', <ascii>)* ,'"';
 <wildcard> = ".*";
 
-<package> = "package", <ws>, <type_ref>, <ws>, <ws>; #Describes the package import#
-<import_namespace> = "import" , <ws>, <type_ref>, <wildcard>, <ws>, "from", <ws>, <file_path>, <ws>;
-<import_model> = "import", <ws>,  "model", <ws>, <file_path> ,<ws>;
+<package> = "package", <ws_atlone>, <type_ref>, <ws>; #Describes the package import#
+<import_namespace> = "import" , <ws_atlone>, <type_ref>, <wildcard>, <ws_atlone>, "from", <ws_atlone>, <file_path>, <ws>;
+<import_model> = "import", <ws_atlone>,  "model", <ws_atlone>, <file_path> ,<ws>;
 
 <attribute> =   <annotation_block>?, <wsn>,
                 "attribute", <ws_atlone>, 

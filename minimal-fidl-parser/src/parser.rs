@@ -89,9 +89,7 @@ pub fn comment<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, p
 	let closure_6 = _subexpression(&closure_5);
 	let closure_7 = _zero_or_more(&closure_6);
 	let closure_8 = _sequence(&closure_1, &closure_7);
-	let closure_9 = _terminal(b'\n');
-	let closure_10 = _sequence(&closure_8, &closure_9);
-	closure_10(parent, source, position)
+	closure_8(parent, source, position)
 
 } #[allow(dead_code)]
 pub fn digit<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
@@ -369,9 +367,7 @@ pub fn package<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, p
 	let closure_5 = _sequence(&closure_3, &closure_4);
 	let closure_6 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
 	let closure_7 = _sequence(&closure_5, &closure_6);
-	let closure_8 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
-	let closure_9 = _sequence(&closure_7, &closure_8);
-	closure_9(parent, source, position)
+	closure_7(parent, source, position)
 
 } #[allow(dead_code)]
 pub fn import_namespace<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {

@@ -1,3 +1,4 @@
+use crate::indented_string::IndentedString;
 use clap::builder::Str;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 use num_traits::int;
@@ -18,45 +19,6 @@ pub struct Formatter<'a> {
     publisher: &'a BasicPublisher,
 }
 
-struct IndentedString {
-    indent_level: u8,
-    str: String,
-}
-impl IndentedString {
-    pub fn new(indent_level: u8, str: String) -> Self {
-        IndentedString { str, indent_level }
-    }
-
-    pub fn indent(&mut self) {
-        self.indent_level += 1
-    }
-}
-impl fmt::Display for IndentedString {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let spacing = "    ";
-        let spacing = spacing.repeat(self.indent_level as usize);
-        write!(f, "\n{spacing}{}", self.str)
-    }
-}
-impl AddAssign for IndentedString {
-    fn add_assign(&mut self, other: Self) {
-        *self = Self {
-            str: self.str.clone() + &other.str,
-            indent_level: self.indent_level,
-        };
-    }
-}
-
-#[test]
-fn test_indented_string() {
-    let mut i = IndentedString::new(0, "str".to_string());
-    println!("{i}");
-    i.indent();
-    println!("{i}");
-    i.indent();
-    println!("{i}");
-}
-
 impl<'a> Formatter<'a> {
     pub fn new(source: &'a str, publisher: &'a BasicPublisher) -> Self {
         Formatter { source, publisher }
@@ -74,15 +36,17 @@ impl<'a> Formatter<'a> {
             let c = self.publisher.get_node(*child);
             match c.rule {
                 Rules::package => {
-                    for line in &self.package(&c) {
+                    ret_string += &self.package(&c).to_string();
+
+                }
+                Rules::import_model => {
+                    for line in &self.import_model(&c) {
                         ret_string += &line.to_string();
                     }
                 }
-                Rules::import_model => {
-                    todo!()
-                }
                 Rules::import_namespace => {
-                    todo!()
+                    ret_string += &self.import_namespace(&c).to_string();
+                  
                 }
                 Rules::interface => {
                     let interface = self.interface(&c);
@@ -91,7 +55,10 @@ impl<'a> Formatter<'a> {
                     }
                 }
                 Rules::type_collection => {
-                    todo!()
+                    let typecollection = self.type_collection(&c);
+                    for line in typecollection {
+                        ret_string += &line.to_string();
+                    }
                 }
                 Rules::comment => ret_string += &self.comment(c).to_string(),
                 Rules::multiline_comment => {
@@ -103,6 +70,150 @@ impl<'a> Formatter<'a> {
             }
         }
         return Ok(ret_string);
+    }
+
+    fn import_namespace(&self, node: &Node) -> IndentedString {
+        debug_assert!(node.rule == Rules::import_namespace);
+        let mut ret_str: IndentedString = IndentedString::new(0, "".to_string());
+        let mut type_ref = "".to_string();
+        let mut wildcard = "".to_string();
+        for child in node.get_children() {
+            let child = self.publisher.get_node(*child);
+            match child.rule {
+                Rules::type_ref => {
+                    type_ref = self.type_ref(child);
+                }
+                Rules::wildcard => {
+                    wildcard = ".*".to_string();
+                }
+                Rules::file_path => {
+                    let filepath = self.file_path(child);
+                    let ret = format!("import {}{} from {}", type_ref, wildcard, filepath);
+                    ret_str = IndentedString::new(0, ret);
+                }
+                Rules::comment => {
+                    let comment = self.comment(child);
+                    ret_str += comment;
+                }
+                e => {
+                    panic!("Rule: {:?} should not be the import_namespace child.", e)
+                }
+            }
+        }
+        ret_str
+    }
+
+    fn import_model(&self, node: &Node) -> Vec<IndentedString> {
+        debug_assert!(node.rule == Rules::import_model);
+        let mut ret_vec: Vec<IndentedString> = Vec::new();
+        for child in node.get_children() {
+            let child = self.publisher.get_node(*child);
+            match child.rule {
+                Rules::file_path => {
+                    ret_vec.push(IndentedString::new(
+                        0,
+                        format!("import model {}", self.file_path(child)),
+                    ));
+                }
+                e => {
+                    panic!("Rule: {:?} should not be the import_model child.", e)
+                }
+            }
+        }
+        ret_vec
+    }
+
+    fn file_path(&self, node: &Node) -> String {
+        debug_assert!(node.rule == Rules::file_path);
+        node.get_string(self.source)
+    }
+
+    fn type_collection(&self, node: &Node) -> Vec<IndentedString> {
+        debug_assert!(node.rule == Rules::type_collection);
+        let mut type_collection_name: Option<String> = None;
+        let mut ret_vec: Vec<IndentedString> = Vec::new();
+        for child in node.get_children() {
+            let child = self.publisher.get_node(*child);
+            match child.rule {
+                Rules::variable_name => {
+                    let tcn = Some(self.variable_name(child));
+                    type_collection_name = tcn.clone();
+                    let interface = format!(
+                        "typeCollection {} {{",
+                        tcn.expect("Interface Name should always exist")
+                    );
+                    let interface = IndentedString::new(0, interface.to_string());
+                    ret_vec.push(interface);
+                }
+
+                Rules::typedef => {
+                    match type_collection_name {
+                        Some(..) => {}
+                        None => {
+                            let interface = format!("typeCollection {{\n",);
+                            let interface = IndentedString::new(0, interface.to_string());
+                            type_collection_name = Some("No Name Set".to_string());
+                            ret_vec.push(interface);
+                        }
+                    }
+                    for mut line in self.typedef(child) {
+                        line.indent();
+                        ret_vec.push(line);
+                    }
+                }
+                Rules::structure => {
+                    match type_collection_name {
+                        Some(..) => {}
+                        None => {
+                            let interface = format!("typeCollection {{\n",);
+                            let interface = IndentedString::new(0, interface.to_string());
+                            type_collection_name = Some("No Name Set".to_string());
+                            ret_vec.push(interface);
+                        }
+                    }
+                    for mut line in self.structure(child) {
+                        line.indent();
+                        ret_vec.push(line);
+                    }
+                    ret_vec.push(IndentedString::new(0, "".to_string()))
+                }
+                Rules::enumeration => {
+                    match type_collection_name {
+                        Some(..) => {}
+                        None => {
+                            let interface = format!("typeCollection {{\n",);
+                            let interface = IndentedString::new(0, interface.to_string());
+                            type_collection_name = Some("No Name Set".to_string());
+                            ret_vec.push(interface);
+                        }
+                    }
+                    for mut line in self.enumeration(child) {
+                        line.indent();
+                        ret_vec.push(line);
+                    }
+                    ret_vec.push(IndentedString::new(0, "".to_string()))
+                }
+                e => {
+                    panic!("Rule: {:?} should not be the interfaces child.", e)
+                }
+            }
+        }
+        if ret_vec.len() > 1 {
+            let last_element = ret_vec.pop().unwrap();
+            if last_element != IndentedString::new(0, "".to_string()) {
+                ret_vec.push(last_element);
+            }
+        }
+
+        if ret_vec.len() == 1 {
+            let mut end_str = IndentedString::new(0, "}\n".to_string());
+            end_str.set_with_newline(false);
+            ret_vec[0] += end_str;
+        } else {
+            ret_vec.push(IndentedString::new(0, "}\n".to_string()));
+        }
+
+        ret_vec
     }
 
     fn interface(&self, node: &Node) -> Vec<IndentedString> {
@@ -120,7 +231,7 @@ impl<'a> Formatter<'a> {
                 Rules::variable_name => {
                     interface_name = Some(self.variable_name(child));
                     let interface = format!(
-                        "\ninterface {} {{",
+                        "interface {} {{",
                         interface_name.expect("Interface Name should always exist")
                     );
                     let interface = IndentedString::new(0, interface.to_string());
@@ -131,63 +242,144 @@ impl<'a> Formatter<'a> {
                         line.indent();
                         ret_vec.push(line);
                     }
+                    ret_vec.push(IndentedString::new(0, "".to_string()))
                 }
-                Rules::typedef => todo!("Implement typedef in interface"),
+                Rules::typedef => {
+                    for mut line in self.typedef(child) {
+                        line.indent();
+                        ret_vec.push(line);
+                    }
+                    // ret_vec.push(IndentedString::new(0, "".to_string()))
+                }
                 Rules::method => {
                     for mut line in self.method(child) {
                         line.indent();
                         ret_vec.push(line);
                     }
+                    ret_vec.push(IndentedString::new(0, "".to_string()))
                 }
                 Rules::attribute => {
                     for mut line in self.attribute(child) {
                         line.indent();
                         ret_vec.push(line);
                     }
+                    ret_vec.push(IndentedString::new(0, "".to_string()))
                 }
                 Rules::structure => {
                     for mut line in self.structure(child) {
                         line.indent();
                         ret_vec.push(line);
                     }
+                    ret_vec.push(IndentedString::new(0, "".to_string()))
+                }
+                Rules::enumeration => {
+                    for mut line in self.enumeration(child) {
+                        line.indent();
+                        ret_vec.push(line);
+                    }
+                    ret_vec.push(IndentedString::new(0, "".to_string()))
                 }
                 e => {
                     panic!("Rule: {:?} should not be the interfaces child.", e)
                 }
             }
         }
-
+        if ret_vec.len() > 1 {
+            let last_element = ret_vec.pop().unwrap();
+            if last_element != IndentedString::new(0, "".to_string()) {
+                ret_vec.push(last_element);
+            }
+        }
+        println!("{:?} {:?}", ret_vec.len(), ret_vec);
         if ret_vec.len() == 1 {
-            ret_vec[0] += IndentedString::new(0, "}".to_string());
+            let mut end_str = IndentedString::new(0, "}\n".to_string());
+            end_str.set_with_newline(false);
+            ret_vec[0] += end_str;
         } else {
-            ret_vec.push(IndentedString::new(0, "}".to_string()));
+            ret_vec.push(IndentedString::new(0, "}\n".to_string()));
         }
 
         ret_vec
     }
 
+    fn enumeration(&self, node: &Node) -> Vec<IndentedString> {
+        debug_assert!(node.rule == Rules::enumeration);
+        let mut ret_vec: Vec<IndentedString> = Vec::new();
+        let mut var_name: String = "".to_string();
+        for child in node.get_children() {
+            let child = self.publisher.get_node(*child);
+            match child.rule {
+                Rules::type_dec => {
+                    var_name = self.type_dec(child);
+                    ret_vec.push(IndentedString::new(0, format!("enumeration {var_name} {{")));
+                }
+                Rules::enum_value => {
+                    for mut line in self.enum_value(child) {
+                        line.indent();
+                        ret_vec.push(line);
+                    }
+                }
+                e => {
+                    panic!("Rule: {:?} should not be the enumeration child.", e)
+                }
+            }
+        }
+        if ret_vec.len() == 1 {
+            ret_vec[0] += IndentedString::new(0, "}\n".to_string());
+        } else {
+            ret_vec.push(IndentedString::new(0, "}\n".to_string()));
+        }
+
+        ret_vec
+    }
+    fn enum_value(&self, node: &Node) -> Vec<IndentedString> {
+        debug_assert!(node.rule == Rules::enum_value);
+        let mut ret_vec: Vec<IndentedString> = Vec::new();
+        let mut var_name: String = "".to_string();
+        let mut number: Option<String> = None;
+        for child in node.get_children() {
+            let child = self.publisher.get_node(*child);
+            match child.rule {
+                Rules::variable_name => var_name = self.variable_name(child),
+                Rules::number => number = Some(self.number(child)),
+                e => {
+                    panic!("Rule: {:?} should not be the enum_value child.", e)
+                }
+            }
+        }
+        let res_string = match number {
+            None => format!("{var_name}"),
+            Some(number) => format!("{var_name} = {number}"),
+        };
+        let res_string = IndentedString::new(0, res_string);
+        ret_vec.push(res_string);
+
+        ret_vec
+    }
     fn type_dec(&self, node: &Node) -> String {
         node.get_string(&self.source)
     }
 
-    fn typedef(&self, node: &Node) -> Vec<String> {
+    fn typedef(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::typedef);
         let mut type_dec = "".to_string();
-        let mut type_ref = "".to_string();
-        let mut ret_vec: Vec<String> = Vec::new();
+        let mut ret_vec: Vec<IndentedString> = Vec::new();
 
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
                 Rules::type_dec => type_dec = self.type_dec(child),
-                Rules::type_ref => type_dec = self.type_ref(child),
+                Rules::type_ref => {
+                    let type_ref = self.type_ref(child);
+                    let result = format!("typedef {} is {}", type_dec, type_ref);
+                    let result = IndentedString::new(0, result);
+                    ret_vec.push(result);
+                }
                 e => {
                     panic!("Rule: {:?} should not be the typedefs child.", e)
                 }
             }
         }
-        let result = format!("typedef {} is {}", type_dec, type_ref);
-        ret_vec.push(result);
         ret_vec
     }
 
@@ -235,9 +427,10 @@ impl<'a> Formatter<'a> {
                 Rules::type_ref => type_ref = self.type_ref(child),
                 Rules::variable_name => {
                     var_name = self.variable_name(child);
-                    let attr = IndentedString::new(0, format!("attribute {} {}", type_ref, var_name));
+                    let attr =
+                        IndentedString::new(0, format!("attribute {} {}", type_ref, var_name));
                     ret_vec.push(attr);
-                }, 
+                }
                 Rules::comment => {
                     ret_vec.push(self.comment(child));
                 }
@@ -408,28 +601,26 @@ impl<'a> Formatter<'a> {
         ret_vec
     }
 
-    fn package(&self, node: &Node) -> Vec<IndentedString> {
+    fn package(&self, node: &Node) -> IndentedString {
         debug_assert!(node.rule == Rules::package);
 
-        let mut ret_vec: Vec<IndentedString> = Vec::new();
+        let mut ret_str: IndentedString = IndentedString::default();
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
                 Rules::type_ref => {
                     let s = format!("package {}", self.type_ref(child));
                     let s = IndentedString::new(0, s);
-                    ret_vec.push(s);
+                    ret_str = s;
                 }
-                Rules::comment => ret_vec.push(self.comment(child)),
-                Rules::multiline_comment => {
-                    todo!()
-                }
+                Rules::comment => ret_str += self.comment(child),
+
                 e => {
                     panic!("Rule: {:?} should not be the packages child.", e)
                 }
             }
         }
-        ret_vec
+        ret_str
     }
 
     fn type_ref(&self, node: &Node) -> String {
@@ -442,9 +633,13 @@ impl<'a> Formatter<'a> {
         debug_assert!(node.rule == Rules::variable_name);
         node.get_string(&self.source)
     }
+    fn number(&self, node: &Node) -> String {
+        debug_assert!(node.rule == Rules::number);
+        node.get_string(&self.source)
+    }
     fn comment(&self, node: &Node) -> IndentedString {
         // type_ref is a terminal so we can just return the str slice
-        debug_assert!(node.rule == Rules::comment);
+        debug_assert!(node.rule == Rules::comment, "{:?}", node);
         IndentedString::new(0, " ".to_owned() + &node.get_string(&self.source))
     }
     fn multiline_comment(&self, node: &Node) -> Vec<IndentedString> {
