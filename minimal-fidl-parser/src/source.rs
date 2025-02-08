@@ -23,7 +23,6 @@ impl<'a> Source<'a> {
     pub fn get_char(&self, position: u32) -> Option<u8> {
         if position < self.source_len {
             let src_chr = self.source.as_bytes()[position as usize];
-            println!("{position}");
             Some(src_chr)
         } else {
             None

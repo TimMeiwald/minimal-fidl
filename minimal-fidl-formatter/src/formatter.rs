@@ -35,6 +35,7 @@ impl<'a> Formatter<'a> {
         for child in grammar_node.get_children() {
             let c = self.publisher.get_node(*child);
             match c.rule {
+                Rules::comment => ret_string += &self.comment(&c, false).to_string(),
                 Rules::package => {
                     ret_string += &self.package(&c).to_string();
                 }
@@ -52,7 +53,6 @@ impl<'a> Formatter<'a> {
                         ret_string += &line.to_string();
                     }
                 }
-                Rules::comment => ret_string += &self.comment(c, false).to_string(),
                 Rules::multiline_comment => {
                     todo!()
                 }
@@ -118,34 +118,84 @@ impl<'a> Formatter<'a> {
         node.get_string(self.source)
     }
 
+    fn comment_helper(
+        &self,
+        child: &Node,
+        ret_vec: &mut Vec<IndentedString>,
+        open_bracket: bool,
+        close_bracket: bool,
+    ) {
+        if !open_bracket && !close_bracket {
+            let comment = self.comment(child, false);
+            ret_vec.push(comment);
+        } else if open_bracket && !close_bracket {
+            let mut comment = self.comment(child, false);
+            comment.indent();
+            ret_vec.push(comment);
+        } else {
+            let mut last_element = ret_vec.pop().unwrap();
+            let mut comment = self.comment(child, true);
+            last_element += comment;
+            ret_vec.push(last_element);
+        }
+    }
+
+    fn after_bracket_helper(&self, ret_vec: &mut Vec<IndentedString>) {
+        if ret_vec.len() == 1 {
+            let mut end_str = IndentedString::new(0, "}".to_string());
+            ret_vec[0] += end_str;
+        } else {
+            ret_vec.push(IndentedString::new(0, "}".to_string()));
+        }
+    }
+
     fn type_collection(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::type_collection);
         let mut type_collection_name: Option<String> = None;
         let mut ret_vec: Vec<IndentedString> = Vec::new();
+        let mut open_bracket: bool = false;
+        let mut close_bracket: bool = false;
+
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
+                Rules::open_bracket => open_bracket = true,
+                Rules::close_bracket => {
+                    close_bracket = true;
+                    self.after_bracket_helper(&mut ret_vec);
+                }
+                Rules::comment => {
+                    match type_collection_name {
+                        Some(..) => {}
+                        None => {
+                            let interface = format!("typeCollection {{",);
+                            let interface = IndentedString::new(0, interface.to_string());
+                            type_collection_name = Some("No Name Set".to_string());
+                            ret_vec.push(interface);
+                        }
+                    }
+                    self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
                 Rules::variable_name => {
                     let tcn = Some(self.variable_name(child));
                     type_collection_name = tcn.clone();
-                    let interface = format!(
+                    let tc: String = format!(
                         "typeCollection {} {{",
                         tcn.expect("Interface Name should always exist")
                     );
-                    let interface = IndentedString::new(0, interface.to_string());
-                    ret_vec.push(interface);
+                    let tc = IndentedString::new(0, tc.to_string());
+                    ret_vec.push(tc);
                 }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
                     }
                 }
-
                 Rules::typedef => {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let interface = format!("typeCollection {{\n",);
+                            let interface = format!("typeCollection {{",);
                             let interface = IndentedString::new(0, interface.to_string());
                             type_collection_name = Some("No Name Set".to_string());
                             ret_vec.push(interface);
@@ -160,7 +210,7 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let interface = format!("typeCollection {{\n",);
+                            let interface = format!("typeCollection {{",);
                             let interface = IndentedString::new(0, interface.to_string());
                             type_collection_name = Some("No Name Set".to_string());
                             ret_vec.push(interface);
@@ -176,7 +226,7 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let interface = format!("typeCollection {{\n",);
+                            let interface = format!("typeCollection {{",);
                             let interface = IndentedString::new(0, interface.to_string());
                             type_collection_name = Some("No Name Set".to_string());
                             ret_vec.push(interface);
@@ -200,14 +250,6 @@ impl<'a> Formatter<'a> {
             }
         }
 
-        if ret_vec.len() == 1 {
-            let mut end_str = IndentedString::new(0, "}\n".to_string());
-            end_str.set_with_newline(false);
-            ret_vec[0] += end_str;
-        } else {
-            ret_vec.push(IndentedString::new(0, "}\n".to_string()));
-        }
-
         ret_vec
     }
 
@@ -218,11 +260,17 @@ impl<'a> Formatter<'a> {
         // let mut methods: Vec<Vec<String>> = Vec::new();
         // let mut attributes: Vec<String> = Vec::new();
         // let mut structures: Vec<Vec<String>> = Vec::new();
-
+        let mut open_bracket: bool = false;
+        let mut close_bracket: bool = false;
         let mut ret_vec: Vec<IndentedString> = Vec::new();
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
+                Rules::open_bracket => open_bracket = true,
+                Rules::close_bracket => {
+                    close_bracket = true;
+                    self.after_bracket_helper(&mut ret_vec);
+                }
                 Rules::variable_name => {
                     interface_name = Some(self.variable_name(child));
                     let interface = format!(
@@ -275,10 +323,14 @@ impl<'a> Formatter<'a> {
                     ret_vec.push(IndentedString::new(0, "".to_string()))
                 }
                 Rules::annotation_block => {
-                    for mut line in self.annotation_block(child) {
+                    for line in self.annotation_block(child) {
                         ret_vec.push(line);
                     }
                 }
+                Rules::comment => {
+                    self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
+
                 e => {
                     panic!("Rule: {:?} should not be the interfaces child.", e)
                 }
@@ -289,13 +341,6 @@ impl<'a> Formatter<'a> {
             if last_element != IndentedString::new(0, "".to_string()) {
                 ret_vec.push(last_element);
             }
-        }
-        if ret_vec.len() == 1 {
-            let mut end_str = IndentedString::new(0, "}\n".to_string());
-            end_str.set_with_newline(false);
-            ret_vec[0] += end_str;
-        } else {
-            ret_vec.push(IndentedString::new(0, "}\n".to_string()));
         }
 
         ret_vec
@@ -355,32 +400,67 @@ impl<'a> Formatter<'a> {
     fn annotation_block(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::annotation_block);
         let mut ret_vec: Vec<IndentedString> = Vec::new();
-        ret_vec.push(IndentedString::new(0, "<**".to_string()));
+        let mut annotation_list: Vec<Vec<IndentedString>> = Vec::new();
+        let mut comments_list: Vec<IndentedString> = Vec::new(); // Can only happen at end of block
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
                 Rules::annotation => {
-                    for mut line in self.annotation(child) {
-                        line.indent();
-                        ret_vec.push(line);
-                    }
+                    // So if there's only one annotation with just one line
+                    // We can make it a single line annotation block
+                    // because it's prettier.
+                    annotation_list.push(self.annotation(child));
+                }
+                Rules::comment => {
+                    let comment = self.comment(child, false);
+                    comments_list.push(comment);
                 }
                 e => {
                     panic!("Rule: {:?} should not be the annotation_block child.", e)
                 }
             }
         }
-        ret_vec.push(IndentedString::new(0, "**>".to_string()));
-        ret_vec
+        if annotation_list.len() == 1 && annotation_list[0].len() == 1 {
+            annotation_list[0][0].set_with_newline(false);
+            let ret_str = format!("<** {} **>", annotation_list[0][0]);
+            ret_vec.push(IndentedString::new(0, ret_str));
+            for comment in comments_list {
+                ret_vec.push(comment);
+            }
+            ret_vec
+        } else {
+            ret_vec.push(IndentedString::new(0, "<**".to_string()));
+            for annotation in annotation_list {
+                for mut line in annotation {
+                    line.indent();
+                    ret_vec.push(line);
+                }
+            }
+            ret_vec.push(IndentedString::new(0, "**>".to_string()));
+            for comment in comments_list {
+                ret_vec.push(comment);
+            }
+            ret_vec
+        }
     }
 
     fn enumeration(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::enumeration);
         let mut ret_vec: Vec<IndentedString> = Vec::new();
         let mut var_name: String = "".to_string();
+        let mut open_bracket: bool = false;
+        let mut close_bracket: bool = false;
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
+                Rules::open_bracket => open_bracket = true,
+                Rules::close_bracket => {
+                    close_bracket = true;
+                    self.after_bracket_helper(&mut ret_vec);
+                }
+                Rules::comment => {
+                    self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
@@ -401,11 +481,7 @@ impl<'a> Formatter<'a> {
                 }
             }
         }
-        if ret_vec.len() == 1 {
-            ret_vec[0] += IndentedString::new(0, "}\n".to_string());
-        } else {
-            ret_vec.push(IndentedString::new(0, "}\n".to_string()));
-        }
+  
 
         ret_vec
     }
@@ -414,6 +490,7 @@ impl<'a> Formatter<'a> {
         let mut ret_vec: Vec<IndentedString> = Vec::new();
         let mut var_name: String = "".to_string();
         let mut number: Option<String> = None;
+        let mut comment: Option<IndentedString> = Some(IndentedString::default());
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
@@ -421,6 +498,9 @@ impl<'a> Formatter<'a> {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
                     }
+                }
+                Rules::comment => {
+                    comment = Some(self.comment(child, true));
                 }
                 Rules::variable_name => var_name = self.variable_name(child),
                 Rules::number => number = Some(self.number(child)),
@@ -433,7 +513,11 @@ impl<'a> Formatter<'a> {
             None => format!("{var_name}"),
             Some(number) => format!("{var_name} = {number}"),
         };
-        let res_string = IndentedString::new(0, res_string);
+        let mut res_string = IndentedString::new(0, res_string);
+        match comment {
+            Some(comment) => res_string += comment,
+            None => {}
+        }
         ret_vec.push(res_string);
 
         ret_vec
@@ -446,7 +530,7 @@ impl<'a> Formatter<'a> {
         debug_assert!(node.rule == Rules::typedef);
         let mut type_dec = "".to_string();
         let mut ret_vec: Vec<IndentedString> = Vec::new();
-
+        let mut type_ref_happened: bool = false;
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
@@ -455,8 +539,20 @@ impl<'a> Formatter<'a> {
                         ret_vec.push(line);
                     }
                 }
+                Rules::comment => {
+                    if type_ref_happened{
+                        let mut last_element = ret_vec.pop().unwrap();
+                        let comment = self.comment(child, true);
+                        last_element += comment;
+                        ret_vec.push(last_element);
+                    }
+                    else{
+                        ret_vec.push(self.comment(child, false));
+                    }
+                }
                 Rules::type_dec => type_dec = self.type_dec(child),
                 Rules::type_ref => {
+                    type_ref_happened = true;
                     let type_ref = self.type_ref(child);
                     let result = format!("typedef {} is {}", type_dec, type_ref);
                     let result = IndentedString::new(0, result);
@@ -474,13 +570,23 @@ impl<'a> Formatter<'a> {
         debug_assert!(node.rule == Rules::structure);
 
         let mut ret_vec: Vec<IndentedString> = Vec::new();
+        let mut open_bracket: bool = false;
+        let mut close_bracket: bool = false;
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
+                Rules::open_bracket => open_bracket = true,
+                Rules::close_bracket => {
+                    close_bracket = true;
+                    self.after_bracket_helper(&mut ret_vec);
+                }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
                     }
+                }
+                Rules::comment => {
+                    self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::type_dec => {
                     // We know this happens before the contents of struct.
@@ -499,12 +605,6 @@ impl<'a> Formatter<'a> {
                 }
             }
         }
-        if ret_vec.len() == 1 {
-            ret_vec[0] += IndentedString::new(0, "}".to_string());
-        } else {
-            ret_vec.push(IndentedString::new(0, "}".to_string()));
-        }
-
         ret_vec
     }
 
@@ -541,42 +641,67 @@ impl<'a> Formatter<'a> {
 
     fn version(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::version);
-        let mut major: Option<String> = None;
-        let mut minor: Option<String> = None;
         let mut ret_vec: Vec<IndentedString> = Vec::new();
+        let mut open_bracket: bool = false;
+        let mut close_bracket: bool = false;
         ret_vec.push(IndentedString::new(0, "version {".to_string()));
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
-                Rules::major => ret_vec.push(IndentedString::new(1, self.major(child))),
-                Rules::minor => ret_vec.push(IndentedString::new(1, self.minor(child))),
+                Rules::open_bracket => open_bracket = true,
+                Rules::close_bracket => {
+                    close_bracket = true;
+                    self.after_bracket_helper(&mut ret_vec);
+                }
+                Rules::major => {
+                    let mut resp = self.major(child);
+                    resp.indent();
+                    ret_vec.push(resp);
+                }
+                Rules::minor => {
+                    let mut resp = self.minor(child);
+                    resp.indent();
+                    ret_vec.push(resp);
+                }
+                Rules::comment => {
+                    self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
                 e => {
                     panic!("Rule: {:?} should not be the version child.", e)
                 }
             }
         }
 
-        if ret_vec.len() == 1 {
-            ret_vec[0] += IndentedString::new(0, "}".to_string());
-        } else {
-            ret_vec.push(IndentedString::new(0, "}".to_string()));
-        }
+      
         ret_vec
     }
-    fn major(&self, node: &Node) -> String {
+
+    fn major(&self, node: &Node) -> IndentedString {
         debug_assert!(node.rule == Rules::major);
         let children = node.get_children();
-        debug_assert_eq!(children.len(), 1);
         let child = self.publisher.get_node(children[0]);
-        format!("major {}", self.digits(child))
+        let ret_str = format!("major {}", self.digits(child));
+        let mut ret_str = IndentedString::new(0, ret_str);
+        if children.len() == 2 {
+            let comment_child = self.publisher.get_node(children[1]);
+            let opt_comment = self.comment(comment_child, true);
+            ret_str += opt_comment;
+        }
+        ret_str
     }
 
-    fn minor(&self, node: &Node) -> String {
+    fn minor(&self, node: &Node) -> IndentedString {
         debug_assert!(node.rule == Rules::minor);
         let children = node.get_children();
-        debug_assert_eq!(children.len(), 1);
         let child = self.publisher.get_node(children[0]);
-        format!("minor {}", self.digits(child))
+        let ret_str = format!("minor {}", self.digits(child));
+        let mut ret_str = IndentedString::new(0, ret_str);
+        if children.len() == 2 {
+            let comment_child = self.publisher.get_node(children[1]);
+            let opt_comment = self.comment(comment_child, true);
+            ret_str += opt_comment;
+        }
+        ret_str
     }
 
     fn digits(&self, node: &Node) -> String {
@@ -590,39 +715,47 @@ impl<'a> Formatter<'a> {
         let mut input: Vec<IndentedString> = Vec::new();
         let mut output: Vec<IndentedString> = Vec::new();
         let mut ret_vec: Vec<IndentedString> = Vec::new();
-
+        let mut open_bracket: bool = false;
+        let mut close_bracket: bool = false;
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
+                Rules::open_bracket => open_bracket = true,
+                Rules::close_bracket => {
+                    close_bracket = true;
+                    self.after_bracket_helper(&mut ret_vec);
+                }
+                Rules::comment => {
+                    self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
+
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
                     }
                 }
-                Rules::variable_name => var_name = self.variable_name(child),
-                Rules::input_params => input = self.input_params(child),
-                Rules::output_params => output = self.output_params(child),
+                Rules::variable_name => {
+                    var_name = self.variable_name(child);
+                    ret_vec.push(IndentedString::new(0, format!("method {} {{", var_name)));
+                }
+                Rules::input_params => {
+                    input = self.input_params(child);
+                    for mut line in input {
+                        line.indent();
+                        ret_vec.push(line);
+                    }
+                }
+                Rules::output_params => {
+                    output = self.output_params(child);
+                    for mut line in output {
+                        line.indent();
+                        ret_vec.push(line);
+                    }
+                }
                 e => {
                     panic!("Rule: {:?} should not be the method child.", e)
                 }
             }
-        }
-
-        ret_vec.push(IndentedString::new(0, format!("method {} {{", var_name)));
-
-        for mut line in input {
-            line.indent();
-            ret_vec.push(line);
-        }
-        for mut line in output {
-            line.indent();
-            ret_vec.push(line);
-        }
-
-        if ret_vec.len() == 1 {
-            ret_vec[0] += IndentedString::new(0, "}".to_string());
-        } else {
-            ret_vec.push(IndentedString::new(0, "}".to_string()));
         }
         ret_vec
     }
@@ -630,10 +763,27 @@ impl<'a> Formatter<'a> {
     fn input_params(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::input_params);
         let mut ret_vec: Vec<IndentedString> = Vec::new();
+        let mut open_bracket: bool = false;
+        let mut close_bracket: bool = false;
         let mut in_already_there = false;
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
+                Rules::open_bracket => open_bracket = true,
+                Rules::close_bracket => {
+                    close_bracket = true;
+                    self.after_bracket_helper(&mut ret_vec);
+                }
+                Rules::comment => {
+                    match in_already_there {
+                        false => {
+                            ret_vec.push(IndentedString::new(0, "in {".to_owned()));
+                            in_already_there = true
+                        }
+                        true => {}
+                    }
+                    self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
@@ -657,21 +807,33 @@ impl<'a> Formatter<'a> {
                 }
             }
         }
-        if ret_vec.len() == 1 {
-            ret_vec[0] += IndentedString::new(0, "}".to_string());
-        } else {
-            ret_vec.push(IndentedString::new(0, "}".to_owned()));
-        }
         ret_vec
     }
 
     fn output_params(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::output_params);
         let mut ret_vec: Vec<IndentedString> = Vec::new();
+        let mut open_bracket: bool = false;
+        let mut close_bracket: bool = false;
         let mut out_already_there = false;
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
             match child.rule {
+                Rules::open_bracket => open_bracket = true,
+                Rules::close_bracket => {
+                    close_bracket = true;
+                    self.after_bracket_helper(&mut ret_vec);
+                }
+                Rules::comment => {
+                    match out_already_there {
+                        false => {
+                            ret_vec.push(IndentedString::new(0, "out {".to_owned()));
+                            out_already_there = true;
+                        }
+                        true => {}
+                    }
+                    self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
@@ -680,7 +842,7 @@ impl<'a> Formatter<'a> {
                 Rules::variable_declaration => {
                     match out_already_there {
                         false => {
-                            ret_vec.push(IndentedString::new(0, "in {".to_owned()));
+                            ret_vec.push(IndentedString::new(0, "out {".to_owned()));
                             out_already_there = true;
                         }
                         true => {}
@@ -695,11 +857,6 @@ impl<'a> Formatter<'a> {
                 }
             }
         }
-        if ret_vec.len() == 1 {
-            ret_vec[0] += IndentedString::new(0, "}".to_string());
-        } else {
-            ret_vec.push(IndentedString::new(0, "}".to_owned()));
-        }
         ret_vec
     }
 
@@ -707,6 +864,7 @@ impl<'a> Formatter<'a> {
         debug_assert!(node.rule == Rules::variable_declaration);
         let mut type_ref: String = "".to_string();
         let mut var_name: String = "".to_string();
+        let mut is_last_element_comment = false;
         let mut ret_vec: Vec<IndentedString> = Vec::new();
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
@@ -715,20 +873,39 @@ impl<'a> Formatter<'a> {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
                     }
+                    is_last_element_comment = false;
                 }
-                Rules::type_ref => type_ref = self.type_ref(child),
+                Rules::type_ref => {
+                    type_ref = self.type_ref(child);
+                    is_last_element_comment = false;
+                }
                 Rules::variable_name => {
                     var_name = self.variable_name(child);
                     let s = format!("{} {}", type_ref, var_name);
                     let s = IndentedString::new(0, s);
                     ret_vec.push(s);
+                    is_last_element_comment = false;
                 }
+                Rules::comment => {
+                    is_last_element_comment = true;
+                    ret_vec.push(self.comment(child, false));
+                }
+
                 e => {
                     panic!("Rule: {:?} should not be the version child.", e)
                 }
             }
         }
-        let vardec = format!("{} {}", type_ref, var_name);
+        if is_last_element_comment {
+            let comment = ret_vec.pop().expect("Comment should exist if flag true");
+            let mut new_comment = IndentedString::new(0, " ".to_string());
+            new_comment += comment;
+            let mut prior_to_last_element = ret_vec
+                .pop()
+                .expect("More than 2 elements always exists if rule parser hasn't changed");
+            prior_to_last_element += new_comment;
+            ret_vec.push(prior_to_last_element);
+        }
         ret_vec
     }
 

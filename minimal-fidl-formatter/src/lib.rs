@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn test_formatter_4() {
         let src = "package org.javaohjavawhyareyouso
-	interface endOfPlaylist { version {major 25 minor 60 // Can comment \n}}	";
+	interface endOfPlaylist { version {major 25 minor 60 //Can comment\n }}	";
         let publisher = parse(src).unwrap();
         publisher.print(Key(0), Some(true));
         let fmt = formatter::Formatter::new(src, &publisher);
@@ -259,7 +259,8 @@ mod tests {
 	}
 }	typeCollection{	typedef aTypedef is Int16 
 	enumeration aEnum {
-		A=3 B C ,D E =10
+		A=3 B C ,D 
+        E =10, // Tis a comment 
 	}struct thing{p1 p1 p2 p2}}";
         let publisher = parse(src).unwrap();
         publisher.print(Key(0), Some(true));
@@ -359,7 +360,8 @@ mod tests {
                 major 25
                 minor 60
             }
-            <** @Annotation: block **>
+            <** @Annotation: block
+                @WegotsMore: of these annations **>
 
             struct thing {
                 <** @Annotation: block **>
@@ -461,6 +463,173 @@ mod tests {
                 }
             }
         }"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
+    #[test]
+    fn test_formatter_27() {
+        let src = r#"package org.javaohjavawhyareyouso //Comment
+        <** @Annotation: block **>//Comment
+        //Comment
+        interface endOfPlaylist {//Comment
+            //Comment
+            version {
+                //Comment
+                major 25//Comment
+                minor 60//Comment
+            }//Comment
+            <** @Annotation: block//Comment
+                @WegotsMore: of these annations **>//Comment
+                //Comment
+            struct thing {//Comment
+                <** @Annotation: block **>//Comment
+                //Comment
+                p1 p1//Comment
+                p2 p2//Comment
+            }//Comment
+            <** @Annotation: block **>//Comment
+            //Comment
+            attribute uint8 thing//Comment
+            <** @Annotation: block **>//Comment
+            //Comment
+            method thing {//Comment
+                <** @Annotation: block **>//Comment
+                //Comment
+                in {//Comment
+                    <** @Annotation: block **>//Comment
+                    //Comment
+                    param param//Comment
+                }//Comment
+                <** @Annotation: block **>//Comment
+                //Comment
+                out {//Comment
+                    
+                    //Comment
+                    param2 param2//Comment
+                    <** @Annotation: block **>//Comment
+                    org.param3 param3//Comment
+                }//Comment
+            }//Comment
+            <** @Annotation: block **>//Comment
+            //Comment
+            method thing {//Comment
+                <** @Annotation: block **>//Comment
+                //Comment
+                in {//Comment
+                    param param//Comment
+                }//Comment
+                <** @Annotation: block **>//Comment
+                //Comment
+                out {//Comment
+                    param2 param2//Comment
+                    org.param3 param3//Comment
+                }//Comment
+            }//Comment
+            <** @Annotation: block **>//Comment
+            //Comment
+            typedef aTypedef is Int16//Comment
+            <** @Annotation: block **>//Comment
+            //Comment
+            enumeration aEnum {//Comment
+                A = 3//Comment
+                B//Comment
+                //Comment
+                C//Comment
+                //Comment
+                D//Comment
+                E = 10//Comment
+            }//Comment
+            //Comment
+        }//Comment
+        <** @Annotation: block **>
+        //Comment
+        typeCollection {//Comment
+            //Comment
+            typedef aTypedef is Int16//Comment
+            //Comment
+            enumeration aEnum {
+                A = 3//Comment
+                B//Comment
+                C
+
+                //Comment
+                D
+                E = 10
+            }
+        
+            //Comment
+            struct thing {
+                //Comment
+                p1 p1//Comment
+                //Comment
+                p2 p2//Comment
+            }
+        }"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
+
+    #[test]
+    fn test_formatter_28() {
+        let src = r#"package org.javaohjavawhyareyouso //Comment
+        <** @Annotation: block **>//Comment
+        //Comment
+        interface endOfPlaylist {//Comment
+            //Comment
+            <** @Annotation: block **>//Comment
+            //Comment
+            method thing {//Comment
+                <** @Annotation: block **>//Comment
+                //Comment
+                in {//Comment
+                    param param//Comment
+                }//Comment
+                <** @Annotation: block **>//Comment
+                //Comment
+                out {//Comment
+                    param2 param2//Comment
+                    org.param3 param3//Comment
+                    //Comment
+                }//Comment
+            }//Comment
+            //Comment
+        }
+"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
+    #[test]
+    fn test_formatter_29() {
+        let src = r#"package org.javaohjavawhyareyouso 
+        <** @Annotation: block **>
+
+        interface endOfPlaylist {
+            <** @Annotation: block **>
+
+            method thing {
+                <** @Annotation: block **>
+
+                in {
+                    param param
+                }
+                <** @Annotation: block **>
+                out {
+                    param2 param2
+                    org.param3 param3
+                }
+            }
+            
+        }
+"#;
         let publisher = parse(src).unwrap();
         publisher.print(Key(0), Some(true));
         let fmt = formatter::Formatter::new(src, &publisher);

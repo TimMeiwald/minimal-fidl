@@ -1,5 +1,6 @@
 use std::fmt::{self};
 use std::ops::AddAssign;
+use std::ops::Add;
 
 
 #[derive(PartialEq, Debug)]
@@ -45,6 +46,7 @@ impl AddAssign for IndentedString {
         };
     }
 }
+
 impl Default for IndentedString {
     fn default() -> Self {  
         Self {

@@ -22,7 +22,7 @@
 
 <number> = <hex>/<binary>/<float>/<integer>;
 
-<annotation_block> = "<**", <wsn_nocomment>, (!"**>", <annotation>, <wsn_nocomment>)+, "**>";
+<annotation_block> = "<**", <wsn_nocomment>, (!"**>", <annotation>, <wsn_nocomment>)+, "**>", <wsn>;
 <annotation> = '@', <annotation_name>, <wsn_nocomment>, ':', <annotation_content>;
 <annotation_content> = (!'@', !"**>",<ascii>)*; # You cannot have comments/multiline comments inside an annotation#
 <annotation_name> = <type_char>+; #type char because same semantically and inlined anyway#
@@ -43,75 +43,79 @@
 <import_namespace> = "import" , <ws_atlone>, <type_ref>, <wildcard>, <ws_atlone>, "from", <ws_atlone>, <file_path>, <ws>;
 <import_model> = "import", <ws_atlone>,  "model", <ws_atlone>, <file_path> ,<ws>;
 
+
+<open_bracket> = '{'; # These two are relevant for formatting and can be inlined for anything else just like comments#
+<close_bracket> = '}';
 <attribute> =   <annotation_block>?, <wsn>,
                 "attribute", <ws_atlone>, 
                 <type_ref>, <ws_atlone>, 
-                <variable_name>, <wsn>;
+                <variable_name>, <ws>;
 <variable_declaration> = <annotation_block>?, <wsn>, 
                         <type_ref>, <wsn>, 
-                        <variable_name>, <wsn>;
+                        <variable_name>, <ws>;
 <input_params> = <annotation_block>?, <wsn>,
                 "in", <wsn>, 
-                '{', 
+                <open_bracket>, 
                 <wsn>, 
-                <variable_declaration>*, 
-                '}';
+                (<variable_declaration>, <wsn>)*, 
+                <close_bracket>, <ws>;
 <output_params> = <annotation_block>?, <wsn>,
                 "out", <wsn>, 
-                '{', 
+                <open_bracket>, 
                 <wsn>,
-                <variable_declaration>*, 
-                '}';
+                (<variable_declaration>, <wsn>)*, 
+                <close_bracket>, <ws>;
 <method> =  <annotation_block>?, <wsn>, 
             "method", <wsn>, 
             <variable_name>, <wsn>, 
-            '{', <wsn>, 
+            <open_bracket>, <wsn>, 
             <input_params>?, <wsn>, 
             <output_params>?, <wsn>,
-            '}';
+            <close_bracket>, <ws>;
 
-<typedef> = <annotation_block>?, <wsn>, 
-            "typedef", <ws>,
-            <type_dec>, <ws>, 
-            "is", <ws>, 
-            <type_ref>;
+<typedef> = <annotation_block>?, <wsn_nocomment>, 
+            "typedef", <ws_atlone>,
+            <type_dec>, <ws_atlone>, 
+            "is", <ws_atlone>, 
+            <type_ref>, <ws>;
 
 <structure> =   <annotation_block>?, <wsn>, 
                 "struct", <ws>, 
                 <type_dec>, <wsn>,
-                '{', <wsn>, 
-                <variable_declaration>*,
-                '}';
+                <open_bracket>, <wsn>, 
+                (<variable_declaration>, <wsn>)*,
+                <close_bracket>, <ws>;
 
 <enumeration> = <annotation_block>?, <wsn>, 
                 "enumeration", <ws>, 
                 <type_dec>, <wsn>, 
-                '{', 
+                <open_bracket>, 
                 <wsn>,
                 (<enum_value>, <wsn>)*, 
-                '}';
+                <close_bracket>, <ws>;
 <enum_value> =  <annotation_block>?, <wsn>, 
                 <variable_name>, <ws>, 
                 ('=', <ws>, <number>)?, 
-                <ws>, ','?;
+                <ws>, ','?, <ws>;
 <version> = "version", <wsn>, 
-            '{', <wsn>, 
+            <open_bracket>, <wsn>, 
             <major>, <wsn>, 
-            <minor>, <wsn>, '}';
-<major> = "major", <ws>, <digits>;
-<minor> = "minor", <ws>, <digits>;
+            <minor>, <wsn>, 
+            <close_bracket>, <ws>;
+<major> = "major", <ws_atlone>, <digits>, <ws>;
+<minor> = "minor", <ws_atlone>, <digits>, <ws>;
 <interface> = <annotation_block>?, <wsn>, "interface", <wsn>, 
                 <variable_name>, <wsn>, 
-                '{', <wsn>, 
+                <open_bracket>, <wsn>, 
                 <version>?, <wsn>, 
                 ((<method>/<typedef>/<structure>/<attribute>/<enumeration>), <wsn>)*, 
-                <wsn>, '}';
+                <wsn>, <close_bracket>, <ws>;
 <type_collection> = <annotation_block>?, <wsn>, 
                     "typeCollection", <ws>, 
                     <variable_name>?, <wsn>, 
-                    '{', <wsn>, <version>?, <wsn>,
+                    <open_bracket>, <wsn>, <version>?, <wsn>,
                     ((<typedef>/<structure>/<enumeration>), <wsn>)*,
-                    '}';
+                    <close_bracket>, <ws>;
 <Grammar> = <wsn>, <package>, 
             <wsn>, ((<import_model>/<import_namespace>), <wsn>)*, 
             <wsn>, ((<interface>/<type_collection>), <wsn>)*, 
