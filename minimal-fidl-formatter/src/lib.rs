@@ -245,7 +245,7 @@ mod tests {
         publisher.print(Key(0), Some(true));
         let fmt = formatter::Formatter::new(src, &publisher);
         let output = fmt.format();
-        println!("Formatted:\n\n{}", output.unwrap());
+        println!("Formatted:\n{}", output.unwrap());
     }
 
     #[test]
@@ -309,9 +309,158 @@ mod tests {
     fn test_formatter_22() {
         let src = r#"package org.javaohjavawhyareyouso 
         import model "Astronomy_t.fidl" // Comment
-        import org.franca.omgidl.* from "OMGIDLBase.fidl" 
+        import org.franca.omgidl.* from "OMGIDLBase.fidl" //Also Comment
         // This is a comment
 	interface endOfPlaylist { }	"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
+    #[test]
+    fn test_formatter_23() {
+        let src = r#"package org.javaohjavawhyareyouso 
+        import model "Astronomy_t.fidl" // Comment
+        import org.franca.omgidl.* from "OMGIDLBase.fidl" //Also Comment
+        // This is a comment
+        <** @Annotation: block**>
+	    interface endOfPlaylist { }	"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
+
+    #[test]
+    fn test_formatter_24() {
+        let src = r#"package org.javaohjavawhyareyouso 
+        import model "Astronomy_t.fidl" // Comment
+        import org.franca.omgidl.* from "OMGIDLBase.fidl" //Also Comment
+        // This is a comment
+        <** @Annotation: block
+            @Annotation: multinline
+            aohgoagoeaobgaeub**>
+	    interface endOfPlaylist { }	"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
+    #[test]
+    fn test_formatter_25() {
+        let src = r#"package org.javaohjavawhyareyouso
+        <** @Annotation: block **>
+        interface endOfPlaylist {
+
+            version {
+                major 25
+                minor 60
+            }
+            <** @Annotation: block **>
+
+            struct thing {
+                <** @Annotation: block **>
+
+                p1 p1
+                p2 p2
+            }
+            <** @Annotation: block **>
+
+            attribute uint8 thing
+            <** @Annotation: block **>
+
+            method thing {
+                <** @Annotation: block **>
+
+                in {
+                    <** @Annotation: block **>
+
+                    param param
+                }
+                <** @Annotation: block **>
+
+                out {
+                    
+
+                    param2 param2
+                    <** @Annotation: block **>
+                    org.param3 param3
+                }
+            }
+            <** @Annotation: block **>
+
+            method thing {
+                <** @Annotation: block **>
+
+                in {
+                    param param
+                }
+                <** @Annotation: block **>
+
+                out {
+                    param2 param2
+                    org.param3 param3
+                }
+            }
+            <** @Annotation: block **>
+
+            typedef aTypedef is Int16
+            <** @Annotation: block **>
+
+            enumeration aEnum {
+                A = 3
+                B
+                C
+                D
+                E = 10
+            }
+        
+        }
+        <** @Annotation: block **>
+
+        typeCollection {
+        
+            typedef aTypedef is Int16
+            enumeration aEnum {
+                A = 3
+                B
+                C
+                D
+                E = 10
+            }
+        
+        
+            struct thing {
+                p1 p1
+                p2 p2
+            }
+        }"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
+
+    #[test]
+    fn test_formatter_26() {
+        let src = r#"package org.javaohjavawhyareyouso
+        <** @Annotation: block **>
+        interface endOfPlaylist {
+            method whatever {
+                in {
+                    param1 param1
+                    param2 param2
+                }
+                out {
+                    param1 param1
+                    param2 param2
+                }
+            }
+        }"#;
         let publisher = parse(src).unwrap();
         publisher.print(Key(0), Some(true));
         let fmt = formatter::Formatter::new(src, &publisher);

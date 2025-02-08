@@ -48,14 +48,18 @@ pub fn ws_atlone<T: Context>(parent: Key, context: &RefCell<T>, source: &Source,
 	closure_5(parent, source, position)
 
 } #[allow(dead_code)]
-pub fn cwsn<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
+pub fn wsn_nocomment<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
 
-	let closure_1 = _var_name(Rules::multiline_comment, context, multiline_comment);
-	let closure_2 = _var_name(Rules::comment, context, comment);
+	let closure_1 = _terminal(b' ');
+	let closure_2 = _terminal(b'\t');
 	let closure_3 = _ordered_choice(&closure_1, &closure_2);
-	let closure_4 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_4 = _terminal(b'\r');
 	let closure_5 = _ordered_choice(&closure_3, &closure_4);
-	closure_5(parent, source, position)
+	let closure_6 = _terminal(b'\n');
+	let closure_7 = _ordered_choice(&closure_5, &closure_6);
+	let closure_8 = _subexpression(&closure_7);
+	let closure_9 = _zero_or_more(&closure_8);
+	closure_9(parent, source, position)
 
 } #[allow(dead_code)]
 pub fn ascii<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
@@ -218,22 +222,20 @@ pub fn number<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, po
 pub fn annotation_block<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
 
 	let closure_1 = _string_terminal_opt_ascii(&[b'<',b'*',b'*']);
-	let closure_2 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_2 = move |parent: Key, source: &Source, position: u32| wsn_nocomment(parent, context, source, position);
 	let closure_3 = _sequence(&closure_1, &closure_2);
 	let closure_4 = _string_terminal_opt_ascii(&[b'*',b'*',b'>']);
 	let closure_5 = _not_predicate(&closure_4);
 	let closure_6 = _var_name(Rules::annotation, context, annotation);
 	let closure_7 = _sequence(&closure_5, &closure_6);
-	let closure_8 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_8 = move |parent: Key, source: &Source, position: u32| wsn_nocomment(parent, context, source, position);
 	let closure_9 = _sequence(&closure_7, &closure_8);
 	let closure_10 = _subexpression(&closure_9);
 	let closure_11 = _one_or_more(&closure_10);
 	let closure_12 = _sequence(&closure_3, &closure_11);
-	let closure_13 = move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
+	let closure_13 = _string_terminal_opt_ascii(&[b'*',b'*',b'>']);
 	let closure_14 = _sequence(&closure_12, &closure_13);
-	let closure_15 = _string_terminal_opt_ascii(&[b'*',b'*',b'>']);
-	let closure_16 = _sequence(&closure_14, &closure_15);
-	closure_16(parent, source, position)
+	closure_14(parent, source, position)
 
 } #[allow(dead_code)]
 pub fn annotation<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
@@ -241,7 +243,7 @@ pub fn annotation<T: Context>(parent: Key, context: &RefCell<T>, source: &Source
 	let closure_1 = _terminal(b'@');
 	let closure_2 = _var_name(Rules::annotation_name, context, annotation_name);
 	let closure_3 = _sequence(&closure_1, &closure_2);
-	let closure_4 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_4 = move |parent: Key, source: &Source, position: u32| wsn_nocomment(parent, context, source, position);
 	let closure_5 = _sequence(&closure_3, &closure_4);
 	let closure_6 = _terminal(b':');
 	let closure_7 = _sequence(&closure_5, &closure_6);
@@ -251,7 +253,7 @@ pub fn annotation<T: Context>(parent: Key, context: &RefCell<T>, source: &Source
 
 } #[allow(dead_code)]
 pub fn annotation_content<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
-
+	//  You cannot have comments/multiline comments inside an annotation
 	let closure_1 = _terminal(b'@');
 	let closure_2 = _not_predicate(&closure_1);
 	let closure_3 = _string_terminal_opt_ascii(&[b'*',b'*',b'>']);

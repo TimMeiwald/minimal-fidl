@@ -1,7 +1,7 @@
 <ws> Inline = (<multiline_comment>/<comment>/' '/'\t'/'\r')*;
 <wsn> Inline = (<multiline_comment>/<comment>/' '/'\t'/'\r'/'\n')*;
 <ws_atlone> Inline = (' '/'\t')+;
-<cwsn> = <multiline_comment>/<comment>/<wsn>;
+<wsn_nocomment> Inline = (' '/'\t'/'\r'/'\n')*;
 <ascii> Inline = [0x00..0xFF];
 <multiline_comment> = "/*", (!"*/", <ascii>)*, "*/";
 <comment> = "//", (!'\n', <ascii>)*;
@@ -22,9 +22,9 @@
 
 <number> = <hex>/<binary>/<float>/<integer>;
 
-<annotation_block> = "<**", <wsn>, (!"**>", <annotation>, <wsn>)+, <wsn>, "**>";
-<annotation> = '@', <annotation_name>, <ws>, ':', <annotation_content>;
-<annotation_content> = (!'@', !"**>",<ascii>)*;
+<annotation_block> = "<**", <wsn_nocomment>, (!"**>", <annotation>, <wsn_nocomment>)+, "**>";
+<annotation> = '@', <annotation_name>, <wsn_nocomment>, ':', <annotation_content>;
+<annotation_content> = (!'@', !"**>",<ascii>)*; # You cannot have comments/multiline comments inside an annotation#
 <annotation_name> = <type_char>+; #type char because same semantically and inlined anyway#
 
 <type_char> Inline = '_'/['A'..'Z']/['a'..'z'] ;
