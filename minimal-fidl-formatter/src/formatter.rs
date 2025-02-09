@@ -206,7 +206,6 @@ impl<'a> Formatter<'a> {
                 }
                 Rules::multiline_comment => {
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
-
                 }
                 Rules::variable_name => {
                     let tcn = Some(self.variable_name(child));
@@ -858,6 +857,13 @@ impl<'a> Formatter<'a> {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::multiline_comment => {
+                    match in_already_there {
+                        false => {
+                            ret_vec.push(IndentedString::new(0, "in {".to_owned()));
+                            in_already_there = true
+                        }
+                        true => {}
+                    }
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
 
                 }
@@ -912,6 +918,13 @@ impl<'a> Formatter<'a> {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::multiline_comment => {
+                    match out_already_there {
+                        false => {
+                            ret_vec.push(IndentedString::new(0, "in {".to_owned()));
+                            out_already_there = true
+                        }
+                        true => {}
+                    }
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
 
                 }

@@ -745,4 +745,37 @@ mod tests {
         let output = fmt.format();
         println!("Formatted:\n\n{}", output.unwrap());
     }
+
+    #[test]
+    fn test_formatter_31() {
+        let src = r#"package org.javaohjavawhyareyouso /** MultiLine Comment **/
+        <** @Annotation: block **>/** MultiLine Comment **/
+        /** MultiLine Comment **/
+        interface endOfPlaylist {/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            <** @Annotation: block **>/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            method thing {/** MultiLine Comment **/
+                <** @Annotation: block **>/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                in {/** MultiLine Comment **/
+                    param param/** MultiLine Comment **/
+                }/** MultiLine Comment **/
+                <** @Annotation: block **>/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                out {/** MultiLine Comment **/
+                    param2 param2/** MultiLine Comment **/
+                    org.param3 param3/** MultiLine Comment **/
+                    /** MultiLine Comment **/
+                }/** MultiLine Comment **/
+            }/** MultiLine Comment **/
+            /** MultiLine Comment **/
+        }
+"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
 }
