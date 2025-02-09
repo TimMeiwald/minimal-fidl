@@ -453,7 +453,8 @@ impl<'a> Formatter<'a> {
                 Rules::multiline_comment => {
                     let comment = self.multiline_comment(child);
                     for line in comment {
-                        ret_vec.push(line);
+                        comments_list.push(line);
+
                     }
                 }
                 e => {
