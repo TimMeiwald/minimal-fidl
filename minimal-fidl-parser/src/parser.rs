@@ -62,6 +62,20 @@ pub fn wsn_nocomment<T: Context>(parent: Key, context: &RefCell<T>, source: &Sou
 	closure_9(parent, source, position)
 
 } #[allow(dead_code)]
+pub fn ws_only_regular_comment<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
+
+	let closure_1 = _var_name(Rules::comment, context, comment);
+	let closure_2 = _terminal(b' ');
+	let closure_3 = _ordered_choice(&closure_1, &closure_2);
+	let closure_4 = _terminal(b'\t');
+	let closure_5 = _ordered_choice(&closure_3, &closure_4);
+	let closure_6 = _terminal(b'\r');
+	let closure_7 = _ordered_choice(&closure_5, &closure_6);
+	let closure_8 = _subexpression(&closure_7);
+	let closure_9 = _zero_or_more(&closure_8);
+	closure_9(parent, source, position)
+
+} #[allow(dead_code)]
 pub fn ascii<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, position: u32) -> (bool, u32) {
 
 	let closure_1 = _ordered_choice_match_range(0, 255);
@@ -369,7 +383,7 @@ pub fn package<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, p
 	let closure_3 = _sequence(&closure_1, &closure_2);
 	let closure_4 = _var_name(Rules::type_ref, context, type_ref);
 	let closure_5 = _sequence(&closure_3, &closure_4);
-	let closure_6 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_6 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_7 = _sequence(&closure_5, &closure_6);
 	closure_7(parent, source, position)
 
@@ -391,7 +405,7 @@ pub fn import_namespace<T: Context>(parent: Key, context: &RefCell<T>, source: &
 	let closure_13 = _sequence(&closure_11, &closure_12);
 	let closure_14 = _var_name(Rules::file_path, context, file_path);
 	let closure_15 = _sequence(&closure_13, &closure_14);
-	let closure_16 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_16 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_17 = _sequence(&closure_15, &closure_16);
 	closure_17(parent, source, position)
 
@@ -407,7 +421,7 @@ pub fn import_model<T: Context>(parent: Key, context: &RefCell<T>, source: &Sour
 	let closure_7 = _sequence(&closure_5, &closure_6);
 	let closure_8 = _var_name(Rules::file_path, context, file_path);
 	let closure_9 = _sequence(&closure_7, &closure_8);
-	let closure_10 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_10 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_11 = _sequence(&closure_9, &closure_10);
 	closure_11(parent, source, position)
 
@@ -440,7 +454,7 @@ pub fn attribute<T: Context>(parent: Key, context: &RefCell<T>, source: &Source,
 	let closure_12 = _sequence(&closure_10, &closure_11);
 	let closure_13 = _var_name(Rules::variable_name, context, variable_name);
 	let closure_14 = _sequence(&closure_12, &closure_13);
-	let closure_15 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_15 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_16 = _sequence(&closure_14, &closure_15);
 	closure_16(parent, source, position)
 
@@ -457,7 +471,7 @@ pub fn variable_declaration<T: Context>(parent: Key, context: &RefCell<T>, sourc
 	let closure_8 = _sequence(&closure_6, &closure_7);
 	let closure_9 = _var_name(Rules::variable_name, context, variable_name);
 	let closure_10 = _sequence(&closure_8, &closure_9);
-	let closure_11 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_11 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_12 = _sequence(&closure_10, &closure_11);
 	closure_12(parent, source, position)
 
@@ -484,7 +498,7 @@ pub fn input_params<T: Context>(parent: Key, context: &RefCell<T>, source: &Sour
 	let closure_18 = _sequence(&closure_12, &closure_17);
 	let closure_19 = _var_name(Rules::close_bracket, context, close_bracket);
 	let closure_20 = _sequence(&closure_18, &closure_19);
-	let closure_21 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_21 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_22 = _sequence(&closure_20, &closure_21);
 	closure_22(parent, source, position)
 
@@ -511,7 +525,7 @@ pub fn output_params<T: Context>(parent: Key, context: &RefCell<T>, source: &Sou
 	let closure_18 = _sequence(&closure_12, &closure_17);
 	let closure_19 = _var_name(Rules::close_bracket, context, close_bracket);
 	let closure_20 = _sequence(&closure_18, &closure_19);
-	let closure_21 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_21 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_22 = _sequence(&closure_20, &closure_21);
 	closure_22(parent, source, position)
 
@@ -546,7 +560,7 @@ pub fn method<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, po
 	let closure_26 = _sequence(&closure_24, &closure_25);
 	let closure_27 = _var_name(Rules::close_bracket, context, close_bracket);
 	let closure_28 = _sequence(&closure_26, &closure_27);
-	let closure_29 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_29 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_30 = _sequence(&closure_28, &closure_29);
 	closure_30(parent, source, position)
 
@@ -571,7 +585,7 @@ pub fn typedef<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, p
 	let closure_16 = _sequence(&closure_14, &closure_15);
 	let closure_17 = _var_name(Rules::type_ref, context, type_ref);
 	let closure_18 = _sequence(&closure_16, &closure_17);
-	let closure_19 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_19 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_20 = _sequence(&closure_18, &closure_19);
 	closure_20(parent, source, position)
 
@@ -602,7 +616,7 @@ pub fn structure<T: Context>(parent: Key, context: &RefCell<T>, source: &Source,
 	let closure_22 = _sequence(&closure_16, &closure_21);
 	let closure_23 = _var_name(Rules::close_bracket, context, close_bracket);
 	let closure_24 = _sequence(&closure_22, &closure_23);
-	let closure_25 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_25 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_26 = _sequence(&closure_24, &closure_25);
 	closure_26(parent, source, position)
 
@@ -633,7 +647,7 @@ pub fn enumeration<T: Context>(parent: Key, context: &RefCell<T>, source: &Sourc
 	let closure_22 = _sequence(&closure_16, &closure_21);
 	let closure_23 = _var_name(Rules::close_bracket, context, close_bracket);
 	let closure_24 = _sequence(&closure_22, &closure_23);
-	let closure_25 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_25 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_26 = _sequence(&closure_24, &closure_25);
 	closure_26(parent, source, position)
 
@@ -661,7 +675,7 @@ pub fn enum_value<T: Context>(parent: Key, context: &RefCell<T>, source: &Source
 	let closure_19 = _terminal(b',');
 	let closure_20 = _optional(&closure_19);
 	let closure_21 = _sequence(&closure_18, &closure_20);
-	let closure_22 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_22 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_23 = _sequence(&closure_21, &closure_22);
 	closure_23(parent, source, position)
 
@@ -685,7 +699,7 @@ pub fn version<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, p
 	let closure_15 = _sequence(&closure_13, &closure_14);
 	let closure_16 = _var_name(Rules::close_bracket, context, close_bracket);
 	let closure_17 = _sequence(&closure_15, &closure_16);
-	let closure_18 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_18 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_19 = _sequence(&closure_17, &closure_18);
 	closure_19(parent, source, position)
 
@@ -697,7 +711,7 @@ pub fn major<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, pos
 	let closure_3 = _sequence(&closure_1, &closure_2);
 	let closure_4 = _var_name(Rules::digits, context, digits);
 	let closure_5 = _sequence(&closure_3, &closure_4);
-	let closure_6 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_6 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_7 = _sequence(&closure_5, &closure_6);
 	closure_7(parent, source, position)
 
@@ -709,7 +723,7 @@ pub fn minor<T: Context>(parent: Key, context: &RefCell<T>, source: &Source, pos
 	let closure_3 = _sequence(&closure_1, &closure_2);
 	let closure_4 = _var_name(Rules::digits, context, digits);
 	let closure_5 = _sequence(&closure_3, &closure_4);
-	let closure_6 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_6 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_7 = _sequence(&closure_5, &closure_6);
 	closure_7(parent, source, position)
 
@@ -756,7 +770,7 @@ pub fn interface<T: Context>(parent: Key, context: &RefCell<T>, source: &Source,
 	let closure_38 = _sequence(&closure_36, &closure_37);
 	let closure_39 = _var_name(Rules::close_bracket, context, close_bracket);
 	let closure_40 = _sequence(&closure_38, &closure_39);
-	let closure_41 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_41 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_42 = _sequence(&closure_40, &closure_41);
 	closure_42(parent, source, position)
 
@@ -798,7 +812,7 @@ pub fn type_collection<T: Context>(parent: Key, context: &RefCell<T>, source: &S
 	let closure_33 = _sequence(&closure_22, &closure_32);
 	let closure_34 = _var_name(Rules::close_bracket, context, close_bracket);
 	let closure_35 = _sequence(&closure_33, &closure_34);
-	let closure_36 = move |parent: Key, source: &Source, position: u32| ws(parent, context, source, position);
+	let closure_36 = move |parent: Key, source: &Source, position: u32| ws_only_regular_comment(parent, context, source, position);
 	let closure_37 = _sequence(&closure_35, &closure_36);
 	closure_37(parent, source, position)
 

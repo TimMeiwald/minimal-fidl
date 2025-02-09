@@ -642,7 +642,8 @@ mod tests {
     fn test_formatter_30() {
         let src = r#"/** MultiLine Comment **/
         package org.javaohjavawhyareyouso /** MultiLine Comment **/
-        <** @Annotation: block **>/** MultiLine Comment **/
+        <** @Annotation: block **>/** MultiLine Comment
+        Tis a multi line comment indeed **/
         /** MultiLine Comment **/
         interface endOfPlaylist {/** MultiLine Comment **/
             /** MultiLine Comment **/

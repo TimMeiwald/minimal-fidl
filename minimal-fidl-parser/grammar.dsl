@@ -103,8 +103,8 @@
             <major>, <wsn>, 
             <minor>, <wsn>, 
             <close_bracket>, <ws_only_regular_comment>;
-<major> = "major", <ws_atlone>, <digits>, <ws>;
-<minor> = "minor", <ws_atlone>, <digits>, <ws>;
+<major> = "major", <ws_atlone>, <digits>, <ws_only_regular_comment>;
+<minor> = "minor", <ws_atlone>, <digits>, <ws_only_regular_comment>;
 <interface> = <annotation_block>?, <wsn>, "interface", <wsn>, 
                 <variable_name>, <wsn>, 
                 <open_bracket>, <wsn>, 

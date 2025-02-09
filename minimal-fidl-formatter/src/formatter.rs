@@ -142,6 +142,31 @@ impl<'a> Formatter<'a> {
             ret_vec.push(last_element);
         }
     }
+    fn multiline_comment_helper(
+        &self,
+        child: &Node,
+        ret_vec: &mut Vec<IndentedString>,
+        open_bracket: bool,
+        close_bracket: bool,
+    ) {
+        if !open_bracket && !close_bracket {
+            let comment = self.multiline_comment(child);
+            for line in comment {
+                ret_vec.push(line);
+            }
+        } else if open_bracket && !close_bracket {
+            let comment = self.multiline_comment(child);
+            for mut line in comment {
+                line.indent();
+                ret_vec.push(line);
+            }
+        } else {
+            let comment = self.multiline_comment(child);
+            for line in comment {
+                ret_vec.push(line);
+            }
+        }
+    }
 
     fn after_bracket_helper(&self, ret_vec: &mut Vec<IndentedString>) {
         if ret_vec.len() == 1 {
@@ -345,7 +370,6 @@ impl<'a> Formatter<'a> {
                         ret_vec.push(line);
                     }
                 }
-                
 
                 e => {
                     panic!("Rule: {:?} should not be the interfaces child.", e)
@@ -509,7 +533,6 @@ impl<'a> Formatter<'a> {
                 }
             }
         }
-  
 
         ret_vec
     }
@@ -580,13 +603,12 @@ impl<'a> Formatter<'a> {
                     }
                 }
                 Rules::comment => {
-                    if type_ref_happened{
+                    if type_ref_happened {
                         let mut last_element = ret_vec.pop().unwrap();
                         let comment = self.comment(child, true);
                         last_element += comment;
                         ret_vec.push(last_element);
-                    }
-                    else{
+                    } else {
                         ret_vec.push(self.comment(child, false));
                     }
                 }
@@ -730,7 +752,6 @@ impl<'a> Formatter<'a> {
             }
         }
 
-      
         ret_vec
     }
 
@@ -966,7 +987,6 @@ impl<'a> Formatter<'a> {
                     is_last_element_comment = true;
                     ret_vec.push(self.comment(child, false));
                 }
-                
 
                 e => {
                     panic!("Rule: {:?} should not be the version child.", e)
@@ -1039,8 +1059,21 @@ impl<'a> Formatter<'a> {
         // Right now it just sticks the entire blob down
         // Without even the ticks possibly
         let mut ret_vec: Vec<IndentedString> = Vec::new();
-        let ml = IndentedString::new(0, "\n".to_owned() + &node.get_string(&self.source) + "\n");
-        ret_vec.push(ml);
-        ret_vec
+        let ml = node.get_string(&self.source);
+        let ml = ml[3..(ml.len() - 3)].replace('\r', "");
+        let ml: Vec<String> = ml.trim().split('\n').map(|line| line.to_string()).collect();
+        let ml: Vec<&str> = ml.iter().map(|line| line.trim()).collect();
+        if ml.len() == 1 {
+            let ret_str = format!("/** {} **/", ml[0].to_string());
+            ret_vec.push(IndentedString::new(0, ret_str));
+            ret_vec
+        } else {
+            ret_vec.push(IndentedString::new(0, "/**".to_string()));
+            for line in ml {
+                ret_vec.push(IndentedString::new(1, line.to_string()));
+            }
+            ret_vec.push(IndentedString::new(0, "**/".to_string()));
+            ret_vec
+        }
     }
 }
