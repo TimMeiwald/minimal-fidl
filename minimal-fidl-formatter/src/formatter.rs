@@ -205,10 +205,8 @@ impl<'a> Formatter<'a> {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::multiline_comment => {
-                    let comment = self.multiline_comment(child);
-                    for line in comment {
-                        ret_vec.push(line);
-                    }
+                    self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+
                 }
                 Rules::variable_name => {
                     let tcn = Some(self.variable_name(child));
@@ -365,10 +363,8 @@ impl<'a> Formatter<'a> {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::multiline_comment => {
-                    let comment = self.multiline_comment(child);
-                    for line in comment {
-                        ret_vec.push(line);
-                    }
+                    self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+
                 }
 
                 e => {
@@ -508,10 +504,8 @@ impl<'a> Formatter<'a> {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::multiline_comment => {
-                    let comment = self.multiline_comment(child);
-                    for line in comment {
-                        ret_vec.push(line);
-                    }
+                    self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+
                 }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
@@ -648,10 +642,8 @@ impl<'a> Formatter<'a> {
                     }
                 }
                 Rules::multiline_comment => {
-                    let comment = self.multiline_comment(child);
-                    for line in comment {
-                        ret_vec.push(line);
-                    }
+                    self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+
                 }
                 Rules::comment => {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
@@ -741,10 +733,8 @@ impl<'a> Formatter<'a> {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::multiline_comment => {
-                    let comment = self.multiline_comment(child);
-                    for line in comment {
-                        ret_vec.push(line);
-                    }
+                    self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+
                 }
                 e => {
                     panic!("Rule: {:?} should not be the version child.", e)
@@ -808,10 +798,8 @@ impl<'a> Formatter<'a> {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::multiline_comment => {
-                    let comment = self.multiline_comment(child);
-                    for line in comment {
-                        ret_vec.push(line);
-                    }
+                    self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+
                 }
 
                 Rules::annotation_block => {
@@ -870,10 +858,8 @@ impl<'a> Formatter<'a> {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::multiline_comment => {
-                    let comment = self.multiline_comment(child);
-                    for line in comment {
-                        ret_vec.push(line);
-                    }
+                    self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+
                 }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
@@ -926,10 +912,8 @@ impl<'a> Formatter<'a> {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
                 Rules::multiline_comment => {
-                    let comment = self.multiline_comment(child);
-                    for line in comment {
-                        ret_vec.push(line);
-                    }
+                    self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+
                 }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
