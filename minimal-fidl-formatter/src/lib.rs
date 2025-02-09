@@ -609,7 +609,8 @@ mod tests {
     }
     #[test]
     fn test_formatter_29() {
-        let src = r#"package org.javaohjavawhyareyouso 
+        let src = r#"//Comment
+        package org.javaohjavawhyareyouso 
         <** @Annotation: block **>
 
         interface endOfPlaylist {
@@ -630,6 +631,113 @@ mod tests {
             
         }
 "#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
+
+    #[test]
+    fn test_formatter_30() {
+        let src = r#"/** MultiLine Comment **/
+        package org.javaohjavawhyareyouso /** MultiLine Comment **/
+        <** @Annotation: block **>/** MultiLine Comment **/
+        /** MultiLine Comment **/
+        interface endOfPlaylist {/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            version {
+                /** MultiLine Comment **/
+                major 25/** MultiLine Comment **/
+                minor 60/** MultiLine Comment **/
+            }/** MultiLine Comment **/
+            <** @Annotation: block/** MultiLine Comment **/
+                @WegotsMore: of these annations **>/** MultiLine Comment **/
+                /** MultiLine Comment **/
+            struct thing {/** MultiLine Comment **/
+                <** @Annotation: block **>/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                p1 p1/** MultiLine Comment **/
+                p2 p2/** MultiLine Comment **/
+            }/** MultiLine Comment **/
+            <** @Annotation: block **>/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            attribute uint8 thing/** MultiLine Comment **/
+            <** @Annotation: block **>/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            method thing {/** MultiLine Comment **/
+                <** @Annotation: block **>/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                in {/** MultiLine Comment **/
+                    <** @Annotation: block **>/** MultiLine Comment **/
+                    /** MultiLine Comment **/
+                    param param/** MultiLine Comment **/
+                }/** MultiLine Comment **/
+                <** @Annotation: block **>/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                out {/** MultiLine Comment **/
+                    
+                    /** MultiLine Comment **/
+                    param2 param2/** MultiLine Comment **/
+                    <** @Annotation: block **>/** MultiLine Comment **/
+                    org.param3 param3/** MultiLine Comment **/
+                }/** MultiLine Comment **/
+            }/** MultiLine Comment **/
+            <** @Annotation: block **>/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            method thing {/** MultiLine Comment **/
+                <** @Annotation: block **>/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                in {/** MultiLine Comment **/
+                    param param/** MultiLine Comment **/
+                }/** MultiLine Comment **/
+                <** @Annotation: block **>/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                out {/** MultiLine Comment **/
+                    param2 param2/** MultiLine Comment **/
+                    org.param3 param3/** MultiLine Comment **/
+                }/** MultiLine Comment **/
+            }/** MultiLine Comment **/
+            <** @Annotation: block **>/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            typedef aTypedef is Int16/** MultiLine Comment **/
+            <** @Annotation: block **>/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            enumeration aEnum {/** MultiLine Comment **/
+                A = 3/** MultiLine Comment **/
+                B/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                C/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                D/** MultiLine Comment **/
+                E = 10/** MultiLine Comment **/
+            }/** MultiLine Comment **/
+            /** MultiLine Comment **/
+        }/** MultiLine Comment **/
+        <** @Annotation: block **>
+        /** MultiLine Comment **/
+        typeCollection {/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            typedef aTypedef is Int16/** MultiLine Comment **/
+            /** MultiLine Comment **/
+            enumeration aEnum {
+                A = 3/** MultiLine Comment **/
+                B/** MultiLine Comment **/
+                C
+
+                /** MultiLine Comment **/
+                D
+                E = 10
+            }
+        
+            /** MultiLine Comment **/
+            struct thing {
+                /** MultiLine Comment **/
+                p1 p1/** MultiLine Comment **/
+                /** MultiLine Comment **/
+                p2 p2/** MultiLine Comment **/
+            }
+        }"#;
         let publisher = parse(src).unwrap();
         publisher.print(Key(0), Some(true));
         let fmt = formatter::Formatter::new(src, &publisher);

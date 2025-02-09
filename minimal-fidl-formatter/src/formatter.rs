@@ -54,7 +54,10 @@ impl<'a> Formatter<'a> {
                     }
                 }
                 Rules::multiline_comment => {
-                    todo!()
+                    let comment = self.multiline_comment(&c);
+                    for line in comment {
+                        ret_string += &line.to_string();
+                    }
                 }
                 e => {
                     panic!("Rule: {:?} should not be the roots child.", e)
@@ -175,6 +178,12 @@ impl<'a> Formatter<'a> {
                         }
                     }
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
                 }
                 Rules::variable_name => {
                     let tcn = Some(self.variable_name(child));
@@ -330,6 +339,13 @@ impl<'a> Formatter<'a> {
                 Rules::comment => {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
+                }
+                
 
                 e => {
                     panic!("Rule: {:?} should not be the interfaces child.", e)
@@ -415,6 +431,12 @@ impl<'a> Formatter<'a> {
                     let comment = self.comment(child, false);
                     comments_list.push(comment);
                 }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
+                }
                 e => {
                     panic!("Rule: {:?} should not be the annotation_block child.", e)
                 }
@@ -461,6 +483,12 @@ impl<'a> Formatter<'a> {
                 Rules::comment => {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
+                }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
@@ -502,6 +530,12 @@ impl<'a> Formatter<'a> {
                 Rules::comment => {
                     comment = Some(self.comment(child, true));
                 }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
+                }
                 Rules::variable_name => var_name = self.variable_name(child),
                 Rules::number => number = Some(self.number(child)),
                 e => {
@@ -536,6 +570,12 @@ impl<'a> Formatter<'a> {
             match child.rule {
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
+                        ret_vec.push(line);
+                    }
+                }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
                         ret_vec.push(line);
                     }
                 }
@@ -585,6 +625,12 @@ impl<'a> Formatter<'a> {
                         ret_vec.push(line);
                     }
                 }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
+                }
                 Rules::comment => {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
@@ -628,6 +674,12 @@ impl<'a> Formatter<'a> {
                         IndentedString::new(0, format!("attribute {} {}", type_ref, var_name));
                     ret_vec.push(attr);
                 }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
+                }
                 Rules::comment => {
                     ret_vec.push(self.comment(child, true));
                 }
@@ -665,6 +717,12 @@ impl<'a> Formatter<'a> {
                 }
                 Rules::comment => {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
                 }
                 e => {
                     panic!("Rule: {:?} should not be the version child.", e)
@@ -728,6 +786,12 @@ impl<'a> Formatter<'a> {
                 Rules::comment => {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
+                }
 
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
@@ -784,6 +848,12 @@ impl<'a> Formatter<'a> {
                     }
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
                 }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
+                }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
                         ret_vec.push(line);
@@ -833,6 +903,12 @@ impl<'a> Formatter<'a> {
                         true => {}
                     }
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
+                }
+                Rules::multiline_comment => {
+                    let comment = self.multiline_comment(child);
+                    for line in comment {
+                        ret_vec.push(line);
+                    }
                 }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
@@ -890,6 +966,7 @@ impl<'a> Formatter<'a> {
                     is_last_element_comment = true;
                     ret_vec.push(self.comment(child, false));
                 }
+                
 
                 e => {
                     panic!("Rule: {:?} should not be the version child.", e)
