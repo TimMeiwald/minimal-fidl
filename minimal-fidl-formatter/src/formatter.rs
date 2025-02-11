@@ -1,9 +1,5 @@
 use crate::indented_string::IndentedString;
-use clap::builder::Str;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
-use num_traits::int;
-use std::fmt::{self, format};
-use std::ops::AddAssign;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]

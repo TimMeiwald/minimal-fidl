@@ -3,7 +3,8 @@ use minimal_fidl_parser::{
 };
 mod indented_string;
 mod formatter;
-use formatter::Formatter;
+pub use formatter::Formatter;
+pub use formatter::FormatterError;
 use std::cell::RefCell;
 
 pub fn parse(input: &str) -> Option<BasicPublisher> {
@@ -779,4 +780,18 @@ mod tests {
         let output = fmt.format();
         println!("Formatted:\n\n{}", output.unwrap());
     }
+    #[test]
+    fn test_formatter_32() {
+        let src = "// minimal content for a Franca IDL file
+        package testcases";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = formatter::Formatter::new(src, &publisher);
+        let output = fmt.format();
+        println!("Formatted:\n\n{}", output.unwrap());
+    }
+
 }
+
+
+

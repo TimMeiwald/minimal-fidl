@@ -2,6 +2,9 @@
 resolver = "2"
 members = ["minimal-fidl-parser", "minimal-fidl-formatter", "test-grammar-proc-macro", "minimal-fidl-cli"]
 
+
+
+
 [profile.dev]
 panic = "unwind"
 debug = true
