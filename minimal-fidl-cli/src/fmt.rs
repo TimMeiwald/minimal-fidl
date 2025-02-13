@@ -18,7 +18,7 @@ pub fn minimal_fidl_fmt(paths: &Vec<PathBuf>, dry_run: bool) {
         RefCell::new(BasicContext::new(0 as usize, RULES_SIZE as usize));
     for path in paths {
         let formatted_string: Result<String, ()> = format_file(&ctx, &path);
-        match(formatted_string){
+        match (formatted_string) {
             Ok(formatted_string) => {
                 if dry_run {
                     println!("Dry run: {:?}", path);

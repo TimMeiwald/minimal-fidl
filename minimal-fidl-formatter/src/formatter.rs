@@ -165,11 +165,23 @@ impl<'a> Formatter<'a> {
     }
 
     fn after_bracket_helper(&self, ret_vec: &mut Vec<IndentedString>) {
-        if ret_vec.len() == 1 {
-            let mut end_str = IndentedString::new(0, "}".to_string());
-            ret_vec[0] += end_str;
+        let last_element = ret_vec.pop().expect("Should always have a last element");
+        if last_element.get_rule() == Rules::type_collection || last_element.get_rule() == Rules::interface {
+            let last_element_string = last_element.to_string();
+            let mut last_element_string =
+                last_element_string[0..last_element_string.len() - 1].to_string();
+            last_element_string += "}";
+            let mut end_str = IndentedString::new(0, last_element_string);
+            end_str.set_with_newline(false);
+            ret_vec.push(end_str);
         } else {
-            ret_vec.push(IndentedString::new(0, "}".to_string()));
+            ret_vec.push(last_element);
+            if ret_vec.len() == 1 {
+                let mut end_str = IndentedString::new(0, "}".to_string());
+                ret_vec[0] += end_str;
+            } else {
+                ret_vec.push(IndentedString::new(0, "}".to_string()));
+            }
         }
     }
 
@@ -192,10 +204,12 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let interface = format!("typeCollection {{",);
-                            let interface = IndentedString::new(0, interface.to_string());
+                            let type_collection = format!("typeCollection {{\n",);
+                            let mut type_collection =
+                                IndentedString::new(0, type_collection.to_string());
+                            type_collection.set_rule(Rules::type_collection);
                             type_collection_name = Some("No Name Set".to_string());
-                            ret_vec.push(interface);
+                            ret_vec.push(type_collection);
                         }
                     }
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
@@ -207,10 +221,12 @@ impl<'a> Formatter<'a> {
                     let tcn = Some(self.variable_name(child));
                     type_collection_name = tcn.clone();
                     let tc: String = format!(
-                        "typeCollection {} {{",
-                        tcn.expect("Interface Name should always exist")
+                        "typeCollection {} {{\n",
+                        tcn.expect("Type Collection Name should  exist if variable name matched")
                     );
-                    let tc = IndentedString::new(0, tc.to_string());
+                    let mut tc = IndentedString::new(0, tc.to_string());
+                    tc.set_rule(Rules::type_collection);
+
                     ret_vec.push(tc);
                 }
                 Rules::annotation_block => {
@@ -222,10 +238,11 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let interface = format!("typeCollection {{",);
-                            let interface = IndentedString::new(0, interface.to_string());
+                            let typedef = format!("typeCollection {{\n",);
+                            let mut typedef = IndentedString::new(0, typedef.to_string());
                             type_collection_name = Some("No Name Set".to_string());
-                            ret_vec.push(interface);
+                            typedef.set_rule(Rules::type_collection);
+                            ret_vec.push(typedef);
                         }
                     }
                     for mut line in self.typedef(child) {
@@ -237,10 +254,10 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let interface = format!("typeCollection {{",);
-                            let interface = IndentedString::new(0, interface.to_string());
+                            let structure = format!("typeCollection {{\n",);
+                            let structure = IndentedString::new(0, structure.to_string());
                             type_collection_name = Some("No Name Set".to_string());
-                            ret_vec.push(interface);
+                            ret_vec.push(structure);
                         }
                     }
                     for mut line in self.structure(child) {
@@ -260,10 +277,11 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let interface = format!("typeCollection {{",);
-                            let interface = IndentedString::new(0, interface.to_string());
+                            let enumeration = format!("typeCollection {{\n",);
+                            let mut enumeration = IndentedString::new(0, enumeration.to_string());
+                            enumeration.set_rule(Rules::type_collection);
                             type_collection_name = Some("No Name Set".to_string());
-                            ret_vec.push(interface);
+                            ret_vec.push(enumeration);
                         }
                     }
                     for mut line in self.enumeration(child) {

@@ -1,6 +1,7 @@
+
 // several empty type collections
 package testcases
-
-typeCollection MyTypes1 { }
-typeCollection MyTypes2 { }
-typeCollection MyTypes3 { }
+typeCollection MyTypes1 {}
+typeCollection MyTypes2 {}
+<** @thing: aoithgahitg **>
+typeCollection MyTypes3 {}
