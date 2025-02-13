@@ -1,4 +1,3 @@
 
 package testcase10
-interface ExampleInterface {
-}
+interface ExampleInterface {}

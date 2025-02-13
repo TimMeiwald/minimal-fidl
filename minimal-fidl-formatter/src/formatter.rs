@@ -329,7 +329,8 @@ impl<'a> Formatter<'a> {
                         "interface {} {{\n",
                         interface_name.expect("Interface Name should always exist")
                     );
-                    let interface = IndentedString::new(0, interface.to_string());
+                    let mut interface = IndentedString::new(0, interface.to_string());
+                    interface.set_rule(Rules::interface);
                     ret_vec.push(interface);
                 }
                 Rules::version => {
