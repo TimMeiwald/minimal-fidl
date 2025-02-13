@@ -13,3 +13,17 @@ typeCollection MyTypeCollection10 {}"#;
     let result = shared(src, type_collection::<BasicContext>, Rules::type_collection); 
     assert_eq!(result, (true, src.len() as u32));
 }
+
+
+
+#[test]
+fn test_type_collection_2() {
+    let src = r#"typeCollection MyTypes {
+	version {
+		major 1
+		minor 2
+	}
+}"#;
+    let result = shared(src, type_collection::<BasicContext>, Rules::type_collection); 
+    assert_eq!(result, (true, src.len() as u32));
+}

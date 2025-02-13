@@ -76,6 +76,7 @@ fn format_file(ctx: &RefCell<BasicContext>, path: &PathBuf) -> Result<String, ()
     }
     let publisher = ctx.into_inner().get_publisher().clear_false();
     // let formatted_text = publisher.print(Key(0), Some(true));
+    println!("Parsing file: {:?}", path);
     let fmt = Formatter::new(&string, &publisher);
     let formatted_text = fmt.format();
     match formatted_text {

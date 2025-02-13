@@ -249,6 +249,13 @@ impl<'a> Formatter<'a> {
                     }
                     ret_vec.push(IndentedString::new(0, "".to_string()))
                 }
+                Rules::version => {
+                    let version = self.version(child);
+                    for mut line in version {
+                        line.indent();
+                        ret_vec.push(line);
+                    }
+                }
                 Rules::enumeration => {
                     match type_collection_name {
                         Some(..) => {}
@@ -301,7 +308,7 @@ impl<'a> Formatter<'a> {
                 Rules::variable_name => {
                     interface_name = Some(self.variable_name(child));
                     let interface = format!(
-                        "interface {} {{",
+                        "interface {} {{\n",
                         interface_name.expect("Interface Name should always exist")
                     );
                     let interface = IndentedString::new(0, interface.to_string());
@@ -698,6 +705,9 @@ impl<'a> Formatter<'a> {
                 }
             }
         }
+        if ret_vec.len() == 1{
+            ret_vec[0].set_with_newline(false);
+        }
         ret_vec
     }
 
@@ -1030,7 +1040,8 @@ impl<'a> Formatter<'a> {
     fn variable_name(&self, node: &Node) -> String {
         // type_ref is a terminal so we can just return the str slice
         debug_assert!(node.rule == Rules::variable_name);
-        node.get_string(&self.source)
+        let str = node.get_string(&self.source);
+        str.trim().to_string()
     }
     fn number(&self, node: &Node) -> String {
         debug_assert!(node.rule == Rules::number);
