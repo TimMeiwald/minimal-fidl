@@ -577,7 +577,8 @@ impl<'a> Formatter<'a> {
         ret_vec
     }
     fn type_dec(&self, node: &Node) -> String {
-        node.get_string(&self.source)
+        let str = node.get_string(&self.source);
+        str.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "")
     }
 
     fn typedef(&self, node: &Node) -> Vec<IndentedString> {
@@ -1035,7 +1036,9 @@ impl<'a> Formatter<'a> {
     fn type_ref(&self, node: &Node) -> String {
         // type_ref is a terminal so we can just return the str slice
         debug_assert!(node.rule == Rules::type_ref);
-        node.get_string(&self.source)
+        let str = node.get_string(&self.source);
+        str.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "")
+
     }
     fn variable_name(&self, node: &Node) -> String {
         // type_ref is a terminal so we can just return the str slice
