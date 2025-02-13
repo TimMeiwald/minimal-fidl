@@ -68,10 +68,10 @@ fn format_file(ctx: &RefCell<BasicContext>, path: &PathBuf) -> Result<String, ()
         let executor = _var_name(Rules::Grammar, &ctx, grammar);
         result = executor(Key(0), &source, position);
     }
-    println!("Result: {:?}", result);
-    if !result.0 && result.1 != src_len as u32 {
+    if !result.0 || result.1 != src_len as u32 {
         // Error failed to parse
-        println!("Error failed to parse: {:?}", path);
+        println!("Successfully parsed up to char: {:?} out of total chars: {src_len}", result.1);
+        println!("Error failed to parse: {:?}\n", path);
         return Err(())
     }
     let publisher = ctx.into_inner().get_publisher().clear_false();
