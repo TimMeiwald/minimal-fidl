@@ -1,6 +1,6 @@
 mod shared;
-use shared::shared;
 use minimal_fidl_parser::{interface, BasicContext, Rules};
+use shared::shared;
 #[test]
 fn test_interface_1() {
     let src = "<** @description: Indicate end of playlist. **>
@@ -8,7 +8,6 @@ fn test_interface_1() {
     let result = shared(src, interface::<BasicContext>, Rules::interface);
     assert_eq!(result, (true, src.len() as u32));
 }
-
 
 #[test]
 fn test_interface_2() {
@@ -113,12 +112,7 @@ fn test_interface_3() {
     }";
     let result = shared(src, interface::<BasicContext>, Rules::interface);
     assert_eq!(result, (true, src.len() as u32));
-
 }
-
-
-
-
 
 #[test]
 fn test_interface_4() {

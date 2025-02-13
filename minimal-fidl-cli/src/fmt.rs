@@ -14,9 +14,31 @@ pub fn minimal_fidl_fmt(paths: &Vec<PathBuf>, dry_run: bool) {
     // Context should be reuseable if cleared after each parse but that's unstable so we pretend we can do this but actualy make a new
     // Context in the format file.
     //Dummy context since it should be reusable but not sure if it is right now
-    let ctx = RefCell::new(BasicContext::new(0 as usize, RULES_SIZE as usize));
+    let ctx: RefCell<BasicContext> =
+        RefCell::new(BasicContext::new(0 as usize, RULES_SIZE as usize));
     for path in paths {
-        format_file(&ctx, &path);
+        let formatted_string: Result<String, ()> = format_file(&ctx, &path);
+        match(formatted_string){
+            Ok(formatted_string) => {
+                if dry_run {
+                    println!("Dry run: {:?}", path);
+                    println!("Formatted text: \n{}", formatted_string);
+                } else {
+                    let write_result = std::fs::write(&path, formatted_string);
+                    match write_result {
+                        Ok(()) => {
+                            println!("Successfully formatted file: {:?}", path);
+                        }
+                        Err(_e) => {
+                            println!("Error writing file: {:?}", path);
+                        }
+                    }
+                }
+            }
+            Err(_e) => {
+                println!("Error formatting file: {:?}", path);
+            }
+        }
     }
 }
 
@@ -70,9 +92,12 @@ fn format_file(ctx: &RefCell<BasicContext>, path: &PathBuf) -> Result<String, ()
     }
     if !result.0 || result.1 != src_len as u32 {
         // Error failed to parse
-        println!("Successfully parsed up to char: {:?} out of total chars: {src_len}", result.1);
+        println!(
+            "Successfully parsed up to char: {:?} out of total chars: {src_len}",
+            result.1
+        );
         println!("Error failed to parse: {:?}\n", path);
-        return Err(())
+        return Err(());
     }
     let publisher = ctx.into_inner().get_publisher().clear_false();
     // let formatted_text = publisher.print(Key(0), Some(true));
@@ -85,8 +110,7 @@ fn format_file(ctx: &RefCell<BasicContext>, path: &PathBuf) -> Result<String, ()
             Err(())
         }
         Ok(formatted_text) => {
-            println!("Wooo parsed file: {:?}", path);
-            println!("{formatted_text}");
+            println!("Wooo formatted file: {:?}", path);
             Ok(formatted_text)
         }
     }

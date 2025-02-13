@@ -1,8 +1,8 @@
 use minimal_fidl_parser::{
     BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
 };
-mod indented_string;
 mod formatter;
+mod indented_string;
 pub use formatter::Formatter;
 pub use formatter::FormatterError;
 use std::cell::RefCell;
@@ -790,8 +790,4 @@ mod tests {
         let output = fmt.format();
         println!("Formatted:\n\n{}", output.unwrap());
     }
-
 }
-
-
-

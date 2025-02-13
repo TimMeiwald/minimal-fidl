@@ -64,7 +64,6 @@ fn test_number_9() {
     assert_eq!(result, (true, 1)); // Number intepreted this as int for first val
 }
 
-
 #[test]
 fn test_number_10() {
     let src = r#"0b10af"#;
@@ -76,9 +75,8 @@ fn test_number_10() {
 fn test_number_11() {
     let src = r#"0b101010001010010"#;
     let result = shared(src, number::<BasicContext>, Rules::number);
-    assert_eq!(result, (true,  src.len() as u32));
+    assert_eq!(result, (true, src.len() as u32));
 }
-
 
 #[test]
 fn test_number_12() {
@@ -86,7 +84,6 @@ fn test_number_12() {
     let result = shared(src, number::<BasicContext>, Rules::number);
     assert_eq!(result, (true, src.len() as u32));
 }
-
 
 #[test]
 fn test_number_13() {

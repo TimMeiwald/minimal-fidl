@@ -38,10 +38,10 @@ pub fn test_grammar_files_in_dir(input: proc_macro::TokenStream) -> proc_macro::
         let file_name_for_ident = format!("test_grammar_file_{}", file_name_for_ident);
         let test_ident = syn::Ident::new(&file_name_for_ident, Span::call_site());
         let cwd = std::env::current_dir().unwrap();
-        let filepath = path::Path::new(&cwd).join(&constant_directory).join(file_name);
-        let filepath = filepath
-            .to_str()
-            .expect("Should be able to turn into str");
+        let filepath = path::Path::new(&cwd)
+            .join(&constant_directory)
+            .join(file_name);
+        let filepath = filepath.to_str().expect("Should be able to turn into str");
         let filepath = syn::LitStr::new(filepath, Span::call_site());
         let stream = quote::quote!(
             #[test]
@@ -62,7 +62,7 @@ pub fn test_grammar_files_in_dir(input: proc_macro::TokenStream) -> proc_macro::
         });
         return_stream.extend(stream);
     }
-    
+
     return_stream.into()
 }
 

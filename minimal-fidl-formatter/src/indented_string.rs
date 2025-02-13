@@ -1,7 +1,6 @@
 use std::fmt::{self};
-use std::ops::AddAssign;
 use std::ops::Add;
-
+use std::ops::AddAssign;
 
 #[derive(PartialEq, Debug)]
 pub struct IndentedString {
@@ -48,7 +47,7 @@ impl AddAssign for IndentedString {
 }
 
 impl Default for IndentedString {
-    fn default() -> Self {  
+    fn default() -> Self {
         Self {
             str: "".to_string(),
             indent_level: 0,

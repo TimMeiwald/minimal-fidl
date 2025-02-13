@@ -1,6 +1,5 @@
+use minimal_fidl_parser::{BasicContext, Context, Key, Rules, Source, _var_name, RULES_SIZE};
 use std::cell::RefCell;
-use minimal_fidl_parser::{Key, Rules, Source, BasicContext, RULES_SIZE, _var_name, Context};
-
 
 pub fn shared<'a>(
     input: &str,

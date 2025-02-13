@@ -10,10 +10,9 @@ fn test_method_1() {
 			RepeatMode mode // huijo
 		}
 	}"#;
-    let result = shared(src, method::<BasicContext>, Rules::method); 
+    let result = shared(src, method::<BasicContext>, Rules::method);
     assert_eq!(result, (true, src.len() as u32));
 }
-
 
 #[test]
 fn test_method_2() {
@@ -22,7 +21,7 @@ fn test_method_2() {
 			RepeatMode mode
 		}
 	}"#;
-    let result = shared(src, method::<BasicContext>, Rules::method); 
+    let result = shared(src, method::<BasicContext>, Rules::method);
     assert_eq!(result, (true, src.len() as u32));
 }
 
@@ -30,10 +29,9 @@ fn test_method_2() {
 fn test_method_3() {
     let src = r#"<** @description: Switch to the next track (if any). **>
      	method nextTrack { }"#;
-    let result = shared(src, method::<BasicContext>, Rules::method); 
+    let result = shared(src, method::<BasicContext>, Rules::method);
     assert_eq!(result, (true, src.len() as u32));
 }
-
 
 #[test]
 fn test_method_4() {
@@ -42,7 +40,7 @@ fn test_method_4() {
 			Boolean low_battery
 		}
 	}"#;
-    let result = shared(src, method::<BasicContext>, Rules::method); 
+    let result = shared(src, method::<BasicContext>, Rules::method);
     assert_eq!(result, (true, src.len() as u32));
 }
 
@@ -61,11 +59,9 @@ method selectValueListEntry {
         TInputState inputState
     }
 }"#;
-    let result = shared(src, method::<BasicContext>, Rules::method); 
+    let result = shared(src, method::<BasicContext>, Rules::method);
     assert_eq!(result, (true, src.len() as u32));
 }
-
-
 
 #[test]
 fn test_method_6() {
@@ -78,6 +74,6 @@ fn test_method_6() {
             String job // huijo
         }
     }"#;
-    let result = shared(src, method::<BasicContext>, Rules::method); 
+    let result = shared(src, method::<BasicContext>, Rules::method);
     assert_eq!(result, (true, src.len() as u32));
 }

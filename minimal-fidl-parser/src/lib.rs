@@ -15,7 +15,9 @@ pub use keys::Key;
 pub use parse::parse;
 pub use parser::*;
 use parser_core::*;
-pub use publisher::{BasicPublisher, DirectLeftRecursionPublisher, IndirectLeftRecursionPublisher, Node};
+pub use publisher::{
+    BasicPublisher, DirectLeftRecursionPublisher, IndirectLeftRecursionPublisher, Node,
+};
 pub use rules::Rules;
 pub use rules::RULES_SIZE;
 pub use source::Source;

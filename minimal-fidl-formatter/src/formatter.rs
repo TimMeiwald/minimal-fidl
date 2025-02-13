@@ -366,7 +366,6 @@ impl<'a> Formatter<'a> {
                 }
                 Rules::multiline_comment => {
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
-
                 }
 
                 e => {
@@ -457,7 +456,6 @@ impl<'a> Formatter<'a> {
                     let comment = self.multiline_comment(child);
                     for line in comment {
                         comments_list.push(line);
-
                     }
                 }
                 e => {
@@ -508,7 +506,6 @@ impl<'a> Formatter<'a> {
                 }
                 Rules::multiline_comment => {
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
-
                 }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
@@ -578,7 +575,10 @@ impl<'a> Formatter<'a> {
     }
     fn type_dec(&self, node: &Node) -> String {
         let str = node.get_string(&self.source);
-        str.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "")
+        str.replace(" ", "")
+            .replace("\t", "")
+            .replace("\n", "")
+            .replace("\r", "")
     }
 
     fn typedef(&self, node: &Node) -> Vec<IndentedString> {
@@ -647,7 +647,6 @@ impl<'a> Formatter<'a> {
                 }
                 Rules::multiline_comment => {
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
-
                 }
                 Rules::comment => {
                     self.comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
@@ -706,7 +705,7 @@ impl<'a> Formatter<'a> {
                 }
             }
         }
-        if ret_vec.len() == 1{
+        if ret_vec.len() == 1 {
             ret_vec[0].set_with_newline(false);
         }
         ret_vec
@@ -741,7 +740,6 @@ impl<'a> Formatter<'a> {
                 }
                 Rules::multiline_comment => {
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
-
                 }
                 e => {
                     panic!("Rule: {:?} should not be the version child.", e)
@@ -806,7 +804,6 @@ impl<'a> Formatter<'a> {
                 }
                 Rules::multiline_comment => {
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
-
                 }
 
                 Rules::annotation_block => {
@@ -873,7 +870,6 @@ impl<'a> Formatter<'a> {
                         true => {}
                     }
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
-
                 }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
@@ -934,7 +930,6 @@ impl<'a> Formatter<'a> {
                         true => {}
                     }
                     self.multiline_comment_helper(child, &mut ret_vec, open_bracket, close_bracket);
-
                 }
                 Rules::annotation_block => {
                     for line in self.annotation_block(child) {
@@ -1037,8 +1032,10 @@ impl<'a> Formatter<'a> {
         // type_ref is a terminal so we can just return the str slice
         debug_assert!(node.rule == Rules::type_ref);
         let str = node.get_string(&self.source);
-        str.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "")
-
+        str.replace(" ", "")
+            .replace("\t", "")
+            .replace("\n", "")
+            .replace("\r", "")
     }
     fn variable_name(&self, node: &Node) -> String {
         // type_ref is a terminal so we can just return the str slice

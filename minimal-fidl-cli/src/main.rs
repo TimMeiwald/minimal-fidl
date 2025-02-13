@@ -1,4 +1,3 @@
-
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 mod fmt;
@@ -13,8 +12,8 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    #[command(arg_required_else_help=true)]
-    Fmt{
+    #[command(arg_required_else_help = true)]
+    Fmt {
         /// Paths to format
         paths: Vec<PathBuf>,
         #[arg(short = 'd', long = "dry-run")]
@@ -22,14 +21,10 @@ enum Commands {
     },
 }
 
-
 fn main() {
-    let args = Cli::parse(); 
+    let args = Cli::parse();
     println!("{:?}", args);
     match &args.command {
-        Commands::Fmt { paths, dry_run } => {
-            fmt::minimal_fidl_fmt(paths, *dry_run)
-        }
+        Commands::Fmt { paths, dry_run } => fmt::minimal_fidl_fmt(paths, *dry_run),
     }
-
 }

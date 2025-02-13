@@ -1,7 +1,6 @@
-use minimal_fidl_parser::*;
 use clap::Parser;
+use minimal_fidl_parser::*;
 use std::{fs, path::PathBuf, process::exit};
-
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
