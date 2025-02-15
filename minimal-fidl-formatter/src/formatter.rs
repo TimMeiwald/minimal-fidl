@@ -31,26 +31,26 @@ impl<'a> Formatter<'a> {
         for child in grammar_node.get_children() {
             let c = self.publisher.get_node(*child);
             match c.rule {
-                Rules::comment => ret_string += &self.comment(&c, false).to_string(),
+                Rules::comment => ret_string += &self.comment(c, false).to_string(),
                 Rules::package => {
-                    ret_string += &self.package(&c).to_string();
+                    ret_string += &self.package(c).to_string();
                 }
-                Rules::import_model => ret_string += &self.import_model(&c).to_string(),
-                Rules::import_namespace => ret_string += &self.import_namespace(&c).to_string(),
+                Rules::import_model => ret_string += &self.import_model(c).to_string(),
+                Rules::import_namespace => ret_string += &self.import_namespace(c).to_string(),
                 Rules::interface => {
-                    let interface = self.interface(&c);
+                    let interface = self.interface(c);
                     for line in interface {
                         ret_string += &line.to_string();
                     }
                 }
                 Rules::type_collection => {
-                    let typecollection = self.type_collection(&c);
+                    let typecollection = self.type_collection(c);
                     for line in typecollection {
                         ret_string += &line.to_string();
                     }
                 }
                 Rules::multiline_comment => {
-                    let comment = self.multiline_comment(&c);
+                    let comment = self.multiline_comment(c);
                     for line in comment {
                         ret_string += &line.to_string();
                     }
@@ -60,7 +60,7 @@ impl<'a> Formatter<'a> {
                 }
             }
         }
-        return Ok(ret_string);
+        Ok(ret_string)
     }
 
     fn import_namespace(&self, node: &Node) -> IndentedString {
@@ -204,7 +204,7 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let type_collection = format!("typeCollection {{\n",);
+                            let type_collection = "typeCollection {\n".to_string();
                             let mut type_collection =
                                 IndentedString::new(0, type_collection.to_string());
                             type_collection.set_rule(Rules::type_collection);
@@ -238,7 +238,7 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let typedef = format!("typeCollection {{\n",);
+                            let typedef = "typeCollection {\n".to_string();
                             let mut typedef = IndentedString::new(0, typedef.to_string());
                             type_collection_name = Some("No Name Set".to_string());
                             typedef.set_rule(Rules::type_collection);
@@ -254,7 +254,7 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let structure = format!("typeCollection {{\n",);
+                            let structure = "typeCollection {\n".to_string();
                             let structure = IndentedString::new(0, structure.to_string());
                             type_collection_name = Some("No Name Set".to_string());
                             ret_vec.push(structure);
@@ -277,7 +277,7 @@ impl<'a> Formatter<'a> {
                     match type_collection_name {
                         Some(..) => {}
                         None => {
-                            let enumeration = format!("typeCollection {{\n",);
+                            let enumeration = "typeCollection {\n".to_string();
                             let mut enumeration = IndentedString::new(0, enumeration.to_string());
                             enumeration.set_rule(Rules::type_collection);
                             type_collection_name = Some("No Name Set".to_string());
@@ -403,15 +403,15 @@ impl<'a> Formatter<'a> {
     }
 
     fn annotation_name(&self, node: &Node) -> String {
-        node.get_string(&self.source).trim_start().to_string()
+        node.get_string(self.source).trim_start().to_string()
     }
     fn annotation_content(&self, node: &Node) -> Vec<IndentedString> {
         let mut ret_vec: Vec<IndentedString> = Vec::new();
         let content = node
-            .get_string(&self.source)
+            .get_string(self.source)
             .trim_start()
             .trim_end()
-            .replace("\r", "");
+            .replace('\r', "");
         let content = content.split('\n');
         for line in content {
             let line = line.trim_start().trim_end();
@@ -580,7 +580,7 @@ impl<'a> Formatter<'a> {
             }
         }
         let res_string = match number {
-            None => format!("{var_name}"),
+            None => var_name.to_string(),
             Some(number) => format!("{var_name} = {number}"),
         };
         let mut res_string = IndentedString::new(0, res_string);
@@ -593,11 +593,11 @@ impl<'a> Formatter<'a> {
         ret_vec
     }
     fn type_dec(&self, node: &Node) -> String {
-        let str = node.get_string(&self.source);
-        str.replace(" ", "")
-            .replace("\t", "")
-            .replace("\n", "")
-            .replace("\r", "")
+        let str = node.get_string(self.source);
+        str.replace(' ', "")
+            .replace('\t', "")
+            .replace('\n', "")
+            .replace('\r', "")
     }
 
     fn typedef(&self, node: &Node) -> Vec<IndentedString> {
@@ -799,7 +799,7 @@ impl<'a> Formatter<'a> {
 
     fn digits(&self, node: &Node) -> String {
         debug_assert!(node.rule == Rules::digits);
-        node.get_string(&self.source)
+        node.get_string(self.source)
     }
 
     fn method(&self, node: &Node) -> Vec<IndentedString> {
@@ -1050,26 +1050,26 @@ impl<'a> Formatter<'a> {
     fn type_ref(&self, node: &Node) -> String {
         // type_ref is a terminal so we can just return the str slice
         debug_assert!(node.rule == Rules::type_ref);
-        let str = node.get_string(&self.source);
-        str.replace(" ", "")
-            .replace("\t", "")
-            .replace("\n", "")
-            .replace("\r", "")
+        let str = node.get_string(self.source);
+        str.replace(' ', "")
+            .replace('\t', "")
+            .replace('\n', "")
+            .replace('\r', "")
     }
     fn variable_name(&self, node: &Node) -> String {
         // type_ref is a terminal so we can just return the str slice
         debug_assert!(node.rule == Rules::variable_name);
-        let str = node.get_string(&self.source);
+        let str = node.get_string(self.source);
         str.trim().to_string()
     }
     fn number(&self, node: &Node) -> String {
         debug_assert!(node.rule == Rules::number);
-        node.get_string(&self.source)
+        node.get_string(self.source)
     }
     fn comment(&self, node: &Node, leading_space: bool) -> IndentedString {
         // type_ref is a terminal so we can just return the str slice
         debug_assert!(node.rule == Rules::comment, "{:?}", node);
-        let comment_string = &node.get_string(&self.source)[2..];
+        let comment_string = &node.get_string(self.source)[2..];
         let comment_string = comment_string.trim_start().trim_end();
         match leading_space {
             true => IndentedString::new(0, " // ".to_owned() + comment_string),
@@ -1083,12 +1083,12 @@ impl<'a> Formatter<'a> {
         // Right now it just sticks the entire blob down
         // Without even the ticks possibly
         let mut ret_vec: Vec<IndentedString> = Vec::new();
-        let ml = node.get_string(&self.source);
+        let ml = node.get_string(self.source);
         let ml = ml[3..(ml.len() - 3)].replace('\r', "");
         let ml: Vec<String> = ml.trim().split('\n').map(|line| line.to_string()).collect();
         let ml: Vec<&str> = ml.iter().map(|line| line.trim()).collect();
         if ml.len() == 1 {
-            let ret_str = format!("/** {} **/", ml[0].to_string());
+            let ret_str = format!("/** {} **/", ml[0]);
             ret_vec.push(IndentedString::new(0, ret_str));
             ret_vec
         } else {
