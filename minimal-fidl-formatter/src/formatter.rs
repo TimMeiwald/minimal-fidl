@@ -133,7 +133,7 @@ impl<'a> Formatter<'a> {
             ret_vec.push(comment);
         } else {
             let mut last_element = ret_vec.pop().unwrap();
-            let mut comment = self.comment(child, true);
+            let comment = self.comment(child, true);
             last_element += comment;
             ret_vec.push(last_element);
         }
@@ -177,7 +177,7 @@ impl<'a> Formatter<'a> {
         } else {
             ret_vec.push(last_element);
             if ret_vec.len() == 1 {
-                let mut end_str = IndentedString::new(0, "}".to_string());
+                let end_str = IndentedString::new(0, "}".to_string());
                 ret_vec[0] += end_str;
             } else {
                 ret_vec.push(IndentedString::new(0, "}".to_string()));

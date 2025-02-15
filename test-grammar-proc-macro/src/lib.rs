@@ -4,11 +4,10 @@ extern crate syn;
 
 use std::{
     path::{self, Path},
-    str::FromStr,
 };
 
 use proc_macro2::{Span, TokenStream};
-use syn::{ext, parse_macro_input, Ident, LitStr};
+use syn::{parse_macro_input, LitStr};
 #[proc_macro]
 pub fn test_grammar_files_in_dir(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let constant_directory = parse_macro_input!(input as LitStr).value();

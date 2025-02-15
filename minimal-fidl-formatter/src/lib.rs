@@ -33,9 +33,9 @@ mod tests {
     use crate::formatter;
     use crate::parse;
     use minimal_fidl_parser::{
-        BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
+        Context, Key,
     };
-    use std::cell::RefCell;
+    
 
     #[test]
     fn test_formatter_1() {

@@ -1,10 +1,10 @@
 use minimal_fidl_formatter::Formatter;
 use minimal_fidl_parser::{
-    BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
+    BasicContext, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
 };
 use std::cell::RefCell;
 use std::path::PathBuf;
-use std::process::exit;
+
 
 pub fn minimal_fidl_fmt(paths: &Vec<PathBuf>, dry_run: bool) {
     let paths = walk_dirs(&paths[0]).expect("Some error occurred");
@@ -15,7 +15,7 @@ pub fn minimal_fidl_fmt(paths: &Vec<PathBuf>, dry_run: bool) {
         RefCell::new(BasicContext::new(0 as usize, RULES_SIZE as usize));
     for path in paths {
         let formatted_string: Result<String, ()> = format_file(&ctx, &path);
-        match (formatted_string) {
+        match formatted_string {
             Ok(formatted_string) => {
                 if dry_run {
                     println!("Dry run: {:?}", path);
@@ -75,7 +75,7 @@ fn walk_dirs(path: &PathBuf) -> Result<Vec<PathBuf>, std::io::Error> {
     Ok(ret_vec)
 }
 
-fn format_file(ctx: &RefCell<BasicContext>, path: &PathBuf) -> Result<String, ()> {
+fn format_file(_ctx: &RefCell<BasicContext>, path: &PathBuf) -> Result<String, ()> {
     let input = std::fs::read_to_string(path).expect("Expected file to exist");
     let string = input.to_string();
     let src_len = string.len();
@@ -102,7 +102,7 @@ fn format_file(ctx: &RefCell<BasicContext>, path: &PathBuf) -> Result<String, ()
     let fmt = Formatter::new(&string, &publisher);
     let formatted_text = fmt.format();
     match formatted_text {
-        Err(formatter_err) => {
+        Err(_formatter_err) => {
             println!("Could not format");
             Err(())
         }
