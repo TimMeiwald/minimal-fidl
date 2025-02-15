@@ -307,7 +307,7 @@ impl<'a> Formatter<'a> {
 
     fn interface(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::interface);
-        let mut interface_name: Option<String> = None;
+        let mut interface_name: Option<String>;
         // let mut version: Option<Vec<String>> = None;
         // let mut methods: Vec<Vec<String>> = Vec::new();
         // let mut attributes: Vec<String> = Vec::new();
@@ -509,7 +509,7 @@ impl<'a> Formatter<'a> {
     fn enumeration(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::enumeration);
         let mut ret_vec: Vec<IndentedString> = Vec::new();
-        let mut var_name: String = "".to_string();
+        let mut var_name: String;
         let mut open_bracket: bool = false;
         let mut close_bracket: bool = false;
         for child in node.get_children() {
@@ -690,7 +690,7 @@ impl<'a> Formatter<'a> {
     fn attribute(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::attribute);
         let mut type_ref: String = "".to_string();
-        let mut var_name: String = "".to_string();
+        let mut var_name: String;
         let mut ret_vec: Vec<IndentedString> = Vec::new();
         for child in node.get_children() {
             let child = self.publisher.get_node(*child);
@@ -801,9 +801,9 @@ impl<'a> Formatter<'a> {
 
     fn method(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::method);
-        let mut var_name: String = "".to_string();
-        let mut input: Vec<IndentedString> = Vec::new();
-        let mut output: Vec<IndentedString> = Vec::new();
+        let mut var_name: String;
+        let mut input: Vec<IndentedString>;
+        let mut output: Vec<IndentedString>;
         let mut ret_vec: Vec<IndentedString> = Vec::new();
         let mut open_bracket: bool = false;
         let mut close_bracket: bool = false;
@@ -976,7 +976,7 @@ impl<'a> Formatter<'a> {
     fn variable_declaration(&self, node: &Node) -> Vec<IndentedString> {
         debug_assert!(node.rule == Rules::variable_declaration);
         let mut type_ref: String = "".to_string();
-        let mut var_name: String = "".to_string();
+        let mut var_name: String;
         let mut is_last_element_comment = false;
         let mut ret_vec: Vec<IndentedString> = Vec::new();
         for child in node.get_children() {
