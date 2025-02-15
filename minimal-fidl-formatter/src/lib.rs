@@ -1,11 +1,18 @@
-use minimal_fidl_parser::{
-    BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
-};
+
 mod formatter;
 mod indented_string;
 pub use formatter::Formatter;
 pub use formatter::FormatterError;
-use std::cell::RefCell;
+
+
+#[cfg(test)]
+mod tests {
+    use minimal_fidl_parser::{
+        BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
+    };
+    use crate::formatter;
+    use std::cell::RefCell;
+
 
 pub fn parse(input: &str) -> Option<BasicPublisher> {
     let string = input.to_string();
@@ -26,15 +33,6 @@ pub fn parse(input: &str) -> Option<BasicPublisher> {
     let publisher = context.into_inner().get_publisher().clear_false();
     Some(publisher)
 }
-
-#[cfg(test)]
-mod tests {
-
-    use crate::formatter;
-    use crate::parse;
-    use minimal_fidl_parser::{
-        Context, Key,
-    };
     
 
     #[test]
