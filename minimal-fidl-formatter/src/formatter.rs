@@ -594,10 +594,7 @@ impl<'a> Formatter<'a> {
     }
     fn type_dec(&self, node: &Node) -> String {
         let str = node.get_string(self.source);
-        str.replace(' ', "")
-            .replace('\t', "")
-            .replace('\n', "")
-            .replace('\r', "")
+        str.replace([' ', '\t', '\n', '\r'], "")
     }
 
     fn typedef(&self, node: &Node) -> Vec<IndentedString> {
@@ -1051,10 +1048,7 @@ impl<'a> Formatter<'a> {
         // type_ref is a terminal so we can just return the str slice
         debug_assert!(node.rule == Rules::type_ref);
         let str = node.get_string(self.source);
-        str.replace(' ', "")
-            .replace('\t', "")
-            .replace('\n', "")
-            .replace('\r', "")
+        str.replace([' ', '\t', '\n', '\r'], "")
     }
     fn variable_name(&self, node: &Node) -> String {
         // type_ref is a terminal so we can just return the str slice
