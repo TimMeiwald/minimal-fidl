@@ -7,9 +7,6 @@ default-run = "minimal-fidl-cli"
 
 [dependencies]
 clap = { version = "4.5.27", features = ["derive"] }
-num = "0.4.3"
-num-derive = "0.4.2"
-num-traits = "0.2.19"
 minimal-fidl-parser = {path = "../minimal-fidl-parser"}
 minimal-fidl-formatter = {path = "../minimal-fidl-formatter"}
 thiserror = "2.0.11"
