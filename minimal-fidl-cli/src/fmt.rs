@@ -4,9 +4,10 @@ use minimal_fidl_parser::{
 };
 use std::cell::RefCell;
 use std::path::PathBuf;
+use std::path::Path;
 
 
-pub fn minimal_fidl_fmt(paths: &Vec<PathBuf>, dry_run: bool) {
+pub fn minimal_fidl_fmt(paths: &[PathBuf], dry_run: bool) {
     let paths = walk_dirs(&paths[0]).expect("Some error occurred");
     // Context should be reuseable if cleared after each parse but that's unstable so we pretend we can do this but actualy make a new
     // Context in the format file.
@@ -39,7 +40,7 @@ pub fn minimal_fidl_fmt(paths: &Vec<PathBuf>, dry_run: bool) {
     }
 }
 
-fn is_fidl_file(path: &PathBuf) -> bool {
+fn is_fidl_file(path: &Path) -> bool {
     let extension = path.extension();
     match extension {
         Some(extension) => {
