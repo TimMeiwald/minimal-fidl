@@ -12,7 +12,7 @@ pub fn minimal_fidl_fmt(paths: &Vec<PathBuf>, dry_run: bool) {
     // Context in the format file.
     //Dummy context since it should be reusable but not sure if it is right now
     let ctx: RefCell<BasicContext> =
-        RefCell::new(BasicContext::new(0 as usize, RULES_SIZE as usize));
+        RefCell::new(BasicContext::new(0_usize, RULES_SIZE as usize));
     for path in paths {
         let formatted_string: Result<String, ()> = format_file(&ctx, &path);
         match formatted_string {
@@ -43,11 +43,7 @@ fn is_fidl_file(path: &PathBuf) -> bool {
     let extension = path.extension();
     match extension {
         Some(extension) => {
-            if extension == "fidl" {
-                true
-            } else {
-                false
-            }
+            extension == "fidl"
         }
         None => false,
     }
