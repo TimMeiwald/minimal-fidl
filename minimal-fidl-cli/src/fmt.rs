@@ -7,9 +7,6 @@ use std::path::PathBuf;
 use std::process::exit;
 
 pub fn minimal_fidl_fmt(paths: &Vec<PathBuf>, dry_run: bool) {
-    println!("Paths: {:?}", paths);
-    println!("Dry Run: {dry_run}");
-
     let paths = walk_dirs(&paths[0]).expect("Some error occurred");
     // Context should be reuseable if cleared after each parse but that's unstable so we pretend we can do this but actualy make a new
     // Context in the format file.
@@ -27,7 +24,7 @@ pub fn minimal_fidl_fmt(paths: &Vec<PathBuf>, dry_run: bool) {
                     let write_result = std::fs::write(&path, formatted_string);
                     match write_result {
                         Ok(()) => {
-                            println!("Successfully formatted file: {:?}", path);
+                            println!("Successfully wrote out formatted file: {:?}", path);
                         }
                         Err(_e) => {
                             println!("Error writing file: {:?}", path);
