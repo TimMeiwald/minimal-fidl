@@ -5,6 +5,7 @@ use minimal_fidl_parser::{
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::path::Path;
+use std::time::Instant;
 
 
 pub fn minimal_fidl_fmt(paths: &[PathBuf], dry_run: bool) {
@@ -14,8 +15,13 @@ pub fn minimal_fidl_fmt(paths: &[PathBuf], dry_run: bool) {
     //Dummy context since it should be reusable but not sure if it is right now
     let ctx: RefCell<BasicContext> =
         RefCell::new(BasicContext::new(0_usize, RULES_SIZE as usize));
+    let start = Instant::now();
     for path in paths {
+        let instant = Instant::now();
         let formatted_string: Result<String, ()> = format_file(&ctx, &path);
+        let instant_after = Instant::now();
+        let duration = instant_after - instant;
+        println!("Time to format {:#?}", duration);
         match formatted_string {
             Ok(formatted_string) => {
                 if dry_run {
@@ -38,6 +44,10 @@ pub fn minimal_fidl_fmt(paths: &[PathBuf], dry_run: bool) {
             }
         }
     }
+    let end = Instant::now();
+    println!("Total time elapsed {:#?}", end-start);
+
+
 }
 
 fn is_fidl_file(path: &Path) -> bool {

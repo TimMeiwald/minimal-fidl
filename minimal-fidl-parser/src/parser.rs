@@ -2,7 +2,7 @@
 #![allow(unused_variables)] // Generated Code also, since everything passes stuff
 #![allow(unused_imports)] // Generated Code also, since everything passes stuff
 use crate::*;
-use std::cell::RefCell;
+use std::{cell::RefCell, time::Instant};
 #[allow(dead_code)]
 pub fn ws<T: Context>(
     parent: Key,
@@ -1224,5 +1224,10 @@ pub fn grammar<T: Context>(
     let closure_26 =
         move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
     let closure_27 = _sequence(&closure_25, &closure_26);
-    closure_27(parent, source, position)
+    let instant = Instant::now();
+    let result = closure_27(parent, source, position);
+    let instant_after = Instant::now();
+    let duration = instant_after - instant;
+    println!("Time to parse {:#?}", duration);
+    result
 }

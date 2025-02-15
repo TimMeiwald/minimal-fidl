@@ -1,0 +1,12 @@
+[package]
+name = "minimal-fidl-symbol-table"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+minimal-fidl-parser = {path = "../minimal-fidl-parser"}
+thiserror = "2.0.11"
+
+

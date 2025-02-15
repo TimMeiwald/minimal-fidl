@@ -1,6 +1,11 @@
 [workspace]
 resolver = "2"
-members = ["minimal-fidl-parser", "minimal-fidl-formatter", "test-grammar-proc-macro", "minimal-fidl-cli"]
+members = [ "minimal-fidl-parser", 
+            "minimal-fidl-formatter", 
+            "test-grammar-proc-macro", 
+            "minimal-fidl-cli",
+            "minimal-fidl-symbol-table", 
+            ]
 
 
 
