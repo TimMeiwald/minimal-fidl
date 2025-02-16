@@ -1,5 +1,6 @@
 
-// an empty type collection with meta informationpackage testcases
+// an empty type collection with meta information
+package testcases
 <** @description: This is an empty type collection. **>
 typeCollection MyTypes {
 

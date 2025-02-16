@@ -33,7 +33,13 @@ impl<'a> Formatter<'a> {
             match c.rule {
                 Rules::comment => ret_string += &self.comment(c, false).to_string(),
                 Rules::package => {
-                    ret_string += &self.package(c).to_string();
+                    if ret_string.len() == 0 {
+                        ret_string += &self.package(c).to_string();
+                    } else {
+                        let mut package = self.package(c);
+                        package.set_with_newline(true);
+                        ret_string += &package.to_string();
+                    }
                 }
                 Rules::import_model => ret_string += &self.import_model(c).to_string(),
                 Rules::import_namespace => ret_string += &self.import_namespace(c).to_string(),
@@ -166,7 +172,9 @@ impl<'a> Formatter<'a> {
 
     fn after_bracket_helper(&self, ret_vec: &mut Vec<IndentedString>) {
         let last_element = ret_vec.pop().expect("Should always have a last element");
-        if last_element.get_rule() == Rules::type_collection || last_element.get_rule() == Rules::interface {
+        if last_element.get_rule() == Rules::type_collection
+            || last_element.get_rule() == Rules::interface
+        {
             let last_element_string = last_element.to_string();
             let mut last_element_string =
                 last_element_string[0..last_element_string.len() - 1].to_string();

@@ -5,6 +5,7 @@ use minimal_fidl_parser::{
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::path::Path;
+use std::process::exit;
 use std::time::Instant;
 
 
@@ -16,6 +17,8 @@ pub fn minimal_fidl_fmt(paths: &[PathBuf], dry_run: bool) {
     let ctx: RefCell<BasicContext> =
         RefCell::new(BasicContext::new(0_usize, RULES_SIZE as usize));
     let start = Instant::now();
+    let mut success_count = 0;
+    let mut err_count = 0;
     for path in paths {
         let instant = Instant::now();
         let formatted_string: Result<String, ()> = format_file(&ctx, &path);
@@ -27,25 +30,36 @@ pub fn minimal_fidl_fmt(paths: &[PathBuf], dry_run: bool) {
                 if dry_run {
                     println!("Dry run: {:?}", path);
                     println!("Formatted text: \n{}", formatted_string);
+                    success_count += 1;
                 } else {
                     let write_result = std::fs::write(&path, formatted_string);
                     match write_result {
                         Ok(()) => {
                             println!("Successfully wrote out formatted file: {:?}", path);
+                            success_count += 1;
                         }
                         Err(_e) => {
+                            err_count += 1;
                             println!("Error writing file: {:?}", path);
                         }
                     }
                 }
             }
             Err(_e) => {
+                err_count +=1 ;
                 println!("Error formatting file: {:?}", path);
             }
         }
     }
     let end = Instant::now();
+    println!("Successfully formatted: {}/{}", success_count, err_count + success_count);
     println!("Total time elapsed {:#?}", end-start);
+    if success_count == (err_count + success_count){
+        exit(0)
+    }
+    else{
+        exit(1)
+    }
 
 
 }
