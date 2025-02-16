@@ -15,8 +15,12 @@ pub enum SymbolTableError {
     UnexpectedNode(Rules, String),
     // #[error("Could not parse `{0}` as an integer.")]
     // IntegerParseError(String),
-    #[error["This error means the program has a bug."]]
-    InternalLogicError(String)
+    #[error["This error means the program has a bug: {0}"]]
+    InternalLogicError(String),
+    #[error["The Interface: '{0}' already exists!"]]
+    InterfaceAlreadyExists(String),
+    #[error["The Field: '{0}' already exists!"]]
+    FieldAlreadyExists(String)
 }
 
 pub struct SymbolTable<'a> {
@@ -84,6 +88,24 @@ impl<'a> SymbolTable<'a> {
         }
     }
 
+    fn add_interface(&mut self, interface: Interface) -> Result<(), SymbolTableError> {
+        let res: u32 = self
+            .interfaces
+            .iter()
+            .map(|intfc| intfc.name == interface.name)
+            .fold(0, |mut acc, result| {
+                acc += result as u32;
+                acc
+            });
+        if res == 0{
+            self.interfaces.push(interface);
+            Ok(())
+        }
+        else{
+            Err(SymbolTableError::InterfaceAlreadyExists(interface.name))
+        }
+    }
+
     fn create_symbol_table(&mut self) -> Result<(), SymbolTableError> {
         let root_node = self.publisher.get_node(Key(0));
         debug_assert_eq!(root_node.rule, Rules::Grammar);
@@ -97,11 +119,11 @@ impl<'a> SymbolTable<'a> {
                 Rules::package => {
                     let package = Package::new(self.source, &self.publisher, child)?;
                     self.packages.push(package);
-                    
                 }
                 Rules::import_namespace => {
-                        let import_namespace = ImportNamespace::new(self.source, &self.publisher, child)?;
-                        self.namespaces.push(import_namespace);
+                    let import_namespace =
+                        ImportNamespace::new(self.source, &self.publisher, child)?;
+                    self.namespaces.push(import_namespace);
                 }
                 Rules::import_model => {
                     let import_model = ImportModel::new(self.source, &self.publisher, child)?;
@@ -109,7 +131,7 @@ impl<'a> SymbolTable<'a> {
                 }
                 Rules::interface => {
                     let interface = Interface::new(&self.source, &self.publisher, child)?;
-                    self.interfaces.push(interface);
+                    self.add_interface(interface)?;
                 }
                 Rules::type_collection => {}
                 rule => {

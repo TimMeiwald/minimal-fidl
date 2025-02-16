@@ -5,6 +5,12 @@ pub mod package;
 pub mod symbol_table;
 pub mod symbol_table_builder;
 pub mod type_collection;
+pub mod version;
+pub mod structure;
+pub mod variable_declaration;
+use variable_declaration::VariableDeclaration;
+use structure::Structure;
+use version::Version;
 use import_model::ImportModel;
 use import_namespace::ImportNamespace;
 use interface::Interface;
@@ -82,4 +88,64 @@ mod tests {
             output.expect("We expect no symbol table errors")
         );
     }
+    #[test]
+    fn test_symbol_table_4() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}}";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{:#?}", output.unwrap());
+    }
+    #[test]
+    fn test_symbol_table_5() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}}
+    interface endOfPlaylist {  version {major 23 minor 40}}";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        let err = output.unwrap_err();
+        println!("Err: {:?}", err)
+    }
+
+
+    #[test]
+    fn test_symbol_table_6() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}
+}   ";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{:#?}", output.unwrap());
+    }
+    #[test]
+    fn test_symbol_table_7() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p1}
+}   ";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{:#?}", output.unwrap_err());
+    }
+    #[test]
+    fn test_symbol_table_8() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing 
+    {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param} 
+    out {param2 param2 org.param3 param3}} 	typedef aTypedef is Int16
+}	";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{:?}", output.unwrap());
+    }
+   
 }
