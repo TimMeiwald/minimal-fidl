@@ -16,7 +16,7 @@ impl<'a> SymbolTableBuilder<'a> {
     }
 
     pub fn create_symbol_table(&self) -> Result<SymbolTable, SymbolTableError> {
-        Ok(SymbolTable::new(&self.source, &self.publisher))
+        SymbolTable::new(&self.source, &self.publisher)
     }
 }
 

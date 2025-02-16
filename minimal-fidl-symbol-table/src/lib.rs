@@ -48,6 +48,20 @@ pub fn parse(input: &str) -> Option<BasicPublisher> {
         publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
-        println!("Formatted:\n\n{:#?}", output.unwrap());
+        println!("{:?}", output);
+        println!("Formatted:\n\n{:#?}", output.expect("We expect no symbol table errors"));
+    }
+    #[test]
+    fn test_symbol_table_2() {
+        let src = r#"package org.javaohjavawhyareyouso
+        import org.franca.omgidl.* from "OMGIDLBase.fidl" //Also Comment
+
+	interface endOfPlaylist { }	"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("{:?}", output);
+        println!("Formatted:\n\n{:#?}", output.expect("We expect no symbol table errors"));
     }
 }

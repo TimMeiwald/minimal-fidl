@@ -1,11 +1,12 @@
 use core::fmt;
 
-use crate::Interface;
-use crate::TypeCollection;
+use crate::symbol_table;
 use crate::ImportModel;
 use crate::ImportNamespace;
+use crate::Interface;
 use crate::Package;
-use minimal_fidl_parser::{BasicPublisher, Rules, Key};
+use crate::TypeCollection;
+use minimal_fidl_parser::{BasicPublisher, Key, Rules};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -14,8 +15,9 @@ pub enum SymbolTableError {
     UnexpectedNode(Rules, String),
     // #[error("Could not parse `{0}` as an integer.")]
     // IntegerParseError(String),
+    #[error["This error means the program has a bug."]]
+    InternalLogicError(String)
 }
-
 
 pub struct SymbolTable<'a> {
     source: &'a str,
@@ -27,13 +29,13 @@ pub struct SymbolTable<'a> {
     type_collections: Vec<TypeCollection>,
 }
 
-impl fmt::Debug for SymbolTable<'_>{
+impl fmt::Debug for SymbolTable<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // The below is some kind of magic I don't fully understand but basically
-        // it let's me print just specific fields(the ones deifned in SymbolTable below) and 
+        // it let's me print just specific fields(the ones deifned in SymbolTable below) and
         // not print source or BasicPublisher
         #[derive(Debug)]
-        struct SymbolTableRepr<'a>{
+        struct SymbolTable<'a> {
             packages: &'a Vec<Package>,
             namespaces: &'a Vec<ImportNamespace>,
             import_models: &'a Vec<ImportModel>,
@@ -43,16 +45,30 @@ impl fmt::Debug for SymbolTable<'_>{
         // Below somehow allows me to use the internals of SymbolTable without explicitly using namespace: self.namespace
         // In a SymbolTableRepr construction.
         let Self {
-            source: _, publisher: _, packages, namespaces, import_models, interfaces, type_collections
+            source: _,
+            publisher: _,
+            packages,
+            namespaces,
+            import_models,
+            interfaces,
+            type_collections,
         } = self;
-        fmt::Debug::fmt(&SymbolTableRepr{packages, namespaces, import_models, interfaces, type_collections}, f)
+        fmt::Debug::fmt(
+            &SymbolTable {
+                packages,
+                namespaces,
+                import_models,
+                interfaces,
+                type_collections,
+            },
+            f,
+        )
     }
 }
 
-
-impl<'a> SymbolTable<'a>{
-    pub fn new(source: &'a str, publisher: &'a BasicPublisher) -> Self {
-        Self {
+impl<'a> SymbolTable<'a> {
+    pub fn new(source: &'a str, publisher: &'a BasicPublisher) -> Result<Self, SymbolTableError> {
+        let mut resp = Self {
             source,
             publisher,
             packages: Vec::new(),
@@ -60,32 +76,44 @@ impl<'a> SymbolTable<'a>{
             import_models: Vec::new(),
             interfaces: Vec::new(),
             type_collections: Vec::new(),
+        };
+        let result = resp.create_symbol_table();
+        match result {
+            Ok(()) => Ok(resp),
+            Err(err) => Err(err),
         }
     }
 
-    fn create_symbol_table(&self) -> Result<(), SymbolTableError>{
+    fn create_symbol_table(&mut self) -> Result<(), SymbolTableError> {
         let root_node = self.publisher.get_node(Key(0));
         debug_assert_eq!(root_node.rule, Rules::Grammar);
         let root_node_children = root_node.get_children();
         debug_assert_eq!(root_node_children.len(), 1);
         let grammar_node_key = root_node_children[0];
         let grammar_node = self.publisher.get_node(grammar_node_key);
-        for child in grammar_node.get_children(){
+        for child in grammar_node.get_children() {
             let child = self.publisher.get_node(*child);
-            match child.rule { 
-                Rules::package => {}, 
-                Rules::import_namespace => {}
-                Rules::import_model => {},
-                Rules::interface => {},
+            match child.rule {
+                Rules::package => {
+                    let package = Package::new(self.source, &self.publisher, child)?;
+                    self.packages.push(package);
+                    
+                }
+                Rules::import_namespace => {
+                        let import_namespace = ImportNamespace::new(self.source, &self.publisher, child)?;
+                        self.namespaces.push(import_namespace);
+                }
+                Rules::import_model => {}
+                Rules::interface => {}
                 Rules::type_collection => {}
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(rule, "create_symbol_table".to_string()));
+                    return Err(SymbolTableError::UnexpectedNode(
+                        rule,
+                        "SymblTable::create_symbol_table".to_string(),
+                    ));
                 }
-
             }
         }
         Ok(())
-
     }
 }
-
