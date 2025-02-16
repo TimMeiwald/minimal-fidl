@@ -103,8 +103,14 @@ impl<'a> SymbolTable<'a> {
                         let import_namespace = ImportNamespace::new(self.source, &self.publisher, child)?;
                         self.namespaces.push(import_namespace);
                 }
-                Rules::import_model => {}
-                Rules::interface => {}
+                Rules::import_model => {
+                    let import_model = ImportModel::new(self.source, &self.publisher, child)?;
+                    self.import_models.push(import_model);
+                }
+                Rules::interface => {
+                    let interface = Interface::new(&self.source, &self.publisher, child)?;
+                    self.interfaces.push(interface);
+                }
                 Rules::type_collection => {}
                 rule => {
                     return Err(SymbolTableError::UnexpectedNode(

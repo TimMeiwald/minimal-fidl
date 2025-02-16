@@ -18,10 +18,10 @@ impl ImportNamespace {
         debug_assert_eq!(node.rule, Rules::import_namespace);
         let mut wildcard = false;
         let mut import: Result<Vec<String>, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: path in ImportNamespace::new".to_string()),
+            SymbolTableError::InternalLogicError("Uninitialized value: 'import' in ImportNamespace::new".to_string()),
         );
         let mut from: Result<PathBuf, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: filepath in ImportNamespace::new".to_string()),
+            SymbolTableError::InternalLogicError("Uninitialized value: 'from' in ImportNamespace::new".to_string()),
         );
 
         for child in node.get_children() {

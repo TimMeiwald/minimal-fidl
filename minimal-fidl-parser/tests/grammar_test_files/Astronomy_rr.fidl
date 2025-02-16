@@ -1,4 +1,3 @@
-
 package Pkg.Astronomy_rr
 import model "Astronomy_t.fidl"
 typeCollection {

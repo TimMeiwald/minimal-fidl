@@ -1,3 +1,2 @@
-
 package testcase10
 interface ExampleInterface {}

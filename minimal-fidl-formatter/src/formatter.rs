@@ -1031,7 +1031,8 @@ impl<'a> Formatter<'a> {
             match child.rule {
                 Rules::type_ref => {
                     let s = format!("package {}", self.type_ref(child));
-                    let s = IndentedString::new(0, s);
+                    let mut s = IndentedString::new(0, s);
+                    s.set_with_newline(false);
                     ret_str = s;
                 }
                 Rules::comment => ret_str += self.comment(child, true),
