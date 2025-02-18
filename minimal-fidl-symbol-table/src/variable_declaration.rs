@@ -2,7 +2,7 @@ use std::{path::{Path, PathBuf}, str::FromStr};
 
 use crate::symbol_table::SymbolTableError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VariableDeclaration {
     type_n: String,
     pub name: String,

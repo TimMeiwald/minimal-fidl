@@ -2,8 +2,10 @@ use std::{path::{Path, PathBuf}, str::FromStr};
 
 use crate::{symbol_table::SymbolTableError, VariableDeclaration};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Structure {
+    start_position: u32,
+    end_position: u32,
     pub name: String,
     contents: Vec<VariableDeclaration>
 
@@ -42,7 +44,7 @@ impl Structure {
                 }
             }
         }
-        Ok(Self { name: name?, contents})
+        Ok(Self { name: name?, contents, start_position: node.start_position, end_position: node.end_position})
     }
 
     fn add_variable_declaration(var_decs: &mut Vec<VariableDeclaration>, var_dec: VariableDeclaration) -> Result<(), SymbolTableError> {

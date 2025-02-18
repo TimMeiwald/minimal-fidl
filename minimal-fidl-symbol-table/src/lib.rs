@@ -2,20 +2,24 @@ pub mod import_model;
 pub mod import_namespace;
 pub mod interface;
 pub mod package;
+pub mod structure;
 pub mod symbol_table;
 pub mod symbol_table_builder;
 pub mod type_collection;
-pub mod version;
-pub mod structure;
 pub mod variable_declaration;
-use variable_declaration::VariableDeclaration;
-use structure::Structure;
-use version::Version;
+pub mod version;
+pub mod attribute;
+pub mod type_def;
 use import_model::ImportModel;
 use import_namespace::ImportNamespace;
 use interface::Interface;
 use package::Package;
+use type_def::TypeDef;
+use attribute::Attribute;
+use structure::Structure;
 use type_collection::TypeCollection;
+use variable_declaration::VariableDeclaration;
+use version::Version;
 
 #[cfg(test)]
 mod tests {
@@ -111,7 +115,6 @@ mod tests {
         println!("Err: {:?}", err)
     }
 
-
     #[test]
     fn test_symbol_table_6() {
         let src = "package org.javaohjavawhyareyouso
@@ -134,8 +137,74 @@ mod tests {
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
+
     #[test]
     fn test_symbol_table_8() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing{}
+}   ";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{}", output.unwrap_err());
+    }
+
+    #[test]
+    fn test_symbol_table_9() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
+}   ";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{:#?}", output.unwrap());
+    }
+
+    #[test]
+    fn test_symbol_table_10() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
+attribute uint16 thing2}   ";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{:#?}", output.unwrap());
+    }
+
+
+    #[test]
+    fn test_symbol_table_11() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
+attribute uint16 thing}   ";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{}", output.unwrap_err());
+    }
+
+
+    #[test]
+    fn test_symbol_table_12() {
+        let src = "package org.javaohjavawhyareyouso
+	interface endOfPlaylist {  version {major 25 minor 60}typedef aTypedef is Int16
+    struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing 
+    {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param} 
+    out {param2 param2 org.param3 param3}} 	
+}	";
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{:?}", output.unwrap());
+    }
+
+    #[test]
+    fn test_symbol_table_16() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing 
     {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param} 
@@ -147,5 +216,4 @@ mod tests {
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:?}", output.unwrap());
     }
-   
 }

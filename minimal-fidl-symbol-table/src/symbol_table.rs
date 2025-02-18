@@ -1,5 +1,7 @@
 use core::fmt;
 
+use crate::attribute::Attribute;
+use crate::structure::Structure;
 use crate::symbol_table;
 use crate::ImportModel;
 use crate::ImportNamespace;
@@ -9,7 +11,7 @@ use crate::TypeCollection;
 use minimal_fidl_parser::{BasicPublisher, Key, Rules};
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum SymbolTableError {
     #[error("Unexpected Node: {0:?} in '{1}'!")]
     UnexpectedNode(Rules, String),
@@ -20,7 +22,11 @@ pub enum SymbolTableError {
     #[error["The Interface: '{0}' already exists!"]]
     InterfaceAlreadyExists(String),
     #[error["The Field: '{0}' already exists!"]]
-    FieldAlreadyExists(String)
+    FieldAlreadyExists(String),
+    #[error["The struct: 'TODO' already exists.\nFirst Struct\n{0:#?}\nSecond Struct\n{1:#?}"]]
+    StructAlreadyExists(Structure, Structure),
+    #[error["The attribute: 'TODO' already exists.\nFirst Attribute\n{0:#?}\nSecond Attribute\n{1:#?}"]]
+    AttributeAlreadyExists(Attribute, Attribute),
 }
 
 pub struct SymbolTable<'a> {

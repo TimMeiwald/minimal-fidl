@@ -3,13 +3,15 @@ use std::{
     str::FromStr,
 };
 
-use crate::{structure::Structure, symbol_table::SymbolTableError, Version};
+use crate::{attribute::{self, Attribute}, structure::Structure, symbol_table::SymbolTableError, Version};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug)]
 pub struct Interface {
     pub name: String,
     version: Version,
-    structures: Vec<Structure>
+    attributes: Vec<Attribute>,
+    structures: Vec<Structure>,
+    
 }
 impl Interface {
     pub fn new(
@@ -25,6 +27,8 @@ impl Interface {
             "Uninitialized value: 'version' in Interface::new".to_string(),
         ));
         let mut structures: Vec<Structure> = Vec::new();
+        let mut attributes: Vec<Attribute> = Vec::new();
+
         for child in node.get_children() {
             let child = publisher.get_node(*child);
             match child.rule {
@@ -37,7 +41,11 @@ impl Interface {
                 }
                 Rules::structure => {
                     let structure = Structure::new(source, publisher, child)?;
-                    structures.push(structure);
+                    let _res = Self::add_structure(&mut structures, structure)?;
+                }
+                Rules::attribute => {
+                    let attribute = Attribute::new(source, publisher, child)?;
+                    let _res = Self::add_attribute(&mut attributes, attribute)?;
                 }
                 Rules::comment
                 | Rules::multiline_comment
@@ -51,10 +59,59 @@ impl Interface {
                 }
             }
         }
-        Ok(Self { name: name?, version: version?, structures })
+        Ok(Self { name: name?, version: version?, structures, attributes })
     }
 
     fn variable_name(source: &str, publisher: &BasicPublisher, node: &Node) -> String {
         node.get_string(source)
     }
+
+
+    fn add_structure(structures: &mut Vec<Structure>, structure: Structure) -> Result<(), SymbolTableError> {
+        let res: u32 = structures
+            .iter()
+            .map(|intfc| intfc.name == structure.name)
+            .fold(0, |mut acc, result| {
+                acc += result as u32;
+                acc
+            });
+        if res == 0{
+            structures.push(structure);
+            Ok(())
+        }
+        else{
+            for s in structures{
+                if s.name == structure.name{
+                    return Err(SymbolTableError::StructAlreadyExists(structure, s.clone()))
+
+                }
+            }
+            Err(SymbolTableError::InternalLogicError("Must not reach here".to_string()))
+        }
+    }
+
+    fn add_attribute(attributes: &mut Vec<Attribute>, attribute: Attribute) -> Result<(), SymbolTableError> {
+        let res: u32 = attributes
+            .iter()
+            .map(|intfc| intfc.name == attribute.name)
+            .fold(0, |mut acc, result| {
+                acc += result as u32;
+                acc
+            });
+        if res == 0{
+            attributes.push(attribute);
+            Ok(())
+        }
+        else{
+            for s in attributes{
+                if s.name == attribute.name{
+                    return Err(SymbolTableError::AttributeAlreadyExists(attribute, s.clone()))
+
+                }
+            }
+            Err(SymbolTableError::InternalLogicError("Must not reach here".to_string()))
+        }
+    }
+
+
 }
