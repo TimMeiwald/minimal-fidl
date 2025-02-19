@@ -171,7 +171,16 @@ impl<'a> Formatter<'a> {
     }
 
     fn after_bracket_helper(&self, ret_vec: &mut Vec<IndentedString>) {
-        let last_element = ret_vec.pop().expect("Should always have a last element");
+        // let last_element = ret_vec.pop().expect("Should always have a last element");
+        // The above can cause a bug because it shouldn't be empty but we still don't want to crash.
+        let last_element = ret_vec.pop();
+        let last_element = match last_element { 
+            None => {
+                println!("Warning: An error occurred in after bracket helper! Empty Vec is not expected. Continuing...");
+                return
+            },
+            Some(last_element) => last_element
+        };
         if last_element.get_rule() == Rules::type_collection
             || last_element.get_rule() == Rules::interface
         {
