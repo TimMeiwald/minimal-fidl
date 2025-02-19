@@ -927,7 +927,7 @@ impl<'a> Formatter<'a> {
                 }
             }
         }
-        debug_assert_eq!(ret_vec.len(), 0, "We do not expect input_params to ever return empty.");
+        debug_assert!(ret_vec.len() != 0, "We do not expect input_params to ever return empty.");
         ret_vec
     }
 
