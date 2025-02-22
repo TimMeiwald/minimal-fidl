@@ -25,7 +25,7 @@ impl VariableDeclaration {
         for child in node.get_children() {
             let child = publisher.get_node(*child);
             match child.rule {
-                Rules::comment | Rules::multiline_comment => {},
+                Rules::comment | Rules::multiline_comment | Rules::annotation_block => {},
                 Rules::type_ref => {
                     type_n = Ok(child.get_string(source));
                 }
@@ -41,5 +41,22 @@ impl VariableDeclaration {
             }
         }
         Ok(Self { name: name?, type_n: type_n?})
+    }
+
+    pub fn push_if_not_exists_else_err(self, var_decs: &mut Vec<VariableDeclaration>) -> Result<(), SymbolTableError> {
+        let res: u32 = var_decs
+            .iter()
+            .map(|intfc| intfc.name == self.name)
+            .fold(0, |mut acc, result| {
+                acc += result as u32;
+                acc
+            });
+        if res == 0{
+            var_decs.push(self);
+            Ok(())
+        }
+        else{
+            Err(SymbolTableError::FieldAlreadyExists(self.name))
+        }
     }
 }

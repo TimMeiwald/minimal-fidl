@@ -3,15 +3,23 @@ use std::{
     str::FromStr,
 };
 
-use crate::{attribute::{self, Attribute}, structure::Structure, symbol_table::SymbolTableError, Version};
+use crate::{
+    attribute::{self, Attribute},
+    method::Method,
+    structure::Structure,
+    symbol_table::SymbolTableError,
+    type_def::TypeDef,
+    Version,
+};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Interface {
     pub name: String,
-    version: Version,
+    version: Option<Version>,
     attributes: Vec<Attribute>,
     structures: Vec<Structure>,
-    
+    typedefs: Vec<TypeDef>,
+    methods: Vec<Method>,
 }
 impl Interface {
     pub fn new(
@@ -23,11 +31,11 @@ impl Interface {
         let mut name: Result<String, SymbolTableError> = Err(SymbolTableError::InternalLogicError(
             "Uninitialized value: 'name' in Interface::new".to_string(),
         ));
-        let mut version: Result<Version, SymbolTableError> = Err(SymbolTableError::InternalLogicError(
-            "Uninitialized value: 'version' in Interface::new".to_string(),
-        ));
+        let mut version: Option<Version> = None;
         let mut structures: Vec<Structure> = Vec::new();
         let mut attributes: Vec<Attribute> = Vec::new();
+        let mut typedefs: Vec<TypeDef> = Vec::new();
+        let mut methods: Vec<Method> = Vec::new();
 
         for child in node.get_children() {
             let child = publisher.get_node(*child);
@@ -37,19 +45,30 @@ impl Interface {
                     name = Ok(name_str);
                 }
                 Rules::version => {
-                    version = Version::new(source, publisher, child);
+                    let ver = Version::new(source, publisher, child)?;
+                    ver.push_if_not_exists_else_err(&mut version)?;
                 }
                 Rules::structure => {
                     let structure = Structure::new(source, publisher, child)?;
-                    let _res = Self::add_structure(&mut structures, structure)?;
+                    structure.push_if_not_exists_else_err(&mut structures)?;
                 }
                 Rules::attribute => {
                     let attribute = Attribute::new(source, publisher, child)?;
-                    let _res = Self::add_attribute(&mut attributes, attribute)?;
+                    attribute.push_if_not_exists_else_err(&mut attributes)?;
                 }
+                Rules::typedef => {
+                    let typedef = TypeDef::new(source, publisher, child)?;
+                    typedef.push_if_not_exists_else_err(&mut typedefs)?;
+                }
+                Rules::method => {
+                    let method = Method::new(source, publisher, child)?;
+                    method.push_if_not_exists_else_err(&mut methods)?;
+                }
+
                 Rules::comment
                 | Rules::multiline_comment
                 | Rules::open_bracket
+                | Rules::annotation_block
                 | Rules::close_bracket => {}
                 rule => {
                     return Err(SymbolTableError::UnexpectedNode(
@@ -59,59 +78,29 @@ impl Interface {
                 }
             }
         }
-        Ok(Self { name: name?, version: version?, structures, attributes })
+        Ok(Self {
+            name: name?,
+            version,
+            structures,
+            attributes,
+            typedefs,
+            methods,
+        })
     }
 
-    fn variable_name(source: &str, publisher: &BasicPublisher, node: &Node) -> String {
+    fn variable_name(source: &str, _publisher: &BasicPublisher, node: &Node) -> String {
         node.get_string(source)
     }
 
+    pub fn push_if_not_exists_else_err(self, interfaces: &mut Vec<Interface>) -> Result<(), SymbolTableError> {
+        for s in &mut *interfaces{
+            if s.name == self.name{
+                return Err(SymbolTableError::InterfaceAlreadyExists(s.clone(), self.clone()));
 
-    fn add_structure(structures: &mut Vec<Structure>, structure: Structure) -> Result<(), SymbolTableError> {
-        let res: u32 = structures
-            .iter()
-            .map(|intfc| intfc.name == structure.name)
-            .fold(0, |mut acc, result| {
-                acc += result as u32;
-                acc
-            });
-        if res == 0{
-            structures.push(structure);
-            Ok(())
-        }
-        else{
-            for s in structures{
-                if s.name == structure.name{
-                    return Err(SymbolTableError::StructAlreadyExists(structure, s.clone()))
-
-                }
             }
-            Err(SymbolTableError::InternalLogicError("Must not reach here".to_string()))
         }
+        interfaces.push(self);
+        Ok(())
+
     }
-
-    fn add_attribute(attributes: &mut Vec<Attribute>, attribute: Attribute) -> Result<(), SymbolTableError> {
-        let res: u32 = attributes
-            .iter()
-            .map(|intfc| intfc.name == attribute.name)
-            .fold(0, |mut acc, result| {
-                acc += result as u32;
-                acc
-            });
-        if res == 0{
-            attributes.push(attribute);
-            Ok(())
-        }
-        else{
-            for s in attributes{
-                if s.name == attribute.name{
-                    return Err(SymbolTableError::AttributeAlreadyExists(attribute, s.clone()))
-
-                }
-            }
-            Err(SymbolTableError::InternalLogicError("Must not reach here".to_string()))
-        }
-    }
-
-
 }

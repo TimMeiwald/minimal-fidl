@@ -27,13 +27,14 @@ impl Structure {
                 Rules::comment
                 | Rules::multiline_comment
                 | Rules::open_bracket
+                | Rules::annotation_block
                 | Rules::close_bracket => {},
                 Rules::type_dec => {
                     name = Ok(child.get_string(source));
                 }
                 Rules::variable_declaration => {
                     let var_dec= VariableDeclaration::new(source, publisher, child)?;
-                    Self::add_variable_declaration(&mut contents, var_dec)?;
+                    var_dec.push_if_not_exists_else_err(&mut contents)?;
                 }
 
                 rule => {
@@ -47,21 +48,18 @@ impl Structure {
         Ok(Self { name: name?, contents, start_position: node.start_position, end_position: node.end_position})
     }
 
-    fn add_variable_declaration(var_decs: &mut Vec<VariableDeclaration>, var_dec: VariableDeclaration) -> Result<(), SymbolTableError> {
-        let res: u32 = var_decs
-            .iter()
-            .map(|intfc| intfc.name == var_dec.name)
-            .fold(0, |mut acc, result| {
-                acc += result as u32;
-                acc
-            });
-        if res == 0{
-            var_decs.push(var_dec);
-            Ok(())
+
+    pub fn push_if_not_exists_else_err(self, structures: &mut Vec<Structure>) -> Result<(), SymbolTableError> {
+        for s in &mut *structures{
+            if s.name == self.name{
+                return Err(SymbolTableError::StructAlreadyExists(s.clone(), self.clone()));
+
+            }
         }
-        else{
-            Err(SymbolTableError::FieldAlreadyExists(var_dec.name))
-        }
+        structures.push(self);
+        Ok(())
+
     }
+
 
 }

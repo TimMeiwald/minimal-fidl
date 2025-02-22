@@ -1,0 +1,105 @@
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+};
+
+use crate::{symbol_table::SymbolTableError, VariableDeclaration};
+use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
+#[derive(Debug, Clone)]
+pub struct Method {
+    start_position: u32,
+    end_position: u32,
+    pub name: String,
+    input_parameters: Vec<VariableDeclaration>,
+    output_parameters: Vec<VariableDeclaration>,
+}
+impl Method {
+    pub fn new(
+        source: &str,
+        publisher: &BasicPublisher,
+        node: &Node,
+    ) -> Result<Self, SymbolTableError> {
+        debug_assert_eq!(node.rule, Rules::method);
+        let mut name: Result<String, SymbolTableError> = Err(SymbolTableError::InternalLogicError(
+            "Uninitialized value: name in Method::new".to_string(),
+        ));
+        let mut input_parameters: Vec<VariableDeclaration> = Vec::new();
+        let mut output_parameters: Vec<VariableDeclaration> = Vec::new();
+
+        for child in node.get_children() {
+            let child = publisher.get_node(*child);
+            match child.rule {
+                Rules::comment
+                | Rules::multiline_comment
+                | Rules::open_bracket
+                | Rules::annotation_block
+                | Rules::close_bracket => {},
+                Rules::variable_name => {
+                    name = Ok(child.get_string(source));
+                }
+                Rules::type_dec => {
+                    name = Ok(child.get_string(source));
+                }
+                Rules::input_params => {
+                    Self::params(source, publisher, child, &mut input_parameters)?;
+                }
+                Rules::output_params => {
+                    Self::params(source, publisher, child, &mut output_parameters)?;
+                }
+                rule => {
+                    return Err(SymbolTableError::UnexpectedNode(
+                        rule,
+                        "Method::new".to_string(),
+                    ));
+                }
+            }
+        }
+        Ok(Self {
+            name: name?,
+            start_position: node.start_position,
+            end_position: node.end_position,
+            input_parameters,
+            output_parameters,
+        })
+    }
+    pub fn push_if_not_exists_else_err(self, methods: &mut Vec<Method>) -> Result<(), SymbolTableError> {
+        for s in &mut *methods{
+            if s.name == self.name{
+                return Err(SymbolTableError::MethodAlreadyExists(s.clone(), self.clone()));
+
+            }
+        }
+        methods.push(self);
+        Ok(())
+
+    }
+
+    fn params(
+        source: &str,
+        publisher: &BasicPublisher,
+        node: &Node,
+        params: &mut Vec<VariableDeclaration>,
+    ) -> Result<(), SymbolTableError> {
+        for child in node.get_children() {
+            let child = publisher.get_node(*child);
+            match child.rule {
+                Rules::variable_declaration => {
+                    let var_dec = VariableDeclaration::new(source, publisher, child)?;
+                    var_dec.push_if_not_exists_else_err(params)?;
+                }
+                Rules::comment
+                | Rules::multiline_comment
+                | Rules::open_bracket
+                | Rules::annotation_block
+                | Rules::close_bracket => {},
+                rule => {
+                    return Err(SymbolTableError::UnexpectedNode(
+                        rule,
+                        "Method::params".to_string(),
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+}

@@ -1,8 +1,11 @@
 use core::fmt;
 
 use crate::attribute::Attribute;
+use crate::method::Method;
 use crate::structure::Structure;
 use crate::symbol_table;
+use crate::type_def::TypeDef;
+use crate::version::Version;
 use crate::ImportModel;
 use crate::ImportNamespace;
 use crate::Interface;
@@ -19,20 +22,30 @@ pub enum SymbolTableError {
     // IntegerParseError(String),
     #[error["This error means the program has a bug: {0}"]]
     InternalLogicError(String),
-    #[error["The Interface: '{0}' already exists!"]]
-    InterfaceAlreadyExists(String),
+    #[error["The Interface: 'TODO' already exists!\nFirst Interface\n{0:#?}\nSecond Interface\n{1:#?}"]]
+    InterfaceAlreadyExists(Interface, Interface),
     #[error["The Field: '{0}' already exists!"]]
     FieldAlreadyExists(String),
-    #[error["The struct: 'TODO' already exists.\nFirst Struct\n{0:#?}\nSecond Struct\n{1:#?}"]]
+    #[error["The Struct: 'TODO' already exists.\nFirst Struct\n{0:#?}\nSecond Struct\n{1:#?}"]]
     StructAlreadyExists(Structure, Structure),
     #[error["The attribute: 'TODO' already exists.\nFirst Attribute\n{0:#?}\nSecond Attribute\n{1:#?}"]]
     AttributeAlreadyExists(Attribute, Attribute),
+    #[error["The typedef: 'TODO' already exists.\nFirst typedef\n{0:#?}\nSecond typedef\n{1:#?}"]]
+    TypeDefAlreadyExists(TypeDef, TypeDef),
+    #[error["The Version: 'TODO' already exists.\n{0:#?}"]]
+    VersionAlreadyExists(Version),
+    #[error["The Method: 'TODO' already exists.\nFirst Struct\n{0:#?}\nSecond Struct\n{1:#?}"]]
+    MethodAlreadyExists(Method, Method),
+    #[error["The Package: 'TODO' already exists.\n{0:#?}"]]
+    PackageAlreadyExists(Package),
+
+
 }
 
 pub struct SymbolTable<'a> {
     source: &'a str,
     publisher: &'a BasicPublisher,
-    packages: Vec<Package>,
+    package: Option<Package>,
     namespaces: Vec<ImportNamespace>,
     import_models: Vec<ImportModel>,
     interfaces: Vec<Interface>,
@@ -46,7 +59,7 @@ impl fmt::Debug for SymbolTable<'_> {
         // not print source or BasicPublisher
         #[derive(Debug)]
         struct SymbolTable<'a> {
-            packages: &'a Vec<Package>,
+            package: &'a Option<Package>,
             namespaces: &'a Vec<ImportNamespace>,
             import_models: &'a Vec<ImportModel>,
             interfaces: &'a Vec<Interface>,
@@ -57,7 +70,7 @@ impl fmt::Debug for SymbolTable<'_> {
         let Self {
             source: _,
             publisher: _,
-            packages,
+            package,
             namespaces,
             import_models,
             interfaces,
@@ -65,7 +78,7 @@ impl fmt::Debug for SymbolTable<'_> {
         } = self;
         fmt::Debug::fmt(
             &SymbolTable {
-                packages,
+                package,
                 namespaces,
                 import_models,
                 interfaces,
@@ -81,7 +94,7 @@ impl<'a> SymbolTable<'a> {
         let mut resp = Self {
             source,
             publisher,
-            packages: Vec::new(),
+            package: None,
             namespaces: Vec::new(),
             import_models: Vec::new(),
             interfaces: Vec::new(),
@@ -94,24 +107,7 @@ impl<'a> SymbolTable<'a> {
         }
     }
 
-    fn add_interface(&mut self, interface: Interface) -> Result<(), SymbolTableError> {
-        let res: u32 = self
-            .interfaces
-            .iter()
-            .map(|intfc| intfc.name == interface.name)
-            .fold(0, |mut acc, result| {
-                acc += result as u32;
-                acc
-            });
-        if res == 0{
-            self.interfaces.push(interface);
-            Ok(())
-        }
-        else{
-            Err(SymbolTableError::InterfaceAlreadyExists(interface.name))
-        }
-    }
-
+   
     fn create_symbol_table(&mut self) -> Result<(), SymbolTableError> {
         let root_node = self.publisher.get_node(Key(0));
         debug_assert_eq!(root_node.rule, Rules::Grammar);
@@ -124,7 +120,7 @@ impl<'a> SymbolTable<'a> {
             match child.rule {
                 Rules::package => {
                     let package = Package::new(self.source, &self.publisher, child)?;
-                    self.packages.push(package);
+                    package.push_if_not_exists_else_err(&mut self.package)?;
                 }
                 Rules::import_namespace => {
                     let import_namespace =
@@ -137,9 +133,14 @@ impl<'a> SymbolTable<'a> {
                 }
                 Rules::interface => {
                     let interface = Interface::new(&self.source, &self.publisher, child)?;
-                    self.add_interface(interface)?;
+                    interface.push_if_not_exists_else_err(&mut self.interfaces)?;
                 }
                 Rules::type_collection => {}
+                Rules::comment
+                | Rules::multiline_comment
+                | Rules::open_bracket
+                | Rules::annotation_block
+                | Rules::close_bracket => {},
                 rule => {
                     return Err(SymbolTableError::UnexpectedNode(
                         rule,

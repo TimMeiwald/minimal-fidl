@@ -28,8 +28,8 @@ impl Attribute {
             match child.rule {
                 Rules::comment
                 | Rules::multiline_comment
-                | Rules::open_bracket
-                | Rules::close_bracket => {},
+                | Rules::annotation_block
+=> {},
                 Rules::type_ref => {
                     type_n = Ok(child.get_string(source));                    
                 }
@@ -46,6 +46,17 @@ impl Attribute {
             }
         }
         Ok(Self { name: name?, type_n: type_n?, start_position: node.start_position, end_position: node.end_position})
+    }
+    pub fn push_if_not_exists_else_err(self, attributes: &mut Vec<Attribute>) -> Result<(), SymbolTableError> {
+        for attr in &mut *attributes{
+            if attr.name == self.name{
+                return Err(SymbolTableError::AttributeAlreadyExists(attr.clone(), self.clone()));
+
+            }
+        }
+        attributes.push(self);
+        Ok(())
+
     }
 
 }

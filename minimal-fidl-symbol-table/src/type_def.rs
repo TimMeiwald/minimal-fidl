@@ -28,10 +28,10 @@ impl TypeDef {
             match child.rule {
                 Rules::comment
                 | Rules::multiline_comment
-                | Rules::open_bracket
-                | Rules::close_bracket => {},
+                | Rules::annotation_block
+=> {},
                 Rules::type_dec => {
-                    todo!("Need to actually do this stuff. Types need to be checked after reading file, 
+                    println!("Need to actually do this stuff. Types need to be checked after reading file, 
                     symbol table is actually File type imo.");
                     name = Ok(child.get_string(source))
                 }
@@ -47,6 +47,18 @@ impl TypeDef {
             }
         }
         Ok(Self { name: name?, type_n: type_n?, start_position: node.start_position, end_position: node.end_position})
+    }
+
+    pub fn push_if_not_exists_else_err(self, typedefs: &mut Vec<TypeDef>) -> Result<(), SymbolTableError> {
+        for t in &mut *typedefs{
+            if t.name == self.name{
+                return Err(SymbolTableError::TypeDefAlreadyExists(t.clone(), self.clone()));
+
+            }
+        }
+        typedefs.push(self);
+        Ok(())
+
     }
 
 }
