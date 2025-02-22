@@ -1,25 +1,29 @@
+pub mod attribute;
+pub mod enum_value;
+pub mod enumeration;
 pub mod import_model;
 pub mod import_namespace;
 pub mod interface;
+pub mod method;
 pub mod package;
 pub mod structure;
 pub mod symbol_table;
-pub mod method;
 pub mod symbol_table_builder;
 pub mod type_collection;
+pub mod type_def;
 pub mod variable_declaration;
 pub mod version;
-pub mod attribute;
-pub mod type_def;
+use attribute::Attribute;
+use enum_value::EnumValue;
+use enumeration::Enumeration;
 use import_model::ImportModel;
 use import_namespace::ImportNamespace;
 use interface::Interface;
-use package::Package;
 use method::Method;
-use type_def::TypeDef;
-use attribute::Attribute;
+use package::Package;
 use structure::Structure;
 use type_collection::TypeCollection;
+use type_def::TypeDef;
 use variable_declaration::VariableDeclaration;
 use version::Version;
 
@@ -176,7 +180,6 @@ attribute uint16 thing2}   ";
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
 
-
     #[test]
     fn test_symbol_table_11() {
         let src = "package org.javaohjavawhyareyouso
@@ -188,7 +191,6 @@ attribute uint16 thing}   ";
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{}", output.unwrap_err());
     }
-
 
     #[test]
     fn test_symbol_table_12() {
@@ -216,7 +218,7 @@ attribute uint16 thing}   ";
         publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
-        println!("Formatted:\n\n{:?}", output.unwrap_err());
+        println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
     #[test]
     #[should_panic] // Temporary because parser will fail instead,
@@ -313,7 +315,7 @@ attribute uint16 thing}   ";
             }
             <** @Annotation: block **>
 
-            method thing {
+            method thing2 {
                 <** @Annotation: block **>
 
                 in {
@@ -363,7 +365,8 @@ attribute uint16 thing}   ";
         publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
-        println!("Formatted:\n\n{:#?}", output.unwrap());
+        //println!("Formatted:\n\n{:#?}", output.unwrap());
+        output.unwrap();
     }
     #[test]
     fn test_formatter_22() {
@@ -411,7 +414,7 @@ attribute uint16 thing}   ";
             }//Comment
             <** @Annotation: block **>//Comment
             //Comment
-            method thing {//Comment
+            method thing2 {//Comment
                 <** @Annotation: block **>//Comment
                 //Comment
                 in {//Comment
@@ -468,12 +471,12 @@ attribute uint16 thing}   ";
         publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
-        println!("Formatted:\n\n{:#?}", output.unwrap());
+        //println!("Formatted:\n\n{:#?}", output.unwrap());
+        output.unwrap();
     }
 
-
     #[test]
-    fn test_formatter_23() {
+    fn test_symbol_table_23() {
         let src = r#"/** MultiLine Comment **/
         package org.javaohjavawhyareyouso /** MultiLine Comment **/
         <** @Annotation: block **>/** MultiLine Comment
@@ -577,19 +580,156 @@ attribute uint16 thing}   ";
         publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
-        println!("Formatted:\n\n{:?}", output.unwrap());
+        //println!("Formatted:\n\n{:?}", output.unwrap());
+        output.unwrap();
     }
-
-
-    fn test_formatter_24(){
+    #[test]
+    fn test_symbol_table_24(){
         let src = r#"
-        
-        "#;
+        package org.javaohjavawhyareyouso
+        interface name {
+            enumeration aEnum {
+                A = 3
+                B = 0x004000
+                C = 0b0101001
+                D
+                E = 10
+            }
+        }"#;
         let publisher = parse(src).unwrap();
         publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
-        println!("Formatted:\n\n{:?}", output.unwrap());
+        println!("Formatted:\n\n{:#?}", output.unwrap());
     }
 
+    #[test]
+    fn test_symbol_table_25(){
+        let src = r#"
+        /**
+    *****************************************************************************
+    * Copyright (c) 2013 itemis AG (http://www.itemis.de).
+    * All rights reserved. This program and the accompanying materials
+    * are made available under the terms of the Eclipse Public License v1.0
+    * which accompanies this distribution, and is available at
+    * http://www.eclipse.org/legal/epl-v10.html
+    *****************************************************************************
+**/
+package org.reference
+<**
+    @description:
+        This reference type collection uses all kinds of type definitions
+        which can be done within one type collection.
+**>
+typeCollection MyTypeCollection10 {
+
+    // struct with all basic types
+    struct MyStruct01 {
+        Int8 se01
+        UInt8 se02
+        Int16 se03
+        UInt16 se04
+        Int32 se05
+        UInt32 se06
+        Int64 se07
+        UInt64 se08
+        Boolean se09
+        String se10
+        ByteBuffer se11
+    }
+
+    // struct for checking alignment/padding
+    struct MyStruct02 {
+        UInt8 se01
+        UInt32 se02
+        UInt8 se03
+        UInt8 se04
+        UInt32 se05
+        UInt8 se06
+        UInt8 se07
+        UInt8 se08
+        UInt32 se09
+    }
+
+    // struct of arrays
+    struct MyStruct04 {
+        MyArray05 se01
+        MyArray20 se02
+        MyArray30 se03
+    }
+
+    // struct with elements of implicit array type
+    struct MyStruct05 {
+        UInt8[] se01
+        String[] se02
+        ByteBuffer[] se03
+        MyArray01[] se10
+        MyStruct02[] se11
+        MyEnum03[] se12
+    }
+
+    // struct of enums
+    struct MyStruct06 {
+        MyEnum01 se01
+        MyEnum02 se02
+        MyEnum03 se03
+        MyEnum10 se10
+    }
+
+    // struct of maps and typedefs
+    struct MyStruct08 {
+        MyMap05 se01
+        MyMap08 se02
+        MyType01 se03
+        MyType03 se04
+    }
+
+    // empty enumeration
+    enumeration MyEnum01 {
+        ENUM00
+    }
+
+    // enumeration without values
+    enumeration MyEnum02 {
+        ENUM01
+        ENUM02
+        ENUM03
+    }
+
+    // enumeration with values
+    enumeration MyEnum03 {
+        ENUM01 = 1
+        ENUM02
+        ENUM03 = 10
+        ENUM04 = 7
+        ENUM05 = 20
+        ENUM06 = 0x20
+    }
+
+    // typedefs from basic types
+    typedef MyType01 is UInt16
+    typedef MyType02 is String
+    typedef MyType03 is Double
+    typedef MyType04 is ByteBuffer
+    // typedefs from user-defined types
+    typedef MyType10 is MyArray10
+    typedef MyType11 is MyStruct01
+    typedef MyType12 is MyStruct10
+    typedef MyType13 is MyUnion03
+    // typedefs from other typedefs
+    typedef MyType20 is MyType01
+    typedef MyType21 is MyType04
+    typedef MyType22 is MyType10
+    typedef MyType23 is MyType12
+}"#;
+        let publisher = parse(src).unwrap();
+        publisher.print(Key(0), Some(true));
+        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
+        let output = fmt.create_symbol_table();
+        println!("Formatted:\n\n{:#?}", output.unwrap());
+    }
 }
+
+
+
+

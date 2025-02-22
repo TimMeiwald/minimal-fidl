@@ -94,10 +94,12 @@
                 <wsn>,
                 (<enum_value>, <wsn>)*, 
                 <close_bracket>, <ws_only_regular_comment>;
+
 <enum_value> =  <annotation_block>?, <wsn>, 
                 <variable_name>, <ws>, 
                 ('=', <ws>, <number>)?, 
                 <ws>, ','?, <ws_only_regular_comment>;
+                
 <version> = "version", <wsn>, 
             <open_bracket>, <wsn>, 
             <major>, <wsn>, 

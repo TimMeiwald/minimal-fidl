@@ -4,6 +4,8 @@ use crate::symbol_table::SymbolTableError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct VariableDeclaration {
+    start_position: u32,
+    end_position: u32,
     type_n: String,
     pub name: String,
 
@@ -40,7 +42,7 @@ impl VariableDeclaration {
                 }
             }
         }
-        Ok(Self { name: name?, type_n: type_n?})
+        Ok(Self { name: name?, type_n: type_n?, start_position: node.start_position, end_position: node.end_position})
     }
 
     pub fn push_if_not_exists_else_err(self, var_decs: &mut Vec<VariableDeclaration>) -> Result<(), SymbolTableError> {

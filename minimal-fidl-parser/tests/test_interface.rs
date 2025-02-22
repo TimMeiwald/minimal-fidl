@@ -246,3 +246,19 @@ fn test_interface_4() {
     let result = shared(src, interface::<BasicContext>, Rules::interface);
     assert_eq!(result, (true, src.len() as u32));
 }
+
+#[test]
+fn test_interface_5() {
+    let src = "interface name {
+        enumeration aEnum {
+            A = 3
+            B = 0x004000
+            C = 0b0101001
+            D
+            E = 10
+        }
+    }";
+    let result = shared(src, interface::<BasicContext>, Rules::interface);
+    assert_eq!(result, (true, src.len() as u32));
+}
+

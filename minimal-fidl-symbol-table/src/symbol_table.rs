@@ -1,9 +1,12 @@
 use core::fmt;
 
 use crate::attribute::Attribute;
+use crate::enum_value::EnumValue;
+use crate::enumeration::Enumeration;
 use crate::method::Method;
 use crate::structure::Structure;
 use crate::symbol_table;
+use crate::type_collection;
 use crate::type_def::TypeDef;
 use crate::version::Version;
 use crate::ImportModel;
@@ -38,6 +41,14 @@ pub enum SymbolTableError {
     MethodAlreadyExists(Method, Method),
     #[error["The Package: 'TODO' already exists.\n{0:#?}"]]
     PackageAlreadyExists(Package),
+    #[error["The Enumeration: 'TODO' already exists.\nFirst Enum\n{0:#?}\nSecond Enum\n{1:#?}"]]
+    EnumerationAlreadyExists(Enumeration, Enumeration),
+    #[error["Could not convert '{0}' to an Integer."]]
+    CouldNotConvertToInteger(String),
+    #[error["The Enum Value: 'TODO' already exists.\nFirst Enum Value\n{0:#?}\nSecond Enum Value\n{1:#?}"]]
+    EnumValueAlreadyExists(EnumValue, EnumValue),
+    #[error["The Type Collection: 'TODO' already exists.\nFirst Type Collection\n{0:#?}\nSecond Type Collection\n{1:#?}"]]
+    TypeCollectionAlreadyExists(TypeCollection, TypeCollection),
 
 
 }
@@ -135,7 +146,10 @@ impl<'a> SymbolTable<'a> {
                     let interface = Interface::new(&self.source, &self.publisher, child)?;
                     interface.push_if_not_exists_else_err(&mut self.interfaces)?;
                 }
-                Rules::type_collection => {}
+                Rules::type_collection => {
+                    let type_collection = TypeCollection::new(&self.source, &self.publisher, child)?;
+                    type_collection.push_if_not_exists_else_err(&mut self.type_collections)?;
+                }
                 Rules::comment
                 | Rules::multiline_comment
                 | Rules::open_bracket

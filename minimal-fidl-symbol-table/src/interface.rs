@@ -4,22 +4,20 @@ use std::{
 };
 
 use crate::{
-    attribute::{self, Attribute},
-    method::Method,
-    structure::Structure,
-    symbol_table::SymbolTableError,
-    type_def::TypeDef,
-    Version,
+    attribute::{self, Attribute}, enumeration::{self, Enumeration}, method::Method, structure::Structure, symbol_table::SymbolTableError, type_def::TypeDef, Version
 };
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Interface {
+    start_position: u32,
+    end_position: u32,
     pub name: String,
     version: Option<Version>,
     attributes: Vec<Attribute>,
     structures: Vec<Structure>,
     typedefs: Vec<TypeDef>,
     methods: Vec<Method>,
+    enumerations: Vec<Enumeration>
 }
 impl Interface {
     pub fn new(
@@ -36,6 +34,8 @@ impl Interface {
         let mut attributes: Vec<Attribute> = Vec::new();
         let mut typedefs: Vec<TypeDef> = Vec::new();
         let mut methods: Vec<Method> = Vec::new();
+        let mut enumerations: Vec<Enumeration> = Vec::new();
+
 
         for child in node.get_children() {
             let child = publisher.get_node(*child);
@@ -64,6 +64,10 @@ impl Interface {
                     let method = Method::new(source, publisher, child)?;
                     method.push_if_not_exists_else_err(&mut methods)?;
                 }
+                Rules::enumeration => {
+                    let enumeration = Enumeration::new(source, publisher, child)?;
+                    enumeration.push_if_not_exists_else_err(&mut enumerations)?;
+                }
 
                 Rules::comment
                 | Rules::multiline_comment
@@ -85,6 +89,9 @@ impl Interface {
             attributes,
             typedefs,
             methods,
+            enumerations, 
+            start_position : node.start_position,
+            end_position : node.end_position,
         })
     }
 

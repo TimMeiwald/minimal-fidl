@@ -7,6 +7,8 @@ use crate::symbol_table::SymbolTableError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Version {
+    start_position: u32,
+    end_position: u32,
     major: Option<u32>,
     minor: Option<u32>
 }
@@ -45,6 +47,8 @@ impl Version {
         Ok(Self {
             major,
             minor,
+            start_position: node.start_position,
+            end_position: node.end_position
         })
     }
 

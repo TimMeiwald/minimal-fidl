@@ -82,3 +82,17 @@ fn test_enumeration_7() {
     let result = shared(src, enumeration::<BasicContext>, Rules::enumeration);
     assert_eq!(result, (true, src.len() as u32));
 }
+
+#[test]
+fn test_enumeration_8() {
+    let src = r#"<** @description : Repeat modes for playback. **>
+	enumeration aEnum {
+		A = 3
+		B = 0x004000
+		C = 0b0101001
+		D
+		E = 10
+	}"#;
+    let result = shared(src, enumeration::<BasicContext>, Rules::enumeration);
+    assert_eq!(result, (true, src.len() as u32));
+}
