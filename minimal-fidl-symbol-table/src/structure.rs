@@ -1,6 +1,6 @@
 use std::{path::{Path, PathBuf}, str::FromStr};
 
-use crate::{symbol_table::SymbolTableError, VariableDeclaration};
+use crate::{fidl_file::FileError, VariableDeclaration};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Structure {
@@ -15,10 +15,10 @@ impl Structure {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::structure);
-        let mut name: Result<String, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: name in Structure::new".to_string()),
+        let mut name: Result<String, FileError> = Err(
+            FileError::InternalLogicError("Uninitialized value: name in Structure::new".to_string()),
         );
         let mut contents: Vec<VariableDeclaration> = Vec::new();
         for child in node.get_children() {
@@ -38,7 +38,7 @@ impl Structure {
                 }
 
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "Structure::new".to_string(),
                     ));
@@ -49,10 +49,10 @@ impl Structure {
     }
 
 
-    pub fn push_if_not_exists_else_err(self, structures: &mut Vec<Structure>) -> Result<(), SymbolTableError> {
+    pub fn push_if_not_exists_else_err(self, structures: &mut Vec<Structure>) -> Result<(), FileError> {
         for s in &mut *structures{
             if s.name == self.name{
-                return Err(SymbolTableError::StructAlreadyExists(s.clone(), self.clone()));
+                return Err(FileError::StructAlreadyExists(s.clone(), self.clone()));
 
             }
         }

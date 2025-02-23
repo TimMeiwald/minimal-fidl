@@ -7,7 +7,7 @@ pub mod interface;
 pub mod method;
 pub mod package;
 pub mod structure;
-pub mod symbol_table;
+pub mod fidl_file;
 pub mod symbol_table_builder;
 pub mod type_collection;
 pub mod type_def;
@@ -29,7 +29,7 @@ use version::Version;
 
 #[cfg(test)]
 mod tests {
-    use crate::{symbol_table::SymbolTable, symbol_table_builder};
+    use crate::{fidl_file::FidlFile, symbol_table_builder};
     use minimal_fidl_parser::{
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };

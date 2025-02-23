@@ -5,7 +5,7 @@ use crate::enum_value::EnumValue;
 use crate::enumeration::Enumeration;
 use crate::method::Method;
 use crate::structure::Structure;
-use crate::symbol_table;
+use crate::fidl_file;
 use crate::type_collection;
 use crate::type_def::TypeDef;
 use crate::version::Version;
@@ -18,7 +18,7 @@ use minimal_fidl_parser::{BasicPublisher, Key, Rules};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum SymbolTableError {
+pub enum FileError {
     #[error("Unexpected Node: {0:?} in '{1}'!")]
     UnexpectedNode(Rules, String),
     // #[error("Could not parse `{0}` as an integer.")]
@@ -53,7 +53,7 @@ pub enum SymbolTableError {
 
 }
 
-pub struct SymbolTable<'a> {
+pub struct FidlFile<'a> {
     source: &'a str,
     publisher: &'a BasicPublisher,
     package: Option<Package>,
@@ -63,13 +63,13 @@ pub struct SymbolTable<'a> {
     type_collections: Vec<TypeCollection>,
 }
 
-impl fmt::Debug for SymbolTable<'_> {
+impl fmt::Debug for FidlFile<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // The below is some kind of magic I don't fully understand but basically
         // it let's me print just specific fields(the ones deifned in SymbolTable below) and
         // not print source or BasicPublisher
         #[derive(Debug)]
-        struct SymbolTable<'a> {
+        struct FidlFile<'a> {
             package: &'a Option<Package>,
             namespaces: &'a Vec<ImportNamespace>,
             import_models: &'a Vec<ImportModel>,
@@ -88,7 +88,7 @@ impl fmt::Debug for SymbolTable<'_> {
             type_collections,
         } = self;
         fmt::Debug::fmt(
-            &SymbolTable {
+            &FidlFile {
                 package,
                 namespaces,
                 import_models,
@@ -100,8 +100,8 @@ impl fmt::Debug for SymbolTable<'_> {
     }
 }
 
-impl<'a> SymbolTable<'a> {
-    pub fn new(source: &'a str, publisher: &'a BasicPublisher) -> Result<Self, SymbolTableError> {
+impl<'a> FidlFile<'a> {
+    pub fn new(source: &'a str, publisher: &'a BasicPublisher) -> Result<Self, FileError> {
         let mut resp = Self {
             source,
             publisher,
@@ -119,7 +119,7 @@ impl<'a> SymbolTable<'a> {
     }
 
    
-    fn create_symbol_table(&mut self) -> Result<(), SymbolTableError> {
+    fn create_symbol_table(&mut self) -> Result<(), FileError> {
         let root_node = self.publisher.get_node(Key(0));
         debug_assert_eq!(root_node.rule, Rules::Grammar);
         let root_node_children = root_node.get_children();
@@ -156,7 +156,7 @@ impl<'a> SymbolTable<'a> {
                 | Rules::annotation_block
                 | Rules::close_bracket => {},
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "SymblTable::create_symbol_table".to_string(),
                     ));

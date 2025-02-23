@@ -3,7 +3,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::symbol_table::SymbolTableError;
+use crate::fidl_file::FileError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct EnumValue {
@@ -18,10 +18,10 @@ impl EnumValue {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::enum_value);
         let mut value: Option<u64> = None;
-        let mut name: Result<String, SymbolTableError> = Err(SymbolTableError::InternalLogicError(
+        let mut name: Result<String, FileError> = Err(FileError::InternalLogicError(
             "Uninitialized value: name in EnumValue::new".to_string(),
         ));
 
@@ -38,7 +38,7 @@ impl EnumValue {
                 }
 
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "EnumValue::new".to_string(),
                     ));
@@ -51,10 +51,10 @@ impl EnumValue {
     pub fn push_if_not_exists_else_err(
         self,
         enum_values: &mut Vec<EnumValue>,
-    ) -> Result<(), SymbolTableError> {
+    ) -> Result<(), FileError> {
         for s in &mut *enum_values {
             if s.name == self.name {
-                return Err(SymbolTableError::EnumValueAlreadyExists(
+                return Err(FileError::EnumValueAlreadyExists(
                     s.clone(),
                     self.clone(),
                 ));
@@ -66,7 +66,7 @@ impl EnumValue {
 
     fn convert_string_representation_of_number_to_value(
         input: String,
-    ) -> Result<u64, SymbolTableError> {
+    ) -> Result<u64, FileError> {
         let value = input.parse::<u64>();
 
         match value {
@@ -96,7 +96,7 @@ impl EnumValue {
             }
             None => {}
         }
-        Err(SymbolTableError::CouldNotConvertToInteger(input))
+        Err(FileError::CouldNotConvertToInteger(input))
     }
 }
 

@@ -1,6 +1,6 @@
 use std::{path::{Path, PathBuf}, str::FromStr};
 
-use crate::{symbol_table::SymbolTableError, VariableDeclaration};
+use crate::{fidl_file::FileError, VariableDeclaration};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Attribute {
@@ -15,13 +15,13 @@ impl Attribute {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::attribute);
-        let mut name: Result<String, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: name in Attribute::new".to_string()),
+        let mut name: Result<String, FileError> = Err(
+            FileError::InternalLogicError("Uninitialized value: name in Attribute::new".to_string()),
         );
-        let mut type_n: Result<String, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: name in Attribute::new".to_string()),
+        let mut type_n: Result<String, FileError> = Err(
+            FileError::InternalLogicError("Uninitialized value: name in Attribute::new".to_string()),
         );
         for child in node.get_children() {
             let child = publisher.get_node(*child);
@@ -38,7 +38,7 @@ impl Attribute {
                 }
 
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "Attribute::new".to_string(),
                     ));
@@ -47,10 +47,10 @@ impl Attribute {
         }
         Ok(Self { name: name?, type_n: type_n?, start_position: node.start_position, end_position: node.end_position})
     }
-    pub fn push_if_not_exists_else_err(self, attributes: &mut Vec<Attribute>) -> Result<(), SymbolTableError> {
+    pub fn push_if_not_exists_else_err(self, attributes: &mut Vec<Attribute>) -> Result<(), FileError> {
         for attr in &mut *attributes{
             if attr.name == self.name{
-                return Err(SymbolTableError::AttributeAlreadyExists(attr.clone(), self.clone()));
+                return Err(FileError::AttributeAlreadyExists(attr.clone(), self.clone()));
 
             }
         }

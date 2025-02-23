@@ -3,7 +3,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::symbol_table::SymbolTableError;
+use crate::fidl_file::FileError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Version {
@@ -17,7 +17,7 @@ impl Version {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::version);
         let mut major: Option<u32> = None;
         let mut minor: Option<u32> = None;
@@ -37,7 +37,7 @@ impl Version {
                  }
 
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "Version::new".to_string(),
                     ));
@@ -59,7 +59,7 @@ impl Version {
             0
         }
 
-    pub fn push_if_not_exists_else_err(self, version: &mut Option<Version>) -> Result<(), SymbolTableError>{
+    pub fn push_if_not_exists_else_err(self, version: &mut Option<Version>) -> Result<(), FileError>{
         // Set would be a more appropriate name but push is more consistent naming.
         // TODO: This never happens because the parser does not allow more than one version.
         // However, the error messages in that case would be far less useful so it might be worth modifying the
@@ -71,7 +71,7 @@ impl Version {
 
             }
             Some(version) => {
-                Err(SymbolTableError::VersionAlreadyExists(version.clone()))
+                Err(FileError::VersionAlreadyExists(version.clone()))
 
             }
         }

@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    attribute::{self, Attribute}, enumeration::{self, Enumeration}, method::Method, structure::Structure, symbol_table::SymbolTableError, type_def::TypeDef, Version
+    attribute::{self, Attribute}, enumeration::{self, Enumeration}, method::Method, structure::Structure, fidl_file::FileError, type_def::TypeDef, Version
 };
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
@@ -24,9 +24,9 @@ impl Interface {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::interface);
-        let mut name: Result<String, SymbolTableError> = Err(SymbolTableError::InternalLogicError(
+        let mut name: Result<String, FileError> = Err(FileError::InternalLogicError(
             "Uninitialized value: 'name' in Interface::new".to_string(),
         ));
         let mut version: Option<Version> = None;
@@ -75,7 +75,7 @@ impl Interface {
                 | Rules::annotation_block
                 | Rules::close_bracket => {}
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "Interface::new".to_string(),
                     ));
@@ -99,10 +99,10 @@ impl Interface {
         node.get_string(source)
     }
 
-    pub fn push_if_not_exists_else_err(self, interfaces: &mut Vec<Interface>) -> Result<(), SymbolTableError> {
+    pub fn push_if_not_exists_else_err(self, interfaces: &mut Vec<Interface>) -> Result<(), FileError> {
         for s in &mut *interfaces{
             if s.name == self.name{
-                return Err(SymbolTableError::InterfaceAlreadyExists(s.clone(), self.clone()));
+                return Err(FileError::InterfaceAlreadyExists(s.clone(), self.clone()));
 
             }
         }

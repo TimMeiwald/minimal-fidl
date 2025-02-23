@@ -1,7 +1,7 @@
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 use thiserror::Error;
-use crate::symbol_table::SymbolTableError;
-use crate::symbol_table::SymbolTable;
+use crate::fidl_file::FileError;
+use crate::fidl_file::FidlFile;
 
 
 pub struct SymbolTableBuilder<'a> {
@@ -15,8 +15,8 @@ impl<'a> SymbolTableBuilder<'a> {
         
     }
 
-    pub fn create_symbol_table(&self) -> Result<SymbolTable, SymbolTableError> {
-        SymbolTable::new(&self.source, &self.publisher)
+    pub fn create_symbol_table(&self) -> Result<FidlFile, FileError> {
+        FidlFile::new(&self.source, &self.publisher)
     }
 }
 

@@ -3,7 +3,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::{symbol_table::SymbolTableError, VariableDeclaration};
+use crate::{fidl_file::FileError, VariableDeclaration};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Method {
@@ -18,9 +18,9 @@ impl Method {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::method);
-        let mut name: Result<String, SymbolTableError> = Err(SymbolTableError::InternalLogicError(
+        let mut name: Result<String, FileError> = Err(FileError::InternalLogicError(
             "Uninitialized value: name in Method::new".to_string(),
         ));
         let mut input_parameters: Vec<VariableDeclaration> = Vec::new();
@@ -47,7 +47,7 @@ impl Method {
                     Self::params(source, publisher, child, &mut output_parameters)?;
                 }
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "Method::new".to_string(),
                     ));
@@ -62,10 +62,10 @@ impl Method {
             output_parameters,
         })
     }
-    pub fn push_if_not_exists_else_err(self, methods: &mut Vec<Method>) -> Result<(), SymbolTableError> {
+    pub fn push_if_not_exists_else_err(self, methods: &mut Vec<Method>) -> Result<(), FileError> {
         for s in &mut *methods{
             if s.name == self.name{
-                return Err(SymbolTableError::MethodAlreadyExists(s.clone(), self.clone()));
+                return Err(FileError::MethodAlreadyExists(s.clone(), self.clone()));
 
             }
         }
@@ -79,7 +79,7 @@ impl Method {
         publisher: &BasicPublisher,
         node: &Node,
         params: &mut Vec<VariableDeclaration>,
-    ) -> Result<(), SymbolTableError> {
+    ) -> Result<(), FileError> {
         for child in node.get_children() {
             let child = publisher.get_node(*child);
             match child.rule {
@@ -93,7 +93,7 @@ impl Method {
                 | Rules::annotation_block
                 | Rules::close_bracket => {},
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "Method::params".to_string(),
                     ));

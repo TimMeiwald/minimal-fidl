@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    attribute::{self, Attribute}, enumeration::{self, Enumeration}, method::Method, structure::Structure, symbol_table::SymbolTableError, type_def::TypeDef, Version
+    attribute::{self, Attribute}, enumeration::{self, Enumeration}, method::Method, structure::Structure, fidl_file::FileError, type_def::TypeDef, Version
 };
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
@@ -22,7 +22,7 @@ impl TypeCollection {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::type_collection);
         let mut name: String = "".to_string(); // Cos the type collection name can be seemingly empty.
         let mut version: Option<Version> = None;
@@ -61,7 +61,7 @@ impl TypeCollection {
                 | Rules::annotation_block
                 | Rules::close_bracket => {}
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "TypeCollection::new".to_string(),
                     ));
@@ -83,10 +83,10 @@ impl TypeCollection {
         node.get_string(source)
     }
 
-    pub fn push_if_not_exists_else_err(self, type_collections: &mut Vec<TypeCollection>) -> Result<(), SymbolTableError> {
+    pub fn push_if_not_exists_else_err(self, type_collections: &mut Vec<TypeCollection>) -> Result<(), FileError> {
         for s in &mut *type_collections{
             if s.name == self.name{
-                return Err(SymbolTableError::TypeCollectionAlreadyExists(s.clone(), self.clone()));
+                return Err(FileError::TypeCollectionAlreadyExists(s.clone(), self.clone()));
 
             }
         }

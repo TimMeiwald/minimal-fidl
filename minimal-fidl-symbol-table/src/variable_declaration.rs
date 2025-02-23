@@ -1,6 +1,6 @@
 use std::{path::{Path, PathBuf}, str::FromStr};
 
-use crate::symbol_table::SymbolTableError;
+use crate::fidl_file::FileError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct VariableDeclaration {
@@ -15,13 +15,13 @@ impl VariableDeclaration {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::variable_declaration);
-        let mut type_n: Result<String, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: type_n in VariableDeclaration::new".to_string()),
+        let mut type_n: Result<String, FileError> = Err(
+            FileError::InternalLogicError("Uninitialized value: type_n in VariableDeclaration::new".to_string()),
         );
-        let mut name: Result<String, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: name in VariableDeclaration::new".to_string()),
+        let mut name: Result<String, FileError> = Err(
+            FileError::InternalLogicError("Uninitialized value: name in VariableDeclaration::new".to_string()),
         );
 
         for child in node.get_children() {
@@ -35,7 +35,7 @@ impl VariableDeclaration {
                     name = Ok(child.get_string(source));
                 }
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "VariableDeclaration::new".to_string(),
                     ));
@@ -45,7 +45,7 @@ impl VariableDeclaration {
         Ok(Self { name: name?, type_n: type_n?, start_position: node.start_position, end_position: node.end_position})
     }
 
-    pub fn push_if_not_exists_else_err(self, var_decs: &mut Vec<VariableDeclaration>) -> Result<(), SymbolTableError> {
+    pub fn push_if_not_exists_else_err(self, var_decs: &mut Vec<VariableDeclaration>) -> Result<(), FileError> {
         let res: u32 = var_decs
             .iter()
             .map(|intfc| intfc.name == self.name)
@@ -58,7 +58,7 @@ impl VariableDeclaration {
             Ok(())
         }
         else{
-            Err(SymbolTableError::FieldAlreadyExists(self.name))
+            Err(FileError::FieldAlreadyExists(self.name))
         }
     }
 }

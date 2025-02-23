@@ -1,6 +1,6 @@
 use std::{path::{Path, PathBuf}, str::FromStr};
 
-use crate::{enum_value::EnumValue, symbol_table::SymbolTableError, VariableDeclaration};
+use crate::{enum_value::EnumValue, fidl_file::FileError, VariableDeclaration};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Enumeration {
@@ -15,10 +15,10 @@ impl Enumeration {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::enumeration);
-        let mut name: Result<String, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: name in Enumeration::new".to_string()),
+        let mut name: Result<String, FileError> = Err(
+            FileError::InternalLogicError("Uninitialized value: name in Enumeration::new".to_string()),
         );
         let mut values: Vec<EnumValue> = Vec::new();
         for child in node.get_children() {
@@ -38,7 +38,7 @@ impl Enumeration {
                 }
 
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "Enumeration::new".to_string(),
                     ));
@@ -49,10 +49,10 @@ impl Enumeration {
     }
 
 
-    pub fn push_if_not_exists_else_err(self, Enumerations: &mut Vec<Enumeration>) -> Result<(), SymbolTableError> {
+    pub fn push_if_not_exists_else_err(self, Enumerations: &mut Vec<Enumeration>) -> Result<(), FileError> {
         for s in &mut *Enumerations{
             if s.name == self.name{
-                return Err(SymbolTableError::EnumerationAlreadyExists(s.clone(), self.clone()));
+                return Err(FileError::EnumerationAlreadyExists(s.clone(), self.clone()));
 
             }
         }

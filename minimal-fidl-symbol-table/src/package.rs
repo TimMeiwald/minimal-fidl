@@ -1,4 +1,4 @@
-use crate::symbol_table::SymbolTableError;
+use crate::fidl_file::FileError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Package {
@@ -9,10 +9,10 @@ impl Package {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::package);
-        let mut path: Result<Vec<String>, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value in Package::new".to_string()),
+        let mut path: Result<Vec<String>, FileError> = Err(
+            FileError::InternalLogicError("Uninitialized value in Package::new".to_string()),
         );
         for child in node.get_children() {
             let child = publisher.get_node(*child);
@@ -23,7 +23,7 @@ impl Package {
                     path = Ok(res.split(".").map(|string| {string.to_string()}).collect())
                 }
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "Package::new".to_string(),
                     ));
@@ -32,7 +32,7 @@ impl Package {
         }
         Ok(Self { path: path? })
     }
-    pub fn push_if_not_exists_else_err(self, package: &mut Option<Package>) -> Result<(), SymbolTableError>{
+    pub fn push_if_not_exists_else_err(self, package: &mut Option<Package>) -> Result<(), FileError>{
         // Set would be a more appropriate name but push is more consistent naming.
         // TODO: This never happens because the parser does not allow more than one version.
         // However, the error messages in that case would be far less useful so it might be worth modifying the
@@ -44,7 +44,7 @@ impl Package {
 
             }
             Some(package) => {
-                Err(SymbolTableError::PackageAlreadyExists(package.clone()))
+                Err(FileError::PackageAlreadyExists(package.clone()))
 
             }
         }

@@ -1,6 +1,6 @@
 use std::{path::{Path, PathBuf}, str::FromStr};
 
-use crate::symbol_table::SymbolTableError;
+use crate::fidl_file::FileError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug)]
 pub struct ImportNamespace {
@@ -14,14 +14,14 @@ impl ImportNamespace {
         source: &str,
         publisher: &BasicPublisher,
         node: &Node,
-    ) -> Result<Self, SymbolTableError> {
+    ) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::import_namespace);
         let mut wildcard = false;
-        let mut import: Result<Vec<String>, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: 'import' in ImportNamespace::new".to_string()),
+        let mut import: Result<Vec<String>, FileError> = Err(
+            FileError::InternalLogicError("Uninitialized value: 'import' in ImportNamespace::new".to_string()),
         );
-        let mut from: Result<PathBuf, SymbolTableError> = Err(
-            SymbolTableError::InternalLogicError("Uninitialized value: 'from' in ImportNamespace::new".to_string()),
+        let mut from: Result<PathBuf, FileError> = Err(
+            FileError::InternalLogicError("Uninitialized value: 'from' in ImportNamespace::new".to_string()),
         );
 
         for child in node.get_children() {
@@ -40,7 +40,7 @@ impl ImportNamespace {
                     from = Ok(PathBuf::from_str(&res[1..(res.len()-1)]).expect("Claims to be infallible"));
                 }
                 rule => {
-                    return Err(SymbolTableError::UnexpectedNode(
+                    return Err(FileError::UnexpectedNode(
                         rule,
                         "ImportNamespace::new".to_string(),
                     ));
