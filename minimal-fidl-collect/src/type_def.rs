@@ -31,8 +31,7 @@ impl TypeDef {
                 | Rules::annotation_block
 => {},
                 Rules::type_dec => {
-                    println!("Need to actually do this stuff. Types need to be checked after reading file, 
-                    symbol table is actually File type imo.");
+                    println!("Need to actually do this stuff. Types need to be checked for duplicates and whether they exist if using external import after reading file.");
                     name = Ok(child.get_string(source))
                 }
                 Rules::type_ref => {

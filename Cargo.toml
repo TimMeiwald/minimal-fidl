@@ -4,7 +4,7 @@ members = [ "minimal-fidl-parser",
             "minimal-fidl-formatter", 
             "test-grammar-proc-macro", 
             "minimal-fidl-cli",
-            "minimal-fidl-symbol-table", 
+            "minimal-fidl-collect", 
             ]
 
 

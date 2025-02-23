@@ -1,13 +1,13 @@
 pub mod attribute;
 pub mod enum_value;
 pub mod enumeration;
+pub mod fidl_file;
 pub mod import_model;
 pub mod import_namespace;
 pub mod interface;
 pub mod method;
 pub mod package;
 pub mod structure;
-pub mod fidl_file;
 pub mod symbol_table_builder;
 pub mod type_collection;
 pub mod type_def;
@@ -60,7 +60,7 @@ mod tests {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist { }	";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("{:?}", output);
@@ -76,7 +76,7 @@ mod tests {
 
 	interface endOfPlaylist { }	"#;
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("{:?}", output);
@@ -90,7 +90,7 @@ mod tests {
         let src = r#"package whatever 
         import model "csm_t.fidl""#;
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!(
@@ -103,7 +103,7 @@ mod tests {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}}";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap());
@@ -114,7 +114,7 @@ mod tests {
 	interface endOfPlaylist {  version {major 25 minor 60}}
     interface endOfPlaylist {  version {major 23 minor 40}}";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         let err = output.unwrap_err();
@@ -127,7 +127,7 @@ mod tests {
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}
 }   ";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap());
@@ -138,7 +138,7 @@ mod tests {
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p1}
 }   ";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
@@ -150,7 +150,7 @@ mod tests {
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing{}
 }   ";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{}", output.unwrap_err());
@@ -162,7 +162,7 @@ mod tests {
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
 }   ";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap());
@@ -174,7 +174,7 @@ mod tests {
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
 attribute uint16 thing2}   ";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap());
@@ -186,7 +186,7 @@ attribute uint16 thing2}   ";
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
 attribute uint16 thing}   ";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{}", output.unwrap_err());
@@ -201,7 +201,7 @@ attribute uint16 thing}   ";
     out {param2 param2 org.param3 param3}} 	
 }	";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap());
@@ -215,7 +215,7 @@ attribute uint16 thing}   ";
     out {param2 param2 org.param3 param3}} 	typedef aTypedef is Int16
 }	";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
@@ -239,7 +239,7 @@ attribute uint16 thing}   ";
     out {param2 param2 org.param3 param3}} 	typedef aTypedef is Int16
 }	";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap());
@@ -251,7 +251,7 @@ attribute uint16 thing}   ";
     interface endOfPlaylist {}
 	";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
@@ -266,7 +266,7 @@ attribute uint16 thing}   ";
         interface endOfPlaylist {}
 	";
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
@@ -362,7 +362,7 @@ attribute uint16 thing}   ";
             }
         }"#;
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         //println!("Formatted:\n\n{:#?}", output.unwrap());
@@ -468,7 +468,7 @@ attribute uint16 thing}   ";
             }
         }"#;
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         //println!("Formatted:\n\n{:#?}", output.unwrap());
@@ -577,14 +577,14 @@ attribute uint16 thing}   ";
             }
         }"#;
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         //println!("Formatted:\n\n{:?}", output.unwrap());
         output.unwrap();
     }
     #[test]
-    fn test_symbol_table_24(){
+    fn test_symbol_table_24() {
         let src = r#"
         package org.javaohjavawhyareyouso
         interface name {
@@ -597,14 +597,14 @@ attribute uint16 thing}   ";
             }
         }"#;
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
 
     #[test]
-    fn test_symbol_table_25(){
+    fn test_symbol_table_25() {
         let src = r#"
         /**
     *****************************************************************************
@@ -723,13 +723,9 @@ typeCollection MyTypeCollection10 {
     typedef MyType23 is MyType12
 }"#;
         let publisher = parse(src).unwrap();
-        publisher.print(Key(0), Some(true));
+        //        publisher.print(Key(0), Some(true));
         let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         let output = fmt.create_symbol_table();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
 }
-
-
-
-
