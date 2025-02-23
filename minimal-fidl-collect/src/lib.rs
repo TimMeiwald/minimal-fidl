@@ -8,7 +8,7 @@ pub mod interface;
 pub mod method;
 pub mod package;
 pub mod structure;
-pub mod symbol_table_builder;
+pub mod file_wrapper;
 pub mod type_collection;
 pub mod type_def;
 pub mod variable_declaration;
@@ -29,7 +29,7 @@ use version::Version;
 
 #[cfg(test)]
 mod tests {
-    use crate::{fidl_file::FidlFile, symbol_table_builder};
+    use crate::{fidl_file::FidlFile, file_wrapper};
     use minimal_fidl_parser::{
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };
@@ -61,8 +61,8 @@ mod tests {
 	interface endOfPlaylist { }	";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("{:?}", output);
         println!(
             "Formatted:\n\n{:#?}",
@@ -77,8 +77,8 @@ mod tests {
 	interface endOfPlaylist { }	"#;
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("{:?}", output);
         println!(
             "Formatted:\n\n{:#?}",
@@ -91,8 +91,8 @@ mod tests {
         import model "csm_t.fidl""#;
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!(
             "Formatted:\n\n{:#?}",
             output.expect("We expect no symbol table errors")
@@ -104,8 +104,8 @@ mod tests {
 	interface endOfPlaylist {  version {major 25 minor 60}}";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
     #[test]
@@ -115,8 +115,8 @@ mod tests {
     interface endOfPlaylist {  version {major 23 minor 40}}";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         let err = output.unwrap_err();
         println!("Err: {:?}", err)
     }
@@ -128,8 +128,8 @@ mod tests {
 }   ";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
     #[test]
@@ -139,8 +139,8 @@ mod tests {
 }   ";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
 
@@ -151,8 +151,8 @@ mod tests {
 }   ";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{}", output.unwrap_err());
     }
 
@@ -163,8 +163,8 @@ mod tests {
 }   ";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
 
@@ -175,8 +175,8 @@ mod tests {
 attribute uint16 thing2}   ";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
 
@@ -187,8 +187,8 @@ attribute uint16 thing2}   ";
 attribute uint16 thing}   ";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{}", output.unwrap_err());
     }
 
@@ -202,8 +202,8 @@ attribute uint16 thing}   ";
 }	";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
 
@@ -216,8 +216,8 @@ attribute uint16 thing}   ";
 }	";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
     #[test]
@@ -240,8 +240,8 @@ attribute uint16 thing}   ";
 }	";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
     #[test]
@@ -252,8 +252,8 @@ attribute uint16 thing}   ";
 	";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
     #[test]
@@ -267,8 +267,8 @@ attribute uint16 thing}   ";
 	";
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
     #[test]
@@ -363,8 +363,8 @@ attribute uint16 thing}   ";
         }"#;
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         //println!("Formatted:\n\n{:#?}", output.unwrap());
         output.unwrap();
     }
@@ -469,8 +469,8 @@ attribute uint16 thing}   ";
         }"#;
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         //println!("Formatted:\n\n{:#?}", output.unwrap());
         output.unwrap();
     }
@@ -578,8 +578,8 @@ attribute uint16 thing}   ";
         }"#;
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         //println!("Formatted:\n\n{:?}", output.unwrap());
         output.unwrap();
     }
@@ -598,8 +598,8 @@ attribute uint16 thing}   ";
         }"#;
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
 
@@ -724,8 +724,8 @@ typeCollection MyTypeCollection10 {
 }"#;
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
-        let output = fmt.create_symbol_table();
+        let fmt = file_wrapper::FileWrapper::new(src, &publisher);
+        let output = fmt.load_file();
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
 }
