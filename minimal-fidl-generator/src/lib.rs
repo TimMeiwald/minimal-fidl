@@ -1,0 +1,1 @@
+use minimal_fidl_collect::import_model;

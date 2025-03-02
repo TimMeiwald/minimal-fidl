@@ -5,7 +5,6 @@ use crate::enum_value::EnumValue;
 use crate::enumeration::Enumeration;
 use crate::method::Method;
 use crate::structure::Structure;
-use crate::fidl_file;
 use crate::type_collection;
 use crate::type_def::TypeDef;
 use crate::version::Version;
@@ -55,7 +54,6 @@ pub enum FileError {
 
 pub struct FidlFile<'a> {
     source: &'a str,
-    publisher: &'a BasicPublisher,
     package: Option<Package>,
     namespaces: Vec<ImportNamespace>,
     import_models: Vec<ImportModel>,
@@ -80,7 +78,6 @@ impl fmt::Debug for FidlFile<'_> {
         // In a SymbolTableRepr construction.
         let Self {
             source: _,
-            publisher: _,
             package,
             namespaces,
             import_models,
@@ -104,14 +101,13 @@ impl<'a> FidlFile<'a> {
     pub fn new(source: &'a str, publisher: &'a BasicPublisher) -> Result<Self, FileError> {
         let mut resp = Self {
             source,
-            publisher,
             package: None,
             namespaces: Vec::new(),
             import_models: Vec::new(),
             interfaces: Vec::new(),
             type_collections: Vec::new(),
         };
-        let result = resp.create_symbol_table();
+        let result = resp.create_symbol_table(&publisher);
         match result {
             Ok(()) => Ok(resp),
             Err(err) => Err(err),
@@ -119,35 +115,35 @@ impl<'a> FidlFile<'a> {
     }
 
    
-    fn create_symbol_table(&mut self) -> Result<(), FileError> {
-        let root_node = self.publisher.get_node(Key(0));
+    fn create_symbol_table(&mut self, publisher: &'a BasicPublisher) -> Result<(), FileError> {
+        let root_node = publisher.get_node(Key(0));
         debug_assert_eq!(root_node.rule, Rules::Grammar);
         let root_node_children = root_node.get_children();
         debug_assert_eq!(root_node_children.len(), 1);
         let grammar_node_key = root_node_children[0];
-        let grammar_node = self.publisher.get_node(grammar_node_key);
+        let grammar_node = publisher.get_node(grammar_node_key);
         for child in grammar_node.get_children() {
-            let child = self.publisher.get_node(*child);
+            let child = publisher.get_node(*child);
             match child.rule {
                 Rules::package => {
-                    let package = Package::new(self.source, &self.publisher, child)?;
+                    let package = Package::new(self.source, &publisher, child)?;
                     package.push_if_not_exists_else_err(&mut self.package)?;
                 }
                 Rules::import_namespace => {
                     let import_namespace =
-                        ImportNamespace::new(self.source, &self.publisher, child)?;
+                        ImportNamespace::new(self.source, &publisher, child)?;
                     self.namespaces.push(import_namespace);
                 }
                 Rules::import_model => {
-                    let import_model = ImportModel::new(self.source, &self.publisher, child)?;
+                    let import_model = ImportModel::new(self.source, &publisher, child)?;
                     self.import_models.push(import_model);
                 }
                 Rules::interface => {
-                    let interface = Interface::new(&self.source, &self.publisher, child)?;
+                    let interface = Interface::new(&self.source, &publisher, child)?;
                     interface.push_if_not_exists_else_err(&mut self.interfaces)?;
                 }
                 Rules::type_collection => {
-                    let type_collection = TypeCollection::new(&self.source, &self.publisher, child)?;
+                    let type_collection = TypeCollection::new(&self.source, &publisher, child)?;
                     type_collection.push_if_not_exists_else_err(&mut self.type_collections)?;
                 }
                 Rules::comment

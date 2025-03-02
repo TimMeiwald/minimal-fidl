@@ -5,6 +5,7 @@ members = [ "minimal-fidl-parser",
             "test-grammar-proc-macro", 
             "minimal-fidl-cli",
             "minimal-fidl-collect", 
+            "minimal-fidl-generator",
             ]
 
 
