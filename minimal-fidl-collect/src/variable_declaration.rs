@@ -6,7 +6,7 @@ use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 pub struct VariableDeclaration {
     start_position: u32,
     end_position: u32,
-    type_n: String,
+    pub type_n: String,
     pub name: String,
 
 }

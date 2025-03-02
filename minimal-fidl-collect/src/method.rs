@@ -10,8 +10,8 @@ pub struct Method {
     start_position: u32,
     end_position: u32,
     pub name: String,
-    input_parameters: Vec<VariableDeclaration>,
-    output_parameters: Vec<VariableDeclaration>,
+    pub input_parameters: Vec<VariableDeclaration>,
+    pub output_parameters: Vec<VariableDeclaration>,
 }
 impl Method {
     pub fn new(

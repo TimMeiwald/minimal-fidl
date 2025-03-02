@@ -12,12 +12,12 @@ pub struct Interface {
     start_position: u32,
     end_position: u32,
     pub name: String,
-    version: Option<Version>,
-    attributes: Vec<Attribute>,
-    structures: Vec<Structure>,
-    typedefs: Vec<TypeDef>,
-    methods: Vec<Method>,
-    enumerations: Vec<Enumeration>
+    pub version: Option<Version>,
+    pub attributes: Vec<Attribute>,
+    pub structures: Vec<Structure>,
+    pub typedefs: Vec<TypeDef>,
+    pub methods: Vec<Method>,
+    pub enumerations: Vec<Enumeration>
 }
 impl Interface {
     pub fn new(

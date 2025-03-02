@@ -53,12 +53,12 @@ pub enum FileError {
 }
 
 pub struct FidlFile<'a> {
-    source: &'a str,
-    package: Option<Package>,
-    namespaces: Vec<ImportNamespace>,
-    import_models: Vec<ImportModel>,
-    interfaces: Vec<Interface>,
-    type_collections: Vec<TypeCollection>,
+    pub source: &'a str,
+    pub package: Option<Package>,
+    pub namespaces: Vec<ImportNamespace>,
+    pub import_models: Vec<ImportModel>,
+    pub interfaces: Vec<Interface>,
+    pub type_collections: Vec<TypeCollection>,
 }
 
 impl fmt::Debug for FidlFile<'_> {

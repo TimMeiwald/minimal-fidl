@@ -56,7 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn test_symbol_table_1() {
+    fn test_fidl_file_1() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist { }	";
         let publisher = parse(src).unwrap();
@@ -70,7 +70,7 @@ mod tests {
         );
     }
     #[test]
-    fn test_symbol_table_2() {
+    fn test_fidl_file_2() {
         let src = r#"package org.javaohjavawhyareyouso
         import org.franca.omgidl.* from "OMGIDLBase.fidl" //Also Comment
 
@@ -86,7 +86,7 @@ mod tests {
         );
     }
     #[test]
-    fn test_symbol_table_3() {
+    fn test_fidl_file_3() {
         let src = r#"package whatever 
         import model "csm_t.fidl""#;
         let publisher = parse(src).unwrap();
@@ -99,7 +99,7 @@ mod tests {
         );
     }
     #[test]
-    fn test_symbol_table_4() {
+    fn test_fidl_file_4() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}}";
         let publisher = parse(src).unwrap();
@@ -109,7 +109,7 @@ mod tests {
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
     #[test]
-    fn test_symbol_table_5() {
+    fn test_fidl_file_5() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}}
     interface endOfPlaylist {  version {major 23 minor 40}}";
@@ -122,7 +122,7 @@ mod tests {
     }
 
     #[test]
-    fn test_symbol_table_6() {
+    fn test_fidl_file_6() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}
 }   ";
@@ -133,7 +133,7 @@ mod tests {
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
     #[test]
-    fn test_symbol_table_7() {
+    fn test_fidl_file_7() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p1}
 }   ";
@@ -145,7 +145,7 @@ mod tests {
     }
 
     #[test]
-    fn test_symbol_table_8() {
+    fn test_fidl_file_8() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing{}
 }   ";
@@ -157,7 +157,7 @@ mod tests {
     }
 
     #[test]
-    fn test_symbol_table_9() {
+    fn test_fidl_file_9() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
 }   ";
@@ -169,7 +169,7 @@ mod tests {
     }
 
     #[test]
-    fn test_symbol_table_10() {
+    fn test_fidl_file_10() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
 attribute uint16 thing2}   ";
@@ -181,7 +181,7 @@ attribute uint16 thing2}   ";
     }
 
     #[test]
-    fn test_symbol_table_11() {
+    fn test_fidl_file_11() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
 attribute uint16 thing}   ";
@@ -193,7 +193,7 @@ attribute uint16 thing}   ";
     }
 
     #[test]
-    fn test_symbol_table_12() {
+    fn test_fidl_file_12() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}typedef aTypedef is Int16
     struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing2 
@@ -208,7 +208,7 @@ attribute uint16 thing}   ";
     }
 
     #[test]
-    fn test_symbol_table_16() {
+    fn test_fidl_file_16() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing 
     {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param} 
@@ -222,7 +222,7 @@ attribute uint16 thing}   ";
     }
     #[test]
     #[should_panic] // Temporary because parser will fail instead,
-    fn test_symbol_table_17() {
+    fn test_fidl_file_17() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}version{}}";
         let publisher = parse(src).unwrap();
@@ -232,7 +232,7 @@ attribute uint16 thing}   ";
         // println!("Formatted:\n\n{:#?}", output.unwrap());
     }
     #[test]
-    fn test_symbol_table_18() {
+    fn test_fidl_file_18() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing 
     {in {param param}  out {param2 param2 org.param3 param3}}method thing2 {in {param param} 
@@ -245,7 +245,7 @@ attribute uint16 thing}   ";
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
     #[test]
-    fn test_symbol_table_19() {
+    fn test_fidl_file_19() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {}
     interface endOfPlaylist {}
@@ -258,7 +258,7 @@ attribute uint16 thing}   ";
     }
     #[test]
     #[should_panic] // Temporary because parser will fail instead,
-    fn test_symbol_table_20() {
+    fn test_fidl_file_20() {
         let src = "
         package org.javaohjavawhyareyouso
         package org.javaohjavawhyareyouso
@@ -476,7 +476,7 @@ attribute uint16 thing}   ";
     }
 
     #[test]
-    fn test_symbol_table_23() {
+    fn test_fidl_file_23() {
         let src = r#"/** MultiLine Comment **/
         package org.javaohjavawhyareyouso /** MultiLine Comment **/
         <** @Annotation: block **>/** MultiLine Comment
@@ -584,7 +584,7 @@ attribute uint16 thing}   ";
         output.unwrap();
     }
     #[test]
-    fn test_symbol_table_24() {
+    fn test_fidl_file_24() {
         let src = r#"
         package org.javaohjavawhyareyouso
         interface name {
@@ -604,7 +604,7 @@ attribute uint16 thing}   ";
     }
 
     #[test]
-    fn test_symbol_table_25() {
+    fn test_fidl_file_25() {
         let src = r#"
         /**
     *****************************************************************************

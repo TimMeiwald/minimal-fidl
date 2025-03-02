@@ -11,3 +11,4 @@ num = "0.4.3"
 num-derive = "0.4.2"
 num-traits = "0.2.19"
 minimal-fidl-collect = {path = "../minimal-fidl-collect"}
+minimal-fidl-parser = {path = "../minimal-fidl-parser"}
