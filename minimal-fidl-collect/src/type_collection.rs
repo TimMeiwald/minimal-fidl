@@ -12,10 +12,10 @@ pub struct TypeCollection {
     start_position: u32,
     end_position: u32,
     pub name: String,
-    version: Option<Version>,
-    typedefs: Vec<TypeDef>,
-    structures: Vec<Structure>,
-    enumerations: Vec<Enumeration>,
+    pub version: Option<Version>,
+    pub typedefs: Vec<TypeDef>,
+    pub structures: Vec<Structure>,
+    pub enumerations: Vec<Enumeration>,
 }
 impl TypeCollection {
     pub fn new(
@@ -67,6 +67,9 @@ impl TypeCollection {
                     ));
                 }
             }
+        }
+        if name.len() == 0{
+            return Err(FileError::TypeCollectionRequiresAName);
         }
         Ok(Self {
             name,

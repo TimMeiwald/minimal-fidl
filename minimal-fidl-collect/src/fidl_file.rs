@@ -48,6 +48,8 @@ pub enum FileError {
     EnumValueAlreadyExists(EnumValue, EnumValue),
     #[error["The Type Collection: 'TODO' already exists.\nFirst Type Collection\n{0:#?}\nSecond Type Collection\n{1:#?}"]]
     TypeCollectionAlreadyExists(TypeCollection, TypeCollection),
+    #[error["The Type collection requires a name"]]
+    TypeCollectionRequiresAName
 
 
 }

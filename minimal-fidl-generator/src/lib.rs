@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-
+mod test;
 use minimal_fidl_collect::{enumeration::Enumeration, fidl_file::FidlFile, interface::Interface, method::Method};
 use minimal_fidl_parser::BasicPublisher;
 use minimal_fidl_collect::fidl_file::FileError;
@@ -161,7 +161,7 @@ mod tests {
         }
         <** @Annotation: block **>
 
-        typeCollection {
+        typeCollection MustHaveName {
         
             typedef aTypedef is Int16
             enumeration aEnum {
@@ -177,6 +177,121 @@ mod tests {
                 p1 p1
                 p2 p2
             }
+        }"#;
+        let publisher = parse(src).unwrap();
+        //        publisher.print(Key(0), Some(true));
+        let codegen = FidlGenerator::new(src, &publisher, RustCodeGen::new()).unwrap();
+    }
+
+    #[test]
+    fn test_generator_4() {
+        let src = r#"
+        package org.reference
+        <**
+            @description:
+                This reference type collection uses all kinds of type definitions
+                which can be done within one type collection.
+        **>
+        typeCollection MyTypeCollection10 {
+        
+            // struct with all basic types
+            struct MyStruct01 {
+                Int8 se01
+                UInt8 se02
+                Int16 se03
+                UInt16 se04
+                Int32 se05
+                UInt32 se06
+                Int64 se07
+                UInt64 se08
+                Boolean se09
+                String se10
+                ByteBuffer se11
+            }
+        
+            // struct for checking alignment/padding
+            struct MyStruct02 {
+                UInt8 se01
+                UInt32 se02
+                UInt8 se03
+                UInt8 se04
+                UInt32 se05
+                UInt8 se06
+                UInt8 se07
+                UInt8 se08
+                UInt32 se09
+            }
+        
+            // struct of arrays
+            struct MyStruct04 {
+                MyArray05 se01
+                MyArray20 se02
+                MyArray30 se03
+            }
+        
+            // struct with elements of implicit array type
+            struct MyStruct05 {
+                UInt8[] se01
+                String[] se02
+                ByteBuffer[] se03
+                MyArray01[] se10
+                MyStruct02[] se11
+                MyEnum03[] se12
+            }
+        
+            // struct of enums
+            struct MyStruct06 {
+                MyEnum01 se01
+                MyEnum02 se02
+                MyEnum03 se03
+                MyEnum10 se10
+            }
+        
+            // struct of maps and typedefs
+            struct MyStruct08 {
+                MyMap05 se01
+                MyMap08 se02
+                MyType01 se03
+                MyType03 se04
+            }
+        
+            // empty enumeration
+            enumeration MyEnum01 {
+                ENUM00
+            }
+        
+            // enumeration without values
+            enumeration MyEnum02 {
+                ENUM01
+                ENUM02
+                ENUM03
+            }
+        
+            // enumeration with values
+            enumeration MyEnum03 {
+                ENUM01 = 1
+                ENUM02
+                ENUM03 = 10
+                ENUM04 = 7
+                ENUM05 = 20
+                ENUM06 = 0x20
+            }
+        
+            // typedefs from basic types
+            typedef MyType01 is UInt16
+            typedef MyType02 is String
+            typedef MyType03 is Double
+            typedef MyType04 is ByteBuffer
+            // typedefs from user-defined types
+            typedef MyType10 is MyArray10
+            typedef MyType11 is MyStruct01
+            typedef MyType12 is MyStruct10
+            typedef MyType13 is MyUnion03
+            // typedefs from other typedefs
+            typedef MyType20 is MyType01
+            typedef MyType21 is MyType04
+            typedef MyType22 is MyType10
+            typedef MyType23 is MyType12
         }"#;
         let publisher = parse(src).unwrap();
         //        publisher.print(Key(0), Some(true));

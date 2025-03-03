@@ -344,7 +344,7 @@ attribute uint16 thing}   ";
         }
         <** @Annotation: block **>
 
-        typeCollection {
+        typeCollection aName {
         
             typedef aTypedef is Int16
             enumeration aEnum {
@@ -445,7 +445,7 @@ attribute uint16 thing}   ";
         }//Comment
         <** @Annotation: block **>
         //Comment
-        typeCollection {//Comment
+        typeCollection aName {//Comment
             //Comment
             typedef aTypedef is Int16//Comment
             //Comment
@@ -554,7 +554,7 @@ attribute uint16 thing}   ";
         }/** MultiLine Comment **/
         <** @Annotation: block **>
         /** MultiLine Comment **/
-        typeCollection {/** MultiLine Comment **/
+        typeCollection aName {/** MultiLine Comment **/
             /** MultiLine Comment **/
             typedef aTypedef is Int16/** MultiLine Comment **/
             /** MultiLine Comment **/

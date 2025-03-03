@@ -7,7 +7,7 @@ pub struct Enumeration {
     start_position: u32,
     end_position: u32,
     pub name: String,
-    values: Vec<EnumValue>
+    pub values: Vec<EnumValue>
 
 }
 impl Enumeration {

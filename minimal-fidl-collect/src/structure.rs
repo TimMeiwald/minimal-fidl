@@ -7,7 +7,7 @@ pub struct Structure {
     start_position: u32,
     end_position: u32,
     pub name: String,
-    contents: Vec<VariableDeclaration>
+    pub contents: Vec<VariableDeclaration>
 
 }
 impl Structure {

@@ -7,7 +7,7 @@ pub struct Attribute {
     start_position: u32,
     end_position: u32,
     pub name: String,
-    type_n: String
+    pub type_n: String
 
 }
 impl Attribute {
