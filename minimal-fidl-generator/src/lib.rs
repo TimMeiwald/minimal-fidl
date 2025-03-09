@@ -297,4 +297,39 @@ mod tests {
         //        publisher.print(Key(0), Some(true));
         let codegen = FidlGenerator::new(src, &publisher, RustCodeGen::new()).unwrap();
     }
+
+    #[test]
+    fn test_generator_5() {
+        let src = "package org.javaohjavawhyareyouso
+	interface MyInterface {
+        typedef CustomDouble is Double
+        attribute UInt8 some_value
+
+        struct ThingStruct {
+            UInt16 some_value
+            Float some_value2
+        }
+        enumeration aEnum {
+            A
+            B
+            C
+            D
+            E
+        }
+        method thing {
+            in {
+                ThingStruct param
+            }
+            out {
+                
+                CustomDouble param2
+                Double param3
+            }
+        }
+
+     }";
+        let publisher = parse(src).unwrap();
+        //        publisher.print(Key(0), Some(true));
+        let codegen = FidlGenerator::new(src, &publisher, RustCodeGen::new()).unwrap();
+    }
 }

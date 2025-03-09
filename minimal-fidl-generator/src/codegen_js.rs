@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::indented_string::IndentedString;
 use crate::{codegen_trait::CodeGenerator, indented_string::FidlType};
 use minimal_fidl_collect::attribute::{self, Attribute};
@@ -13,6 +15,11 @@ pub struct JSCodeGen();
 impl CodeGenerator for JSCodeGen {
     fn new() -> Self {
         Self {}
+    }
+    fn project(&self, dir: &PathBuf) -> Vec<IndentedString> {
+        let mut res: Vec<IndentedString> = Vec::new();
+        res.push(IndentedString::new(0, FidlType::Method,"JS Project stub".to_string()));
+        res
     }
     fn file(&self, file: &FidlFile) -> Vec<IndentedString> {
         vec![IndentedString::new(0, FidlType::File, "JS File Stub".to_string())]

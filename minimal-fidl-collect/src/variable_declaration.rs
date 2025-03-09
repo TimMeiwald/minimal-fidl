@@ -1,6 +1,6 @@
 use std::{path::{Path, PathBuf}, str::FromStr};
 
-use crate::fidl_file::FileError;
+use crate::{fidl_file::FileError, type_ref::TypeRef};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct VariableDeclaration {
@@ -8,6 +8,7 @@ pub struct VariableDeclaration {
     end_position: u32,
     pub type_n: String,
     pub name: String,
+    pub is_array: bool,
 
 }
 impl VariableDeclaration {
@@ -23,13 +24,17 @@ impl VariableDeclaration {
         let mut name: Result<String, FileError> = Err(
             FileError::InternalLogicError("Uninitialized value: name in VariableDeclaration::new".to_string()),
         );
+        let mut is_array = false;
 
         for child in node.get_children() {
             let child = publisher.get_node(*child);
             match child.rule {
                 Rules::comment | Rules::multiline_comment | Rules::annotation_block => {},
                 Rules::type_ref => {
-                    type_n = Ok(child.get_string(source));
+                    let t = TypeRef::new(source, publisher, child)?;
+                    is_array = t.is_array;
+                    type_n = Ok(t.name);
+                    
                 }
                 Rules::variable_name => {
                     name = Ok(child.get_string(source));
@@ -42,7 +47,7 @@ impl VariableDeclaration {
                 }
             }
         }
-        Ok(Self { name: name?, type_n: type_n?, start_position: node.start_position, end_position: node.end_position})
+        Ok(Self { name: name?, type_n: type_n?, is_array,  start_position: node.start_position, end_position: node.end_position})
     }
 
     pub fn push_if_not_exists_else_err(self, var_decs: &mut Vec<VariableDeclaration>) -> Result<(), FileError> {

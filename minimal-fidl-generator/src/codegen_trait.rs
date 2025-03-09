@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, path::PathBuf};
 
 use minimal_fidl_collect::{
     attribute::{self, Attribute}, enumeration::Enumeration, fidl_file::FidlFile, interface::Interface, method::Method, structure::Structure, type_collection::TypeCollection, type_def::TypeDef, version::Version
@@ -6,6 +6,7 @@ use minimal_fidl_collect::{
 use crate::indented_string::IndentedString;
 pub trait CodeGenerator {
     fn new() -> Self;
+    fn project(&self, dir: &PathBuf) -> Vec<IndentedString>;
     fn file(&self, file: &FidlFile) -> Vec<IndentedString>;
     fn interface(&self, interface: &Interface) -> Vec<IndentedString>;
     fn method(&self, method: &Method) -> Vec<IndentedString>;

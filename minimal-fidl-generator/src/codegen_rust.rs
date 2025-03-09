@@ -1,4 +1,4 @@
-use std::fmt::format;
+use std::{fmt::format, path::PathBuf};
 
 use crate::codegen_trait::CodeGenerator;
 use crate::indented_string::IndentedString;
@@ -35,57 +35,59 @@ impl RustCodeGen {
         String character string, see caveat below
         ByteBuffer buffer of bytes (aka BLOB), see caveat below"#;
         let mut res: Vec<IndentedString> = Vec::new();
-
+        
+        res.push(IndentedString::new(0, FidlType::File, "pub mod Primitives {".to_string()));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use u8 as UInt8;"),
+            format!("pub use u8 as UInt8;"),
         ));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use i8 as Int8;"),
+            format!("pub use i8 as Int8;"),
         ));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use u16 as UInt16;"),
+            format!("pub use u16 as UInt16;"),
         ));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use i16 as Int16;"),
+            format!("pub use i16 as Int16;"),
         ));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use u32 as UInt32;"),
+            format!("pub use u32 as UInt32;"),
         ));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use i32 as Int32;"),
+            format!("pub use i32 as Int32;"),
         ));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use u64 as UInt64;"),
+            format!("pub use u64 as UInt64;"),
         ));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use i64 as Int64;"),
+            format!("pub use i64 as Int64;"),
         ));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use f32 as Float;"),
+            format!("pub use f32 as Float;"),
         ));
         res.push(IndentedString::new(
-            0,
+            1,
             FidlType::File,
-            format!("use f64 as Double;"),
+            format!("pub use f64 as Double;"),
         ));
+        res.push(IndentedString::new(0, FidlType::File, "}".to_string()));
 
         res
     }
@@ -107,9 +109,25 @@ impl CodeGenerator for RustCodeGen {
         Self {}
     }
 
+
+    fn project(&self, dir: &PathBuf) -> Vec<IndentedString> {
+        let mut res: Vec<IndentedString> = Vec::new();
+        res.push(IndentedString::new(0,FidlType::File,"use serde::{Serialize, Deserialize};".to_string()));
+        res.push(IndentedString::new(0,FidlType::File,"use binary_serde::{binary_serde_bitfield, BinarySerde, Endianness};".to_string()));
+
+        res.extend(self.built_in_types());
+        res.extend(self.context_trait());
+    
+        res
+    }
+
     fn file(&self, file: &FidlFile) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
-        res.extend(self.context_trait());
+
+        // Below is temporary, file should really be called by and from project not this way around.
+        let dir_path = PathBuf::new();
+        res.extend(self.project(&dir_path));
+        // End temporary
 
         for type_collection in &file.type_collections {
             let x = self.type_collection(&type_collection);
@@ -170,7 +188,10 @@ impl CodeGenerator for RustCodeGen {
         
         );
         res.push(module);
-        res.extend(self.built_in_types().into_iter().map(|e: IndentedString|{e.indent()}).collect::<Vec<IndentedString>>());
+        res.push(IndentedString::new(1, FidlType::Interface, "use super::Primitives::*;".to_string()));
+        res.push(IndentedString::new(1, FidlType::Interface, "use super::*;".to_string()));
+        res.push(IndentedString::new(1, FidlType::Interface, "use super::FidlContext;".to_string()));
+
         res.extend(self.version(&type_collection.version));
         for typedef in &type_collection.typedefs {
             let typedef: Vec<IndentedString> = self
@@ -206,9 +227,12 @@ impl CodeGenerator for RustCodeGen {
         let mut res: Vec<IndentedString> = Vec::new();
         // An interface is equivalent to a Rust Module
         let module =
-            IndentedString::new(0, FidlType::File, format!("pub mod {} {{", interface.name));
+            IndentedString::new(0, FidlType::Interface, format!("pub mod {} {{", interface.name));
         res.push(module);
-        res.extend(self.built_in_types().into_iter().map(|e: IndentedString|{e.indent()}).collect::<Vec<IndentedString>>());
+        res.push(IndentedString::new(1, FidlType::Interface, "use super::Primitives::*;".to_string()));
+        res.push(IndentedString::new(1, FidlType::Interface, "use super::*;".to_string()));
+        res.push(IndentedString::new(1, FidlType::Interface, "use super::FidlContext;".to_string()));
+
         res.extend(self.version(&interface.version));
         for typedef in &interface.typedefs {
             let typedef: Vec<IndentedString> = self
@@ -282,8 +306,12 @@ impl CodeGenerator for RustCodeGen {
 
         res
     }
+
     fn structure(&self, structure: &Structure, public: bool) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
+        res.push(IndentedString::new(0, FidlType::Structure, "#[derive(Debug, Serialize, Deserialize, BinarySerde, PartialEq)]".to_string()));
+        res.push(IndentedString::new(0, FidlType::Structure, "#[repr(C)]".to_string()));
+
         let header: IndentedString;
         if public {
             header = IndentedString::new(
@@ -295,14 +323,21 @@ impl CodeGenerator for RustCodeGen {
             header = IndentedString::new(
                 0,
                 FidlType::Structure,
-                format!("struct {} {{ ", structure.name),
+                format!("pub struct {} {{ ", structure.name),
             );
         }
 
         res.push(header);
         for var_dec in &structure.contents {
-            let var_dec = format!("{}: {},", var_dec.name, var_dec.type_n);
-            res.push(IndentedString::new(1, FidlType::Structure, var_dec));
+            if var_dec.is_array{
+                let var_dec = format!("pub {}: [{}; 0],", var_dec.name, var_dec.type_n);
+                res.push(IndentedString::new(1, FidlType::Structure, var_dec));
+            }
+            else{
+                let var_dec = format!("pub {}: {},", var_dec.name, var_dec.type_n);
+                res.push(IndentedString::new(1, FidlType::Structure, var_dec));
+            }
+            
         }
         let header = IndentedString::new(0, FidlType::Structure, format!("}}"));
         res.push(header);
@@ -364,6 +399,9 @@ impl CodeGenerator for RustCodeGen {
     }
     fn enumeration(&self, enumeration: &Enumeration, public: bool) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
+        res.push(IndentedString::new(0, FidlType::Enumeration, "#[derive(Debug, Serialize, Deserialize, BinarySerde, PartialEq, Eq)]".to_string()));
+        res.push(IndentedString::new(0, FidlType::Structure, "#[repr(u8)]".to_string()));
+
         let header: IndentedString;
         if public {
             header = IndentedString::new(
