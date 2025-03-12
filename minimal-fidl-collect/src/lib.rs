@@ -12,8 +12,8 @@ pub mod structure;
 pub mod type_collection;
 pub mod type_def;
 pub mod variable_declaration;
+pub mod fidl_project;
 pub mod version;
-use fidl_file::FidlFile;
 use attribute::Attribute;
 use enum_value::EnumValue;
 use enumeration::Enumeration;
@@ -28,14 +28,18 @@ use type_collection::TypeCollection;
 use type_def::TypeDef;
 use variable_declaration::VariableDeclaration;
 use version::Version;
+pub use fidl_file::FidlFile;
+pub use fidl_project::FidlProject;
+pub use fidl_file::FileError;
 
 #[cfg(test)]
 mod tests {
-    use crate::{FidlFile};
+    use crate::{FidlFile, FidlProject};
     use minimal_fidl_parser::{
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };
     use std::cell::RefCell;
+    use std::path::Path;
 
     pub fn parse(input: &str) -> Option<BasicPublisher> {
         let string = input.to_string();
@@ -60,8 +64,8 @@ mod tests {
     #[test]
     fn test_fidl_file_1() {
         let src = "package org.javaohjavawhyareyouso
-	interface endOfPlaylist { }	";
-        let publisher = parse(src).unwrap();
+	interface endOfPlaylist { }	".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -76,8 +80,8 @@ mod tests {
         let src = r#"package org.javaohjavawhyareyouso
         import org.franca.omgidl.* from "OMGIDLBase.fidl" //Also Comment
 
-	interface endOfPlaylist { }	"#;
-        let publisher = parse(src).unwrap();
+	interface endOfPlaylist { }	"#.to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -90,8 +94,8 @@ mod tests {
     #[test]
     fn test_fidl_file_3() {
         let src = r#"package whatever 
-        import model "csm_t.fidl""#;
-        let publisher = parse(src).unwrap();
+        import model "csm_t.fidl""#.to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -103,8 +107,8 @@ mod tests {
     #[test]
     fn test_fidl_file_4() {
         let src = "package org.javaohjavawhyareyouso
-	interface endOfPlaylist {  version {major 25 minor 60}}";
-        let publisher = parse(src).unwrap();
+	interface endOfPlaylist {  version {major 25 minor 60}}".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -114,8 +118,8 @@ mod tests {
     fn test_fidl_file_5() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}}
-    interface endOfPlaylist {  version {major 23 minor 40}}";
-        let publisher = parse(src).unwrap();
+    interface endOfPlaylist {  version {major 23 minor 40}}".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -127,8 +131,8 @@ mod tests {
     fn test_fidl_file_6() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}
-}   ";
-        let publisher = parse(src).unwrap();
+}   ".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -138,8 +142,8 @@ mod tests {
     fn test_fidl_file_7() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p1}
-}   ";
-        let publisher = parse(src).unwrap();
+}   ".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -150,8 +154,8 @@ mod tests {
     fn test_fidl_file_8() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing{}
-}   ";
-        let publisher = parse(src).unwrap();
+}   ".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -162,8 +166,8 @@ mod tests {
     fn test_fidl_file_9() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
-}   ";
-        let publisher = parse(src).unwrap();
+}   ".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -174,8 +178,8 @@ mod tests {
     fn test_fidl_file_10() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
-attribute uint16 thing2}   ";
-        let publisher = parse(src).unwrap();
+attribute uint16 thing2}   ".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -186,8 +190,8 @@ attribute uint16 thing2}   ";
     fn test_fidl_file_11() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}struct thing2{}attribute uint8 thing
-attribute uint16 thing}   ";
-        let publisher = parse(src).unwrap();
+attribute uint16 thing}   ".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -201,8 +205,8 @@ attribute uint16 thing}   ";
     struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing2 
     {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param} 
     out {param2 param2 org.param3 param3}} 	
-}	";
-        let publisher = parse(src).unwrap();
+}	".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -215,8 +219,8 @@ attribute uint16 thing}   ";
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing 
     {in {param param}  out {param2 param2 org.param3 param3}}method thing {in {param param} 
     out {param2 param2 org.param3 param3}} 	typedef aTypedef is Int16
-}	";
-        let publisher = parse(src).unwrap();
+}	".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -226,8 +230,8 @@ attribute uint16 thing}   ";
     #[should_panic] // Temporary because parser will fail instead,
     fn test_fidl_file_17() {
         let src = "package org.javaohjavawhyareyouso
-	interface endOfPlaylist {  version {major 25 minor 60}version{}}";
-        let publisher = parse(src).unwrap();
+	interface endOfPlaylist {  version {major 25 minor 60}version{}}".to_string();
+        let publisher = parse(&src).unwrap();
         // publisher.print(Key(0), Some(true));
         // let fmt = symbol_table_builder::SymbolTableBuilder::new(src, &publisher);
         // let output = fmt.create_symbol_table();
@@ -239,8 +243,8 @@ attribute uint16 thing}   ";
 	interface endOfPlaylist {  version {major 25 minor 60}struct thing{p1 p1 p2 p2}attribute uint8 thing\n method thing 
     {in {param param}  out {param2 param2 org.param3 param3}}method thing2 {in {param param} 
     out {param2 param2 org.param3 param3}} 	typedef aTypedef is Int16
-}	";
-        let publisher = parse(src).unwrap();
+}	".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -251,8 +255,8 @@ attribute uint16 thing}   ";
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist {}
     interface endOfPlaylist {}
-	";
-        let publisher = parse(src).unwrap();
+	".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -266,8 +270,8 @@ attribute uint16 thing}   ";
         package org.javaohjavawhyareyouso
         interface endOfPlaylist {}
         interface endOfPlaylist {}
-	";
-        let publisher = parse(src).unwrap();
+	".to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -362,8 +366,8 @@ attribute uint16 thing}   ";
                 p1 p1
                 p2 p2
             }
-        }"#;
-        let publisher = parse(src).unwrap();
+        }"#.to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -468,8 +472,8 @@ attribute uint16 thing}   ";
                 //Comment
                 p2 p2//Comment
             }
-        }"#;
-        let publisher = parse(src).unwrap();
+        }"#.to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -577,8 +581,8 @@ attribute uint16 thing}   ";
                 /** MultiLine Comment **/
                 p2 p2/** MultiLine Comment **/
             }
-        }"#;
-        let publisher = parse(src).unwrap();
+        }"#.to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -597,8 +601,8 @@ attribute uint16 thing}   ";
                 D
                 E = 10
             }
-        }"#;
-        let publisher = parse(src).unwrap();
+        }"#.to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
@@ -723,11 +727,21 @@ typeCollection MyTypeCollection10 {
     typedef MyType21 is MyType04
     typedef MyType22 is MyType10
     typedef MyType23 is MyType12
-}"#;
-        let publisher = parse(src).unwrap();
+}"#.to_string();
+        let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
+    }
+
+    #[test]
+    fn test_fidl_project_1() {
+        let path = Path::new("../");
+        let mut fmt = FidlProject::new(&path).unwrap();
+        println!("{:?}", fmt);
+        let fidl_file = FidlProject::generate_file(fmt.pop().unwrap());
+        println!("{:#?}", fidl_file)
+        
     }
 }

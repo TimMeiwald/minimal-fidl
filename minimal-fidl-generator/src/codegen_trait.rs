@@ -1,21 +1,28 @@
 use std::{fmt::Debug, path::PathBuf};
 
 use minimal_fidl_collect::{
-    attribute::{self, Attribute}, enumeration::Enumeration, fidl_file::FidlFile, interface::Interface, method::Method, structure::Structure, type_collection::TypeCollection, type_def::TypeDef, version::Version
+    attribute::{self, Attribute}, enumeration::Enumeration, fidl_file::FidlFile, interface::Interface, method::Method, structure::Structure, type_collection::TypeCollection, type_def::TypeDef, version::Version, FidlProject, FileError
 };
 use crate::indented_string::IndentedString;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum GeneratorError {
+    #[error["This error means the program has a bug: {0}"]]
+    InternalLogicError(String),
+    #[error["Could not generate code. {:?}", 0]]
+    CouldNotGeneratCodeForFile(FidlFile),
+    #[error["{:?}", 0]]
+    FidlFileError(FileError)
+
+
+
+}
 pub trait CodeGenerator {
     fn new() -> Self;
-    fn project(&self, dir: &PathBuf) -> Vec<IndentedString>;
-    fn file(&self, file: &FidlFile) -> Vec<IndentedString>;
-    fn interface(&self, interface: &Interface) -> Vec<IndentedString>;
-    fn method(&self, method: &Method) -> Vec<IndentedString>;
-    fn enumeration(&self, enumeration: &Enumeration, public: bool) -> Vec<IndentedString>;
-    fn attribute(&self, attribute: &Attribute) -> Vec<IndentedString>;
-    fn structure(&self, structure: &Structure, public: bool) -> Vec<IndentedString>;
-    fn typedef(&self, typedef: &TypeDef, public: bool) -> Vec<IndentedString>;
-    fn version(&self, version: &Option<Version>) -> Vec<IndentedString>;
-    fn type_collection(&self, type_collection: &TypeCollection) -> Vec<IndentedString>;
-
+    fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError>;
+    /// Convenience function if you don't want to filter the files at all. Otherwise use FidlProject to generate each file manually then call
+    /// CodeGenerator::generate_file instead for each you want to use. 
+    fn generate_project(&mut self,  dir: PathBuf) -> Result<(), GeneratorError>;
 }
 

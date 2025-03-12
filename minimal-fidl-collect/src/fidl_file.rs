@@ -1,4 +1,5 @@
 use core::fmt;
+use std::path::PathBuf;
 
 use crate::attribute::Attribute;
 use crate::enum_value::EnumValue;
@@ -20,6 +21,12 @@ use thiserror::Error;
 pub enum FileError {
     #[error("Unexpected Node: {0:?} in '{1}'!")]
     UnexpectedNode(Rules, String),
+    #[error("Could not parse file: {0:?}")]
+    CouldNotParseFile(PathBuf),
+    #[error("Could not parse source string: {0:?}")]
+    CouldNotParseSourceString(String),
+    #[error("Could not read file: {0:?}")]
+    CouldNotReadFile(std::io::Error),
     // #[error("Could not parse `{0}` as an integer.")]
     // IntegerParseError(String),
     #[error["This error means the program has a bug: {0}"]]
@@ -54,8 +61,8 @@ pub enum FileError {
 
 }
 
-pub struct FidlFile<'a> {
-    pub source: &'a str,
+pub struct FidlFile{
+    pub source: String,
     pub package: Option<Package>,
     pub namespaces: Vec<ImportNamespace>,
     pub import_models: Vec<ImportModel>,
@@ -63,7 +70,7 @@ pub struct FidlFile<'a> {
     pub type_collections: Vec<TypeCollection>,
 }
 
-impl fmt::Debug for FidlFile<'_> {
+impl fmt::Debug for FidlFile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // The below is some kind of magic I don't fully understand but basically
         // it let's me print just specific fields(the ones deifned in SymbolTable below) and
@@ -99,8 +106,8 @@ impl fmt::Debug for FidlFile<'_> {
     }
 }
 
-impl<'a> FidlFile<'a> {
-    pub fn new(source: &'a str, publisher: &'a BasicPublisher) -> Result<Self, FileError> {
+impl FidlFile {
+    pub fn new(source: String, publisher: &BasicPublisher) -> Result<Self, FileError> {
         let mut resp = Self {
             source,
             package: None,
@@ -117,7 +124,7 @@ impl<'a> FidlFile<'a> {
     }
 
    
-    fn create_symbol_table(&mut self, publisher: &'a BasicPublisher) -> Result<(), FileError> {
+    fn create_symbol_table(&mut self, publisher: &BasicPublisher) -> Result<(), FileError> {
         let root_node = publisher.get_node(Key(0));
         debug_assert_eq!(root_node.rule, Rules::Grammar);
         let root_node_children = root_node.get_children();
@@ -128,16 +135,16 @@ impl<'a> FidlFile<'a> {
             let child = publisher.get_node(*child);
             match child.rule {
                 Rules::package => {
-                    let package = Package::new(self.source, &publisher, child)?;
+                    let package = Package::new(&self.source, &publisher, child)?;
                     package.push_if_not_exists_else_err(&mut self.package)?;
                 }
                 Rules::import_namespace => {
                     let import_namespace =
-                        ImportNamespace::new(self.source, &publisher, child)?;
+                        ImportNamespace::new(&self.source, &publisher, child)?;
                     self.namespaces.push(import_namespace);
                 }
                 Rules::import_model => {
-                    let import_model = ImportModel::new(self.source, &publisher, child)?;
+                    let import_model = ImportModel::new(&self.source, &publisher, child)?;
                     self.import_models.push(import_model);
                 }
                 Rules::interface => {

@@ -1,53 +1,29 @@
 use std::fmt::Debug;
 
-mod test;
-use minimal_fidl_collect::{enumeration::Enumeration, fidl_file::FidlFile, interface::Interface, method::Method};
-use minimal_fidl_parser::BasicPublisher;
 use minimal_fidl_collect::fidl_file::FileError;
-mod codegen_trait;
+use minimal_fidl_collect::{
+    enumeration::Enumeration, fidl_file::FidlFile, interface::Interface, method::Method,
+};
+use minimal_fidl_parser::BasicPublisher;
 mod codegen_js;
+mod codegen_py;
 mod codegen_rust;
+mod codegen_trait;
 mod indented_string;
-use indented_string::IndentedString;
-use codegen_trait::CodeGenerator;
 use codegen_rust::RustCodeGen;
-use codegen_js::JSCodeGen;
+use codegen_trait::CodeGenerator;
 use indented_string::FidlType;
+use indented_string::IndentedString;
 
-struct FidlGenerator<'a>(FidlFile<'a>);
-impl<'a> FidlGenerator<'a> {
-    pub fn new(source: &'a str, publisher: &'a BasicPublisher, codegen: impl CodeGenerator) -> Result<Self, FileError> {
-
-        let mut resp = FidlFile::new(source, publisher);
-        match resp {
-            Ok(resp) => {
-                let res = codegen.file(&resp);
-                let mut result: String = "".to_string();
-                for line in res{
-                    result += &line.to_string();
-                }
-                println!("{result}");
-
-                let fidl_gen = FidlGenerator{0: resp};
-                Ok(fidl_gen)
-
-            },
-            Err(err) => Err(err),
-        }
-    }
-
-
-
-}
 #[cfg(test)]
 mod tests {
-    use minimal_fidl_collect::fidl_file:: FidlFile;
+    use minimal_fidl_collect::{FidlFile, FidlProject};
     use minimal_fidl_parser::{
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };
-    use std::cell::RefCell;
+    use std::{cell::RefCell, path::{Path, PathBuf}};
 
-    use crate::{codegen_js::JSCodeGen, CodeGenerator, FidlGenerator, RustCodeGen};
+    use crate::{codegen_py::PythonCodeGen, CodeGenerator, RustCodeGen};
 
     pub fn parse(input: &str) -> Option<BasicPublisher> {
         let string = input.to_string();
@@ -69,23 +45,24 @@ mod tests {
         Some(publisher)
     }
 
-
     #[test]
     fn test_generator_1() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist { }
     interface endOfPlaylist2 { }	";
-        let publisher = parse(src).unwrap();
-        //        publisher.print(Key(0), Some(true));
-        let codegen = FidlGenerator::new(src, &publisher, RustCodeGen::new()).unwrap();
+    let file = FidlProject::generate_file_from_string(src.to_string()).unwrap();
+    let mut codegen = PythonCodeGen::new();
+    codegen.generate_file(PathBuf::new(), file).unwrap();
+    println!("{:?}", codegen);
     }
     #[test]
     fn test_generator_2() {
         let src = "package org.javaohjavawhyareyouso
 	interface endOfPlaylist { }	";
-        let publisher = parse(src).unwrap();
-        //        publisher.print(Key(0), Some(true));
-        let codegen = FidlGenerator::new(src, &publisher, JSCodeGen::new()).unwrap();
+    let file = FidlProject::generate_file_from_string(src.to_string()).unwrap();
+    let mut codegen = PythonCodeGen::new();
+    codegen.generate_file(PathBuf::new(), file).unwrap();
+    println!("{:?}", codegen);
     }
     #[test]
     fn test_generator_3() {
@@ -178,9 +155,10 @@ mod tests {
                 p2 p2
             }
         }"#;
-        let publisher = parse(src).unwrap();
-        //        publisher.print(Key(0), Some(true));
-        let codegen = FidlGenerator::new(src, &publisher, RustCodeGen::new()).unwrap();
+        let file = FidlProject::generate_file_from_string(src.to_string()).unwrap();
+        let mut codegen = PythonCodeGen::new();
+        codegen.generate_file(PathBuf::new(), file).unwrap();
+        println!("{:?}", codegen);
     }
 
     #[test]
@@ -228,7 +206,7 @@ mod tests {
                 MyArray20 se02
                 MyArray30 se03
             }
-        
+        FidlGenerator::new(src, &publisher, JSCodeGen::new()).unwrap();
             // struct with elements of implicit array type
             struct MyStruct05 {
                 UInt8[] se01
@@ -293,9 +271,10 @@ mod tests {
             typedef MyType22 is MyType10
             typedef MyType23 is MyType12
         }"#;
-        let publisher = parse(src).unwrap();
-        //        publisher.print(Key(0), Some(true));
-        let codegen = FidlGenerator::new(src, &publisher, RustCodeGen::new()).unwrap();
+        let file = FidlProject::generate_file_from_string(src.to_string()).unwrap();
+        let mut codegen = PythonCodeGen::new();
+        codegen.generate_file(PathBuf::new(), file).unwrap();
+        println!("{:?}", codegen);
     }
 
     #[test]
@@ -328,8 +307,55 @@ mod tests {
         }
 
      }";
-        let publisher = parse(src).unwrap();
-        //        publisher.print(Key(0), Some(true));
-        let codegen = FidlGenerator::new(src, &publisher, RustCodeGen::new()).unwrap();
+     let file = FidlProject::generate_file_from_string(src.to_string()).unwrap();
+     let mut codegen = PythonCodeGen::new();
+     codegen.generate_file(PathBuf::new(), file).unwrap();
+     println!("{:?}", codegen);
+    }
+
+    #[test]
+    fn test_generator_6() {
+        let src = "package org.javaohjavawhyareyouso
+	interface MyInterface {
+        typedef CustomDouble is Double
+        attribute UInt8 some_value
+
+        struct ThingStruct {
+            UInt16 some_value
+            Float some_value2
+        }
+        enumeration aEnum {
+            A
+            B
+            C
+            D
+            E
+        }
+        method thing {
+            in {
+                ThingStruct param
+            }
+            out {
+                
+                CustomDouble param2
+                Double param3
+            }
+        }
+
+     }";
+     let file = FidlProject::generate_file_from_string(src.to_string()).unwrap();
+     let mut codegen = PythonCodeGen::new();
+     codegen.generate_file(PathBuf::new(), file).unwrap();
+     println!(r#"{}"#, codegen.python_code[&PathBuf::new()][0]);
+
+    }
+
+    #[test]
+    fn test_generator_7() {
+    let src = Path::new("tests/");
+     let mut codegen = PythonCodeGen::new();
+     codegen.generate_project(src.into()).unwrap();
+    //  println!(r#"{}"#, codegen.python_code[&PathBuf::new()][0]);
+
     }
 }

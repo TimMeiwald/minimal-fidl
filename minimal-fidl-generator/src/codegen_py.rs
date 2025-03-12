@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+use std::hash::Hash;
 use std::{fmt::format, path::PathBuf};
 
-use crate::codegen_trait::CodeGenerator;
+use crate::codegen_trait::{CodeGenerator, GeneratorError};
 use crate::indented_string::IndentedString;
 use crate::FidlType;
+use minimal_fidl_collect::{fidl_file, FidlProject};
 use minimal_fidl_collect::{
     attribute::{self, Attribute},
     enumeration::Enumeration,
@@ -16,9 +19,49 @@ use minimal_fidl_collect::{
     version::Version,
 };
 
-pub struct RustCodeGen();
+#[derive(Debug)]
+pub struct PythonCodeGen {
+    // Generate file creates a vector of strings because one fidl file can generate multiple source code files
+    // in languages where a module is a file. E.g Python
+    pub python_code: HashMap<PathBuf, Vec<String>>,
+}
 
-impl RustCodeGen {
+impl CodeGenerator for PythonCodeGen {
+    fn new() -> Self {
+        Self {
+            python_code: HashMap::new(),
+        }
+    }
+
+    fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError> {
+        let file = self.file(&fidl);
+        let mut str: String = "".to_string();
+        for line in file {
+            str += &line.to_string();
+        }
+        let mut vec: Vec<String> = Vec::new();
+        vec.push(str);
+        self.python_code.insert(path, vec);
+        Ok(())
+    }
+    fn generate_project(
+        &mut self,
+        dir: PathBuf,
+    ) -> Result<(), GeneratorError> {
+        let paths = FidlProject::new(dir);
+        for path in paths.unwrap() {
+            let fidl = match FidlProject::generate_file(path.clone()){
+                Ok(fidl_file) => fidl_file,
+                Err(err) => return Err(GeneratorError::FidlFileError(err))
+            };
+            self.generate_file(path, fidl).unwrap();
+        }
+        Ok(())
+
+    }
+}
+
+impl PythonCodeGen {
     fn built_in_types(&self) -> Vec<IndentedString> {
         r#"UInt8 unsigned 8-bit integer (range 0..255)
         Int 8signed 8-bit integer (range -128..127)
