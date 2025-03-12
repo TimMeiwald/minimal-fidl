@@ -355,6 +355,7 @@ mod tests {
     let src = Path::new("tests/");
      let mut codegen = PythonCodeGen::new();
      codegen.generate_project(src.into()).unwrap();
+     println!("{:?}", codegen)
     //  println!(r#"{}"#, codegen.python_code[&PathBuf::new()][0]);
 
     }

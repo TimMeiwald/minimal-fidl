@@ -19,13 +19,24 @@ use minimal_fidl_collect::{
     version::Version,
 };
 
-#[derive(Debug)]
+
 pub struct PythonCodeGen {
     // Generate file creates a vector of strings because one fidl file can generate multiple source code files
     // in languages where a module is a file. E.g Python
     pub python_code: HashMap<PathBuf, Vec<String>>,
 }
+impl std::fmt::Debug for PythonCodeGen {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (path, vec) in &self.python_code{
+            write!(f, "\n\n{:?}\n", path)?;
+            for src in vec{
+                write!(f, "{}", src)?;
 
+            }
+        }
+        Ok(())
+    }
+}
 impl CodeGenerator for PythonCodeGen {
     fn new() -> Self {
         Self {
@@ -54,6 +65,16 @@ impl CodeGenerator for PythonCodeGen {
                 Ok(fidl_file) => fidl_file,
                 Err(err) => return Err(GeneratorError::FidlFileError(err))
             };
+
+            // This needs to be modified because I want to get each interface and type collection as a 
+            // seperate file.  
+            // But it's not part of the trait anymore so that's fine. 
+            // We then also create a primitive types at root level that the rest can import 
+            // We'll need JSON and Little Endian serde for debug and to send to comms
+            // Then each method will need to accept the inputs, serialize them
+            // Send through some function 
+            // Deserialize the returned value. Async/Sync as options. Maybe only async since we can always force sync using async
+            // Also need to add annotation block details support. 
             self.generate_file(path, fidl).unwrap();
         }
         Ok(())

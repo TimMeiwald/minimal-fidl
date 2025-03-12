@@ -40,7 +40,6 @@
                 MyArray20 se02
                 MyArray30 se03
             }
-        FidlGenerator::new(src, &publisher, JSCodeGen::new()).unwrap();
             // struct with elements of implicit array type
             struct MyStruct05 {
                 UInt8[] se01
@@ -105,4 +104,4 @@
             typedef MyType22 is MyType10
             typedef MyType23 is MyType12
         }
-        }
+        
