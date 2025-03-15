@@ -20,7 +20,7 @@ pub enum GeneratorError {
 }
 pub trait CodeGenerator {
     fn new() -> Self;
-    fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError>;
+    // fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError>;
     /// Convenience function if you don't want to filter the files at all. Otherwise use FidlProject to generate each file manually then call
     /// CodeGenerator::generate_file instead for each you want to use. 
     fn generate_project(&mut self,  dir: PathBuf) -> Result<(), GeneratorError>;

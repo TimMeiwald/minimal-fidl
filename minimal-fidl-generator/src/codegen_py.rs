@@ -5,7 +5,6 @@ use std::{fmt::format, path::PathBuf};
 use crate::codegen_trait::{CodeGenerator, GeneratorError};
 use crate::indented_string::IndentedString;
 use crate::FidlType;
-use minimal_fidl_collect::{fidl_file, FidlProject};
 use minimal_fidl_collect::{
     attribute::{self, Attribute},
     enumeration::Enumeration,
@@ -18,20 +17,19 @@ use minimal_fidl_collect::{
     variable_declaration::VariableDeclaration,
     version::Version,
 };
-
+use minimal_fidl_collect::{fidl_file, FidlProject};
 
 pub struct PythonCodeGen {
     // Generate file creates a vector of strings because one fidl file can generate multiple source code files
     // in languages where a module is a file. E.g Python
-    pub python_code: HashMap<PathBuf, Vec<String>>,
+    pub python_code: HashMap<PathBuf, Vec<IndentedString>>,
 }
 impl std::fmt::Debug for PythonCodeGen {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (path, vec) in &self.python_code{
+        for (path, vec) in &self.python_code {
             write!(f, "\n\n{:?}\n", path)?;
-            for src in vec{
+            for src in vec {
                 write!(f, "{}", src)?;
-
             }
         }
         Ok(())
@@ -44,41 +42,39 @@ impl CodeGenerator for PythonCodeGen {
         }
     }
 
-    fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError> {
-        let file = self.file(&fidl);
-        let mut str: String = "".to_string();
-        for line in file {
-            str += &line.to_string();
-        }
-        let mut vec: Vec<String> = Vec::new();
-        vec.push(str);
-        self.python_code.insert(path, vec);
-        Ok(())
-    }
-    fn generate_project(
-        &mut self,
-        dir: PathBuf,
-    ) -> Result<(), GeneratorError> {
+    // fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError> {
+    //     let file = self.file(path.clone(), &fidl);
+    //     let mut str: String = "".to_string();
+
+    //     let mut vec: Vec<String> = Vec::new();
+    //     vec.push(str);
+    //     self.python_code.insert(path, vec);
+    //     Ok(())
+    // }
+    fn generate_project(&mut self, dir: PathBuf) -> Result<(), GeneratorError> {
+        let dir_clone = dir.clone();
         let paths = FidlProject::new(dir);
+        self.project(&dir_clone);
         for path in paths.unwrap() {
-            let fidl = match FidlProject::generate_file(path.clone()){
+            let fidl = match FidlProject::generate_file(path.clone()) {
                 Ok(fidl_file) => fidl_file,
-                Err(err) => return Err(GeneratorError::FidlFileError(err))
+                Err(err) => return Err(GeneratorError::FidlFileError(err)),
             };
 
-            // This needs to be modified because I want to get each interface and type collection as a 
-            // seperate file.  
-            // But it's not part of the trait anymore so that's fine. 
-            // We then also create a primitive types at root level that the rest can import 
+            // This needs to be modified because I want to get each interface and type collection as a
+            // seperate file.
+            // But it's not part of the trait anymore so that's fine.
+            // We then also create a primitive types at root level that the rest can import
             // We'll need JSON and Little Endian serde for debug and to send to comms
             // Then each method will need to accept the inputs, serialize them
-            // Send through some function 
+            // Send through some function
             // Deserialize the returned value. Async/Sync as options. Maybe only async since we can always force sync using async
-            // Also need to add annotation block details support. 
-            self.generate_file(path, fidl).unwrap();
+            // Also need to add annotation block details support.
+            let mut p = path.clone();
+            p.set_extension("");
+            self.file(p, &fidl);
         }
         Ok(())
-
     }
 }
 
@@ -172,43 +168,35 @@ impl PythonCodeGen {
         res
     }
 
-    fn project(&self, dir: &PathBuf) -> Vec<IndentedString> {
-        let mut res: Vec<IndentedString> = Vec::new();
-        res.push(IndentedString::new(
-            0,
-            FidlType::File,
-            "use serde::{Serialize, Deserialize};".to_string(),
-        ));
-        res.push(IndentedString::new(
-            0,
-            FidlType::File,
-            "use binary_serde::{binary_serde_bitfield, BinarySerde, Endianness};".to_string(),
-        ));
-
-        res.extend(self.built_in_types());
-        res.extend(self.context_trait());
-
-        res
+    fn project(&mut self, dir: &PathBuf) -> () {
+        let built_ins = self.built_in_types();
+        let path = dir.join("built_in_fidl_types");
+        self.python_code.insert(dir.with_file_name(path), built_ins);
+        let comm_handler = self.context_trait();
+        let path = dir.join("comm_handler");
+        self.python_code
+            .insert(dir.with_file_name(path), comm_handler);
     }
 
-    fn file(&self, file: &FidlFile) -> Vec<IndentedString> {
-        let mut res: Vec<IndentedString> = Vec::new();
-
-        // Below is temporary, file should really be called by and from project not this way around.
-        let dir_path = PathBuf::new();
-        res.extend(self.project(&dir_path));
-        // End temporary
+    fn file(&mut self, path: PathBuf, file: &FidlFile) -> () {
+        let init_path = path.clone().join("__init__.py");
+        self.python_code
+            .insert(path.with_file_name(init_path), Vec::new());
 
         for type_collection in &file.type_collections {
+            let type_collection_name = &type_collection.name;
             let x = self.type_collection(&type_collection);
-            res.extend(x);
+            let mut p = path.clone();
+            p.push(type_collection_name);
+            self.python_code.insert(p, x);
         }
         for interface in &file.interfaces {
+            let interface_name = &interface.name;
             let x = self.interface(&interface);
-            res.extend(x);
+            let mut p = path.clone();
+            p.push(interface_name);
+            self.python_code.insert(p, x);
         }
-
-        res
     }
 
     fn version(&self, version: &Option<Version>) -> Vec<IndentedString> {
@@ -216,32 +204,32 @@ impl PythonCodeGen {
         match version {
             Some(version) => {
                 res.push(IndentedString::new(
-                    1,
+                    0,
                     FidlType::File,
                     format!(
-                        "pub const VERSION_MAJOR: u32 = {:?};",
+                        "VERSION_MAJOR: int = {:?}",
                         version.major.expect("Should exist")
                     ),
                 ));
                 res.push(IndentedString::new(
-                    1,
+                    0,
                     FidlType::File,
                     format!(
-                        "pub const VERSION_MINOR: u32 = {:?};",
+                        "VERSION_MINOR: int = {:?}\n",
                         version.minor.expect("Should exist")
                     ),
                 ));
             }
             None => {
                 res.push(IndentedString::new(
-                    1,
+                    0,
                     FidlType::File,
-                    format!("pub const VERSION_MAJOR: u32 = {:?};", 0),
+                    format!("VERSION_MAJOR: int = {:?}", 0),
                 ));
                 res.push(IndentedString::new(
-                    1,
+                    0,
                     FidlType::File,
-                    format!("pub const VERSION_MINOR: u32 = {:?};", 0),
+                    format!("VERSION_MINOR: int = {:?}\n", 0),
                 ));
             }
         }
@@ -250,128 +238,45 @@ impl PythonCodeGen {
 
     fn type_collection(&self, type_collection: &TypeCollection) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
-        // An interface is equivalent to a Rust Module
-        let module = IndentedString::new(
-            0,
-            FidlType::File,
-            format!("pub mod {} {{", type_collection.name),
-        );
-        res.push(module);
-        res.push(IndentedString::new(
-            1,
-            FidlType::Interface,
-            "use super::Primitives::*;".to_string(),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::Interface,
-            "use super::*;".to_string(),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::Interface,
-            "use super::FidlContext;".to_string(),
-        ));
-
         res.extend(self.version(&type_collection.version));
         for typedef in &type_collection.typedefs {
-            let typedef: Vec<IndentedString> = self
-                .typedef(typedef, true)
-                .into_iter()
-                .map(|e| e.indent())
-                .collect();
+            let typedef: Vec<IndentedString> = self.typedef(typedef);
             res.extend(typedef)
         }
         for structure in &type_collection.structures {
-            let structure: Vec<IndentedString> = self
-                .structure(structure, true)
-                .into_iter()
-                .map(|e| e.indent())
-                .collect();
+            let structure: Vec<IndentedString> = self.structure(structure);
             res.extend(structure)
         }
         for enumeration in &type_collection.enumerations {
-            let enumeration: Vec<IndentedString> = self
-                .enumeration(enumeration, true)
-                .into_iter()
-                .map(|e| e.indent())
-                .collect();
+            let enumeration: Vec<IndentedString> = self.enumeration(enumeration);
             res.extend(enumeration)
         }
-        let end_bracket = IndentedString::new(0, FidlType::Interface, format!("}}"));
-        res.push(end_bracket);
-
         res
     }
 
     fn interface(&self, interface: &Interface) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
-        // An interface is equivalent to a Rust Module
-        let module = IndentedString::new(
-            0,
-            FidlType::Interface,
-            format!("pub mod {} {{", interface.name),
-        );
-        res.push(module);
-        res.push(IndentedString::new(
-            1,
-            FidlType::Interface,
-            "use super::Primitives::*;".to_string(),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::Interface,
-            "use super::*;".to_string(),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::Interface,
-            "use super::FidlContext;".to_string(),
-        ));
-
         res.extend(self.version(&interface.version));
         for typedef in &interface.typedefs {
-            let typedef: Vec<IndentedString> = self
-                .typedef(typedef, false)
-                .into_iter()
-                .map(|e| e.indent())
-                .collect();
+            let typedef: Vec<IndentedString> = self.typedef(typedef);
             res.extend(typedef)
         }
         for attribute in &interface.attributes {
-            let attr: Vec<IndentedString> = self
-                .attribute(attribute)
-                .into_iter()
-                .map(|e| e.indent())
-                .collect();
+            let attr: Vec<IndentedString> = self.attribute(attribute);
             res.extend(attr);
         }
         for method in &interface.methods {
-            let method: Vec<IndentedString> = self
-                .method(method)
-                .into_iter()
-                .map(|e| e.indent())
-                .collect();
+            let method: Vec<IndentedString> = self.method(method);
             res.extend(method)
         }
         for structure in &interface.structures {
-            let structure: Vec<IndentedString> = self
-                .structure(structure, false)
-                .into_iter()
-                .map(|e| e.indent())
-                .collect();
+            let structure: Vec<IndentedString> = self.structure(structure);
             res.extend(structure)
         }
         for enumeration in &interface.enumerations {
-            let enumeration: Vec<IndentedString> = self
-                .enumeration(enumeration, false)
-                .into_iter()
-                .map(|e| e.indent())
-                .collect();
+            let enumeration: Vec<IndentedString> = self.enumeration(enumeration);
             res.extend(enumeration)
         }
-        let end_bracket = IndentedString::new(0, FidlType::Interface, format!("}}"));
-        res.push(end_bracket);
         res
     }
     fn attribute(&self, attribute: &Attribute) -> Vec<IndentedString> {
@@ -382,76 +287,69 @@ impl PythonCodeGen {
             0,
             FidlType::Structure,
             format!(
-                "fn set_{}(ctx: impl FidlContext, {}: {}) {{ ",
+                "def set_{}(ctx: Comms, {}: {}):",
                 attribute.name,
                 attribute.name.to_lowercase(),
                 attribute.type_n
             ),
         );
         res.push(header);
-        let header = IndentedString::new(0, FidlType::Structure, format!("}}"));
-        res.push(header);
+        res.push(IndentedString::new(1, FidlType::Attribute, "pass".to_string()));
+        res.push(IndentedString::new(1, FidlType::Attribute, "".to_string()));
+
         let header = IndentedString::new(
             0,
             FidlType::Structure,
-            format!("pub fn get_{}() {{ ", attribute.name),
+            format!("def get_{}() -> {}: ", attribute.name, attribute.type_n),
         );
         res.push(header);
-        let header = IndentedString::new(0, FidlType::Structure, format!("}}"));
-        res.push(header);
+        res.push(IndentedString::new(1, FidlType::Attribute, "pass".to_string()));
+        res.push(IndentedString::new(0, FidlType::Attribute, "".to_string()));
 
         res
     }
 
-    fn structure(&self, structure: &Structure, public: bool) -> Vec<IndentedString> {
+    fn structure(&self, structure: &Structure) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
-        res.push(IndentedString::new(
-            0,
-            FidlType::Structure,
-            "#[derive(Debug, Serialize, Deserialize, BinarySerde, PartialEq)]".to_string(),
-        ));
-        res.push(IndentedString::new(
-            0,
-            FidlType::Structure,
-            "#[repr(C)]".to_string(),
-        ));
-
         let header: IndentedString;
-        if public {
-            header = IndentedString::new(
-                0,
-                FidlType::Structure,
-                format!("pub struct {} {{ ", structure.name),
-            );
-        } else {
-            header = IndentedString::new(
-                0,
-                FidlType::Structure,
-                format!("pub struct {} {{ ", structure.name),
-            );
-        }
+        header = IndentedString::new(0, FidlType::Structure, format!("@dataclass"));
 
         res.push(header);
+        let header: IndentedString;
+        header = IndentedString::new(
+            0,
+            FidlType::Structure,
+            format!("class {}():", structure.name),
+        );
+
+        res.push(header);
+
         for var_dec in &structure.contents {
             if var_dec.is_array {
-                let var_dec = format!("pub {}: [{}; 0],", var_dec.name, var_dec.type_n);
+                let var_dec = format!("{}: List[{}]", var_dec.name, var_dec.type_n);
                 res.push(IndentedString::new(1, FidlType::Structure, var_dec));
             } else {
-                let var_dec = format!("pub {}: {},", var_dec.name, var_dec.type_n);
+                let var_dec = format!("{}: {}", var_dec.name, var_dec.type_n);
                 res.push(IndentedString::new(1, FidlType::Structure, var_dec));
             }
         }
-        let header = IndentedString::new(0, FidlType::Structure, format!("}}"));
-        res.push(header);
+        res.push(IndentedString::new(0, FidlType::Structure, "".to_string()));
         res
     }
 
-    fn typedef(&self, typedef: &TypeDef, public: bool) -> Vec<IndentedString> {
-        vec![IndentedString::new(
-            0,
-            FidlType::File,
-            format!("use {} as {};", typedef.type_n, typedef.name),
-        )]
+    fn typedef(&self, typedef: &TypeDef) -> Vec<IndentedString> {
+        vec![
+            IndentedString::new(
+                0,
+                FidlType::File,
+                format!("class {}({}):", typedef.type_n, typedef.name),
+            ),
+            IndentedString::new(
+                0,
+                FidlType::File,
+                format!("'''This is a type definition.'''\n"),
+            ),
+        ]
     }
 
     fn method(&self, method: &Method) -> Vec<IndentedString> {
@@ -490,57 +388,53 @@ impl PythonCodeGen {
             0,
             FidlType::Method,
             format!(
-                "pub fn {}(ctx: impl FidlContext, {}) -> {} {{",
+                "def {}(ctx: Comms, {}) -> {}:",
                 method.name, input_params, output_params
             )
             .to_string(),
         ));
 
-        res.push(IndentedString::new(0, FidlType::Method, format!("}}")));
+        res.push(IndentedString::new(1, FidlType::Method, format!("pass\n")));
         res
     }
-    fn enumeration(&self, enumeration: &Enumeration, public: bool) -> Vec<IndentedString> {
+    fn enumeration(&self, enumeration: &Enumeration) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
-        res.push(IndentedString::new(
-            0,
-            FidlType::Enumeration,
-            "#[derive(Debug, Serialize, Deserialize, BinarySerde, PartialEq, Eq)]".to_string(),
-        ));
-        res.push(IndentedString::new(
-            0,
-            FidlType::Structure,
-            "#[repr(u8)]".to_string(),
-        ));
 
         let header: IndentedString;
-        if public {
-            header = IndentedString::new(
-                0,
-                FidlType::Enumeration,
-                format!("pub enum {} {{ ", enumeration.name),
-            );
-        } else {
-            header = IndentedString::new(
-                0,
-                FidlType::Enumeration,
-                format!("enum {} {{ ", enumeration.name),
-            );
-        }
+
+        header = IndentedString::new(
+            0,
+            FidlType::Enumeration,
+            format!("class {}(IntEnum): ", enumeration.name),
+        );
+
         res.push(header);
+        let mut count = 0;
+        let mut value_map: HashMap<i64, ()> = HashMap::new();
         for enum_value in &enumeration.values {
             let var_dec: String;
             match enum_value.value {
                 Some(value) => {
                     println!("Warning: Value: {:?} for {} in {}, Enum Values behaviour is currently language defined.", value, enum_value.name, enumeration.name);
                     var_dec = format!("{} = {:?},", enum_value.name, value);
+                    value_map.insert(value as i64, ());
                 }
                 None => {
-                    var_dec = format!("{},", enum_value.name);
+                    loop {
+                        if value_map.contains_key(&count) {
+                            count += 1;
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+                    var_dec = format!("{} = {:?},", enum_value.name, count);
+                    count += 1;
                 }
             }
             res.push(IndentedString::new(1, FidlType::Enumeration, var_dec));
         }
-        let header = IndentedString::new(0, FidlType::Enumeration, format!("}}"));
+        let header = IndentedString::new(0, FidlType::Enumeration, format!(""));
         res.push(header);
         res
     }

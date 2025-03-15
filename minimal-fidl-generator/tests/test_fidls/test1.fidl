@@ -80,6 +80,7 @@
         
             // enumeration with values
             enumeration MyEnum03 {
+                ENUM010
                 ENUM01 = 1
                 ENUM02
                 ENUM03 = 10
