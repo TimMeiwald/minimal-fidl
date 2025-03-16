@@ -1,7 +1,34 @@
 from dataclasses import dataclass
+from enum import IntEnum
 from typing import ClassVar
 import struct
 from abc import ABC
+
+@dataclass(frozen=True)
+class Boolean():
+    value: bool
+    _struct_format: ClassVar[str] = "?"
+    _size: ClassVar[int] = 1
+    
+    def __repr__(self) -> str:
+        return str(self.value)
+    
+    def __bytes__(self) -> bytes:
+        array = struct.pack(self._struct_format, self.value)
+        return array
+
+    def __post_init__(self):
+        if not isinstance(self.value, bool):
+            raise TypeError(f"{self.__class__.__name__} '{self.value}' is not a valid input for {type(self).__name__}")
+    
+    @classmethod
+    def from_bytes(cls, input: list[bytes]):
+        if len(input) != cls._size:
+            raise ValueError(f"{cls.__name__} can only be initialized from {cls._size} bytes")
+        input = struct.unpack(cls._struct_format, input)[0] 
+        return cls(input)
+    
+
 
 @dataclass(frozen=True)
 class BaseFloatingPointPrimitive(ABC):
@@ -184,4 +211,11 @@ if __name__ == "__main__":
     y = bytes(x)
     print(x, y.hex(" ", 1))
     z = f32.from_bytes(y)
+    print(z)
+
+    x = Boolean(True)
+    print(x)
+    y = bytes(x)
+    print(y.hex())
+    z = Boolean.from_bytes(y)
     print(z)
