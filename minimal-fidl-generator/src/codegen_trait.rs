@@ -13,7 +13,9 @@ pub enum GeneratorError {
     #[error["Could not generate code. {:?}", 0]]
     CouldNotGeneratCodeForFile(FidlFile),
     #[error["{:?}", 0]]
-    FidlFileError(FileError)
+    FidlFileError(#[from] FileError),
+    #[error["{:?}", 0]]
+    IoError(#[from] std::io::Error)
 
 
 
@@ -24,5 +26,6 @@ pub trait CodeGenerator {
     /// Convenience function if you don't want to filter the files at all. Otherwise use FidlProject to generate each file manually then call
     /// CodeGenerator::generate_file instead for each you want to use. 
     fn generate_project(&mut self,  dir: PathBuf) -> Result<(), GeneratorError>;
+    fn emit_project(&self, target_dir: PathBuf) -> Result<(), GeneratorError>;
 }
 

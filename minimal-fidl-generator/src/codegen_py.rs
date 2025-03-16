@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::io::Write;
 use std::{fmt::format, path::PathBuf};
 
 use crate::codegen_trait::{CodeGenerator, GeneratorError};
@@ -42,6 +43,28 @@ impl CodeGenerator for PythonCodeGen {
         }
     }
 
+    fn emit_project(&self, target_dir: PathBuf) -> Result<(), GeneratorError> {
+        match std::fs::create_dir_all(&target_dir){
+            Err(err) => return Err(GeneratorError::IoError(err)),
+            _ => {}
+        };
+        for (path, content) in &self.python_code {
+            let new_path = target_dir.clone().join(path);
+            println!("{:?}", new_path);
+            let parent = new_path.parent();
+            if parent.is_some(){
+                // Mkdirs if needed
+                let parent = parent.unwrap();
+                std::fs::create_dir_all(parent)?;
+            }
+            let mut file = std::fs::File::create(new_path)?;
+            let str = self.create_string(content);
+            file.write(str.as_bytes())?;
+        }
+        Ok(())
+        
+    }
+
     // fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError> {
     //     let file = self.file(path.clone(), &fidl);
     //     let mut str: String = "".to_string();
@@ -56,11 +79,7 @@ impl CodeGenerator for PythonCodeGen {
         let paths = FidlProject::new(dir);
         self.project(&dir_clone);
         for path in paths.unwrap() {
-            let fidl = match FidlProject::generate_file(path.clone()) {
-                Ok(fidl_file) => fidl_file,
-                Err(err) => return Err(GeneratorError::FidlFileError(err)),
-            };
-
+            let fidl = FidlProject::generate_file(path.clone())?;
             // This needs to be modified because I want to get each interface and type collection as a
             // seperate file.
             // But it's not part of the trait anymore so that's fine.
@@ -79,6 +98,15 @@ impl CodeGenerator for PythonCodeGen {
 }
 
 impl PythonCodeGen {
+
+    fn create_string(&self, input: &Vec<IndentedString>) -> String{
+        let mut str = "".to_string();
+        for line in input{
+            str += &line.to_string();
+        }
+        str
+    }
+
     fn built_in_types(&self) -> Vec<IndentedString> {
         r#"UInt8 unsigned 8-bit integer (range 0..255)
         Int 8signed 8-bit integer (range -128..127)
@@ -169,11 +197,14 @@ impl PythonCodeGen {
     }
 
     fn project(&mut self, dir: &PathBuf) -> () {
+        let init_path = dir.clone().join("__init__.py");
+        self.python_code
+            .insert(init_path, Vec::new());
         let built_ins = self.built_in_types();
-        let path = dir.join("built_in_fidl_types");
+        let path = dir.join("built_in_fidl_types.py");
         self.python_code.insert(dir.with_file_name(path), built_ins);
         let comm_handler = self.context_trait();
-        let path = dir.join("comm_handler");
+        let path = dir.join("comm_handler.py");
         self.python_code
             .insert(dir.with_file_name(path), comm_handler);
     }
@@ -181,13 +212,14 @@ impl PythonCodeGen {
     fn file(&mut self, path: PathBuf, file: &FidlFile) -> () {
         let init_path = path.clone().join("__init__.py");
         self.python_code
-            .insert(path.with_file_name(init_path), Vec::new());
+            .insert(init_path, Vec::new());
 
         for type_collection in &file.type_collections {
             let type_collection_name = &type_collection.name;
             let x = self.type_collection(&type_collection);
             let mut p = path.clone();
             p.push(type_collection_name);
+            p.set_extension(".py");
             self.python_code.insert(p, x);
         }
         for interface in &file.interfaces {
@@ -195,6 +227,7 @@ impl PythonCodeGen {
             let x = self.interface(&interface);
             let mut p = path.clone();
             p.push(interface_name);
+            p.set_extension(".py");
             self.python_code.insert(p, x);
         }
     }
@@ -345,7 +378,7 @@ impl PythonCodeGen {
                 format!("class {}({}):", typedef.type_n, typedef.name),
             ),
             IndentedString::new(
-                0,
+                1,
                 FidlType::File,
                 format!("'''This is a type definition.'''\n"),
             ),

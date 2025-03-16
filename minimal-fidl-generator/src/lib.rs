@@ -359,6 +359,10 @@ mod tests {
         println!("{:?}", codegen);
         stdout().flush()?;
         //  println!(r#"{}"#, codegen.python_code[&PathBuf::new()][0]);
+        let mut path = PathBuf::new();
+        path.push("tests");
+        path.push("test_python_code");
+        codegen.emit_project(path).unwrap();
         Ok(())
     }
 }

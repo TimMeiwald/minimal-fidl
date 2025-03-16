@@ -106,3 +106,31 @@
             typedef MyType23 is MyType12
         }
         
+
+interface MyInterface {
+        typedef CustomDouble is Double
+        attribute UInt8 some_value
+
+        struct ThingStruct {
+            UInt16 some_value
+            Float some_value2
+        }
+        enumeration aEnum {
+            A
+            B
+            C
+            D
+            E
+        }
+        method thing {
+            in {
+                ThingStruct param
+            }
+            out {
+                
+                CustomDouble param2
+                Double param3
+            }
+        }
+
+     }
