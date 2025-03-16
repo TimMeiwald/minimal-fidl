@@ -44,7 +44,7 @@ impl CodeGenerator for PythonCodeGen {
     }
 
     fn emit_project(&self, target_dir: PathBuf) -> Result<(), GeneratorError> {
-        match std::fs::create_dir_all(&target_dir){
+        match std::fs::create_dir_all(&target_dir) {
             Err(err) => return Err(GeneratorError::IoError(err)),
             _ => {}
         };
@@ -52,7 +52,7 @@ impl CodeGenerator for PythonCodeGen {
             let new_path = target_dir.clone().join(path);
             println!("{:?}", new_path);
             let parent = new_path.parent();
-            if parent.is_some(){
+            if parent.is_some() {
                 // Mkdirs if needed
                 let parent = parent.unwrap();
                 std::fs::create_dir_all(parent)?;
@@ -62,7 +62,6 @@ impl CodeGenerator for PythonCodeGen {
             file.write(str.as_bytes())?;
         }
         Ok(())
-        
     }
 
     // fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError> {
@@ -98,10 +97,9 @@ impl CodeGenerator for PythonCodeGen {
 }
 
 impl PythonCodeGen {
-
-    fn create_string(&self, input: &Vec<IndentedString>) -> String{
+    fn create_string(&self, input: &Vec<IndentedString>) -> String {
         let mut str = "".to_string();
-        for line in input{
+        for line in input {
             str += &line.to_string();
         }
         str
@@ -198,8 +196,7 @@ impl PythonCodeGen {
 
     fn project(&mut self, dir: &PathBuf) -> () {
         let init_path = dir.clone().join("__init__.py");
-        self.python_code
-            .insert(init_path, Vec::new());
+        self.python_code.insert(init_path, Vec::new());
         let built_ins = self.built_in_types();
         let path = dir.join("built_in_fidl_types.py");
         self.python_code.insert(dir.with_file_name(path), built_ins);
@@ -211,8 +208,7 @@ impl PythonCodeGen {
 
     fn file(&mut self, path: PathBuf, file: &FidlFile) -> () {
         let init_path = path.clone().join("__init__.py");
-        self.python_code
-            .insert(init_path, Vec::new());
+        self.python_code.insert(init_path, Vec::new());
 
         for type_collection in &file.type_collections {
             let type_collection_name = &type_collection.name;
@@ -271,6 +267,23 @@ impl PythonCodeGen {
 
     fn type_collection(&self, type_collection: &TypeCollection) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
+        let header: IndentedString;
+        header = IndentedString::new(
+            0,
+            FidlType::Enumeration,
+            format!(
+                "from enum import IntEnum
+"
+            ),
+        );
+        res.push(header);
+        let header: IndentedString;
+        header = IndentedString::new(
+            0,
+            FidlType::Enumeration,
+            format!("from dataclasses import dataclass"),
+        );
+        res.push(header);
         res.extend(self.version(&type_collection.version));
         for typedef in &type_collection.typedefs {
             let typedef: Vec<IndentedString> = self.typedef(typedef);
@@ -289,6 +302,20 @@ impl PythonCodeGen {
 
     fn interface(&self, interface: &Interface) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
+        let header: IndentedString;
+        header = IndentedString::new(
+            0,
+            FidlType::Enumeration,
+            format!("from enum import IntEnum"),
+        );
+        res.push(header);
+        let header: IndentedString;
+        header = IndentedString::new(
+            0,
+            FidlType::Enumeration,
+            format!("from dataclasses import dataclass"),
+        );
+        res.push(header);
         res.extend(self.version(&interface.version));
         for typedef in &interface.typedefs {
             let typedef: Vec<IndentedString> = self.typedef(typedef);
@@ -327,7 +354,11 @@ impl PythonCodeGen {
             ),
         );
         res.push(header);
-        res.push(IndentedString::new(1, FidlType::Attribute, "pass".to_string()));
+        res.push(IndentedString::new(
+            1,
+            FidlType::Attribute,
+            "pass".to_string(),
+        ));
         res.push(IndentedString::new(1, FidlType::Attribute, "".to_string()));
 
         let header = IndentedString::new(
@@ -336,7 +367,11 @@ impl PythonCodeGen {
             format!("def get_{}() -> {}: ", attribute.name, attribute.type_n),
         );
         res.push(header);
-        res.push(IndentedString::new(1, FidlType::Attribute, "pass".to_string()));
+        res.push(IndentedString::new(
+            1,
+            FidlType::Attribute,
+            "pass".to_string(),
+        ));
         res.push(IndentedString::new(0, FidlType::Attribute, "".to_string()));
 
         res
@@ -432,15 +467,12 @@ impl PythonCodeGen {
     }
     fn enumeration(&self, enumeration: &Enumeration) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
-
         let header: IndentedString;
-
         header = IndentedString::new(
             0,
             FidlType::Enumeration,
             format!("class {}(IntEnum): ", enumeration.name),
         );
-
         res.push(header);
         let mut count = 0;
         let mut value_map: HashMap<i64, ()> = HashMap::new();
