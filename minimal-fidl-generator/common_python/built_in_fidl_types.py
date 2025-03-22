@@ -8,7 +8,7 @@ from enum import EnumMeta
 
 
 
-@dataclass
+@dataclass(frozen=True)
 class BinarySerdeIntEnum(IntEnum):
     def __init__(self, value: int, size: int, struct_format: str, lower_range_limit: int, upper_range_limit: int):
         super().__init__() 
@@ -27,6 +27,9 @@ class BinarySerdeIntEnum(IntEnum):
     def __str__(self):
         return f"{type(self).__name__}.{self.name}: {self.value}, Size: {self._size}"
     
+    def __int__(self):
+        return self.value
+    
     def __bytes__(self) -> bytes:
         array = struct.pack(self._struct_format, self.value)
         return array
@@ -38,7 +41,7 @@ class BinarySerdeIntEnum(IntEnum):
         input = struct.unpack(cls._struct_format, input)[0] 
         return cls(input)
 
-@dataclass 
+@dataclass(frozen=True)
 class u8IntEnum(BinarySerdeIntEnum):
 
     def __init__(self, value: int):
@@ -48,7 +51,7 @@ class u8IntEnum(BinarySerdeIntEnum):
         upper_range_limit = 255
         super().__init__(value, size, struct_format, lower_range_limit, upper_range_limit)
 
-@dataclass 
+@dataclass(frozen=True)
 class u16IntEnum(BinarySerdeIntEnum):
 
     def __init__(self, value: int):
@@ -57,6 +60,30 @@ class u16IntEnum(BinarySerdeIntEnum):
         struct_format: str = "<H"
         lower_range_limit: int = 0 
         upper_range_limit: int = 65535
+        super().__init__(value, size, struct_format, lower_range_limit, upper_range_limit)
+
+@dataclass(frozen=True)
+class u32IntEnum(BinarySerdeIntEnum):
+
+    def __init__(self, value: int):
+        # value is required in the function signature but is consumed by the IntEnum constructor that runs eventually.
+        struct_format: str = "<I"
+        size: int = 4
+        lower_range_limit: int = 0
+        upper_range_limit: int = 4294967295 
+        super().__init__(value, size, struct_format, lower_range_limit, upper_range_limit)
+
+
+
+@dataclass(frozen=True)
+class u64IntEnum(BinarySerdeIntEnum):
+
+    def __init__(self, value: int):
+        # value is required in the function signature but is consumed by the IntEnum constructor that runs eventually.
+        struct_format: str = "<Q"
+        size: int = 8
+        lower_range_limit: int = 0
+        upper_range_limit: int = (2**64)-1 
         super().__init__(value, size, struct_format, lower_range_limit, upper_range_limit)
 
 
@@ -95,9 +122,14 @@ class BaseFloatingPointPrimitive(ABC):
     def __str__(self) -> str:
         return str(self.value)
     
+        
+    def __float__(self):
+        return self.value
+    
     def __bytes__(self) -> bytes:
         array = struct.pack(self._struct_format, self.value)
         return array
+    
 
     def __post_init__(self):
         # TODO: Currently no validation of size of floats because not entirely sure how. 
@@ -123,6 +155,9 @@ class BaseIntegerPrimitive(ABC):
     
     def __str__(self) -> str:
         return str(self.value)
+        
+    def __int__(self):
+        return self.value
     
     def __bytes__(self) -> bytes:
         array = struct.pack(self._struct_format, self.value)
@@ -248,14 +283,21 @@ class Double(f64):
 
 
 
-class TestEnum(u8IntEnum):
-    THING = 2
-    THING3 = 3
+############################################################################################
+# The following is test code, this should be moved out with the common fidl types being    #
+# tested properly in a package, this is currently a WIP temporary measure.                 #
+############################################################################################
 
-class TestEnum2(u16IntEnum):
-    THINGY = 3
+
 if __name__ == "__main__":
-    x = UInt8(45)
+    class TestEnum(u8IntEnum):
+        THING = 2
+        THING3 = 3
+
+    class TestEnum2(u16IntEnum):
+        THINGY = 3
+
+    x = UInt8(20)
     y = u16(20)
     print(x, y, x == y)
     z = bytes(x)
