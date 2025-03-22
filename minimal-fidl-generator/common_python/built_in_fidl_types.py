@@ -1,8 +1,64 @@
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import IntEnum, Enum
 from typing import ClassVar
 import struct
 from abc import ABC
+from enum import EnumMeta
+
+
+
+
+@dataclass
+class BinarySerdeIntEnum(IntEnum):
+    def __init__(self, value: int, size: int, struct_format: str, lower_range_limit: int, upper_range_limit: int):
+        super().__init__() 
+        self._size = size
+        type(self)._size = size # So class method has access to _size
+        type(self)._struct_format = struct_format
+        self._struct_format = struct_format
+        self._lower_range_limit = lower_range_limit
+        self._upper_range_limit = upper_range_limit
+
+
+
+        if int(self.value) < self._lower_range_limit or int(self.value) > self._upper_range_limit:
+            raise ValueError(f"{self.__class__.__name__}  must be between {self._lower_range_limit} and {self._upper_range_limit}")
+
+    def __str__(self):
+        return f"{type(self).__name__}.{self.name}: {self.value}, Size: {self._size}"
+    
+    def __bytes__(self) -> bytes:
+        array = struct.pack(self._struct_format, self.value)
+        return array
+    
+    @classmethod
+    def from_bytes(cls, input: list[bytes]):
+        if len(input) != cls._size:
+            raise ValueError(f"{cls.__name__} can only be initialized from {cls._size} bytes")
+        input = struct.unpack(cls._struct_format, input)[0] 
+        return cls(input)
+
+@dataclass 
+class u8IntEnum(BinarySerdeIntEnum):
+
+    def __init__(self, value: int):
+        size = 1
+        struct_format = "<B"
+        lower_range_limit = 0
+        upper_range_limit = 255
+        super().__init__(value, size, struct_format, lower_range_limit, upper_range_limit)
+
+@dataclass 
+class u16IntEnum(BinarySerdeIntEnum):
+
+    def __init__(self, value: int):
+        # value is required in the function signature but is consumed by the IntEnum constructor that runs eventually.
+        size: int = 2
+        struct_format: str = "<H"
+        lower_range_limit: int = 0 
+        upper_range_limit: int = 65535
+        super().__init__(value, size, struct_format, lower_range_limit, upper_range_limit)
+
 
 @dataclass(frozen=True)
 class Boolean():
@@ -36,7 +92,7 @@ class BaseFloatingPointPrimitive(ABC):
     _struct_format: ClassVar[str]
     _size: ClassVar[int]
     
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return str(self.value)
     
     def __bytes__(self) -> bytes:
@@ -65,7 +121,7 @@ class BaseIntegerPrimitive(ABC):
     _lower_range_limit: ClassVar[int]
     _upper_range_limit: ClassVar[int]
     
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return str(self.value)
     
     def __bytes__(self) -> bytes:
@@ -191,6 +247,13 @@ class Double(f64):
 
 
 
+
+class TestEnum(u8IntEnum):
+    THING = 2
+    THING3 = 3
+
+class TestEnum2(u16IntEnum):
+    THINGY = 3
 if __name__ == "__main__":
     x = UInt8(45)
     y = u16(20)
@@ -219,3 +282,16 @@ if __name__ == "__main__":
     print(y.hex())
     z = Boolean.from_bytes(y)
     print(z)
+
+    f = TestEnum.THING
+    print(f)
+    print(f == 2)
+    z = bytes(f)
+    print(z)
+    print(f.from_bytes(z))
+
+    f2 = TestEnum2.THINGY
+    z = bytes(f2)
+    print(z)
+    print(f2.from_bytes(z))
+
