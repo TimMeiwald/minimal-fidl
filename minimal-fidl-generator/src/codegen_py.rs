@@ -136,10 +136,10 @@ impl PythonCodeGen {
     fn context_trait(&self) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
 
-        let module = IndentedString::new(0, FidlType::File, format!("pub trait FidlContext {{",));
+        let module = IndentedString::new(0, FidlType::File, format!("class Comms:",));
         res.push(module);
 
-        let module = IndentedString::new(0, FidlType::File, format!("}}",));
+        let module = IndentedString::new(1, FidlType::File, format!("pass",));
         res.push(module);
         res
     }
@@ -234,6 +234,20 @@ impl PythonCodeGen {
             format!("from dataclasses import dataclass"),
         );
         res.push(header);
+        let header: IndentedString;
+        header = IndentedString::new(
+            0,
+            FidlType::Enumeration,
+            format!("from comm_handler import Comms"),
+        );
+        res.push(header);
+        let header: IndentedString;
+        header = IndentedString::new(
+            0,
+            FidlType::Enumeration,
+            format!("from built_in_fidl_types import *"),
+        );
+        res.push(header);
         res.extend(self.version(&type_collection.version));
         for typedef in &type_collection.typedefs {
             let typedef: Vec<IndentedString> = self.typedef(typedef);
@@ -266,6 +280,21 @@ impl PythonCodeGen {
             format!("from dataclasses import dataclass"),
         );
         res.push(header);
+        let header: IndentedString;
+        header = IndentedString::new(
+            0,
+            FidlType::Enumeration,
+            format!("from comm_handler import Comms"),
+        );
+        res.push(header);
+        let header: IndentedString;
+        header = IndentedString::new(
+            0,
+            FidlType::Enumeration,
+            format!("from built_in_fidl_types import *"),
+        );
+        res.push(header);
+
         res.extend(self.version(&interface.version));
         for typedef in &interface.typedefs {
             let typedef: Vec<IndentedString> = self.typedef(typedef);
