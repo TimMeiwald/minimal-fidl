@@ -121,65 +121,15 @@ impl PythonCodeGen {
         15 digits)
         String character string, see caveat below
         ByteBuffer buffer of bytes (aka BLOB), see caveat below"#;
+        let built_ins = include_str!("../common_python/built_in_fidl_types.py");
+
         let mut res: Vec<IndentedString> = Vec::new();
 
         res.push(IndentedString::new(
             0,
             FidlType::File,
-            "pub mod Primitives {".to_string(),
+            built_ins.to_string(),
         ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use u8 as UInt8;"),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use i8 as Int8;"),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use u16 as UInt16;"),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use i16 as Int16;"),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use u32 as UInt32;"),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use i32 as Int32;"),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use u64 as UInt64;"),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use i64 as Int64;"),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use f32 as Float;"),
-        ));
-        res.push(IndentedString::new(
-            1,
-            FidlType::File,
-            format!("pub use f64 as Double;"),
-        ));
-        res.push(IndentedString::new(0, FidlType::File, "}".to_string()));
-
         res
     }
 

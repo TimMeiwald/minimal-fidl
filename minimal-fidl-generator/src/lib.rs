@@ -22,7 +22,7 @@ mod tests {
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };
     use std::{
-        cell::RefCell, io::{stdout, Write}, path::{Path, PathBuf}
+        cell::RefCell, fs::remove_dir_all, io::{stdout, Write}, path::{Path, PathBuf}
     };
 
     use crate::{codegen_py::PythonCodeGen, CodeGenerator, RustCodeGen};
@@ -362,6 +362,7 @@ mod tests {
         let mut path = PathBuf::new();
         path.push("tests");
         path.push("test_python_code");
+        remove_dir_all("tests/test_python_code")?;
         codegen.emit_project(path).unwrap();
         Ok(())
     }
