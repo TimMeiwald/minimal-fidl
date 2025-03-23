@@ -4,6 +4,7 @@ from typing import ClassVar
 import struct
 from abc import ABC
 from enum import EnumMeta
+from typing import Self
 
 
 
@@ -18,14 +19,13 @@ class BinarySerdeIntEnum(IntEnum):
         self._struct_format = struct_format
         self._lower_range_limit = lower_range_limit
         self._upper_range_limit = upper_range_limit
-
-
-
+        
         if int(self.value) < self._lower_range_limit or int(self.value) > self._upper_range_limit:
             raise ValueError(f"{self.__class__.__name__}  must be between {self._lower_range_limit} and {self._upper_range_limit}")
 
     def __str__(self):
-        return f"{type(self).__name__}.{self.name}: {self.value}, Size: {self._size}"
+        return f"({type(self).__name__}.{self.name}: {self.value}, Size: {self._size})"
+    
     
     def __int__(self):
         return self.value
@@ -34,6 +34,11 @@ class BinarySerdeIntEnum(IntEnum):
         array = struct.pack(self._struct_format, self.value)
         return array
     
+    @classmethod
+    def size(cls):
+        size = cls._size
+        return size
+
     @classmethod
     def from_bytes(cls, input: list[bytes]):
         if len(input) != cls._size:
@@ -102,7 +107,7 @@ class Boolean():
 
     def __post_init__(self):
         if not isinstance(self.value, bool):
-            raise TypeError(f"{self.__class__.__name__} '{self.value}' is not a valid input for {type(self).__name__}")
+            raise TypeError(f"{self.__class__.__name__} '{type(self.value).__name__}: {self.value}' is not a valid input for {type(self).__name__}")
     
     @classmethod
     def from_bytes(cls, input: list[bytes]):
@@ -134,8 +139,12 @@ class BaseFloatingPointPrimitive(ABC):
     def __post_init__(self):
         # TODO: Currently no validation of size of floats because not entirely sure how. 
         if not isinstance(self.value, float):
-            raise TypeError(f"{self.__class__.__name__} '{self.value}' is not a valid input for {type(self).__name__}")
+            raise TypeError(f"{self.__class__.__name__} '{type(self.value).__name__}: {self.value}' is not a valid input for {type(self).__name__}")
     
+    @classmethod
+    def size(cls):
+        return cls._size
+
     @classmethod
     def from_bytes(cls, input: list[bytes]):
         if len(input) != cls._size:
@@ -169,6 +178,10 @@ class BaseIntegerPrimitive(ABC):
         if int(self.value) < self._lower_range_limit or int(self.value) > self._upper_range_limit:
             raise ValueError(f"{self.__class__.__name__}  must be between {self._lower_range_limit} and {self._upper_range_limit}")
     
+    @classmethod
+    def size(cls):
+        return cls._size
+
     @classmethod
     def from_bytes(cls, input: list[bytes]):
         if len(input) != cls._size:
@@ -248,7 +261,93 @@ class f64(BaseFloatingPointPrimitive):
     _struct_format: ClassVar[str] = "<d"
     _size: ClassVar[int] = 8
 
+@dataclass(frozen=True)
+class BinarySerdeStruct(ABC):
+    
+    def __bytes__(self) -> bytes:
+        result = bytes()
+        for field in self.__dataclass_fields__:
+            result = result + bytes(self.__getattribute__(field))
+        return result
 
+    @classmethod
+    def from_bytes(cls, input: list[bytes]):
+        position = 0
+        field_value_map = {}
+        for field in cls.__dataclass_fields__:
+            field_type = cls.__dataclass_fields__[field].type
+            size = field_type.size()
+            if size != None:
+                new_obj = field_type.from_bytes(input[position:position+size])
+            else:
+                (new_obj, size) = field_type.dynamic_from_bytes(input[position:]) # Assumes unsized elements are at the end of the struct
+            position += size
+            field_value_map[field] = new_obj
+        return cls(**field_value_map)
+    
+    @classmethod
+    def size(cls):
+        size = cls._size
+        return size
+
+    def __post_init__(self):
+        sized: bool = True
+        size = 0
+        for field in self.__dataclass_fields__:
+            attribute = self.__getattribute__(field)
+            typ = self.__dataclass_fields__[field].type
+            if not isinstance(attribute, typ): 
+                raise ValueError(f"Struct: '{self.__class__.__name__}', Field: '{field}' must be of type '{typ.__name__}' not '{type(attribute).__name__}'")
+            if typ.size() == None:
+                sized = False
+            else:
+                size += typ.size()
+        if sized:
+            type(self)._size = size
+        else: 
+            type(self)._size = None
+
+
+@dataclass(frozen=True)
+class String():
+    ''' Zero Char terminated String'''
+    value: str
+
+    def __bytes__(self) -> bytes:
+        result = bytes(self.value + "\0", encoding="ASCII")
+        return result
+    
+    @classmethod
+    def dynamic_from_bytes(cls, input: bytes) -> tuple[int, bytes]:
+        return cls._from_bytes(input)
+
+    @classmethod
+    def _from_bytes(cls, input: bytes) -> tuple[Self, int]:
+        actual_input = None
+        for index, char in enumerate(input):
+            if char == 0:
+                actual_input = input[0:index]
+                break # We break because we can get passed more data than the actual string since we don't know yet where the null char is. 
+        if actual_input == None:
+            raise ValueError("Not a null terminated string.")
+        return (cls(str(actual_input, encoding="ASCII")), len(actual_input)+1)
+
+    @classmethod
+    def from_bytes(cls, input: bytes):
+        return cls._from_bytes(input)[1]
+    
+    @classmethod
+    def size(cls):
+        size = None # None indicates it's dynamically sized and the callee needs to use 'dynamic_from_bytes'
+        return size
+    
+    def __post_init__(self):
+        if not isinstance(self.value, str):
+            raise ValueError("String input must be a string")
+        for index, char in enumerate(self.value):
+            if ord(char) == 0:
+                # CAREFUL: The null characters could be from being passed too large an input and getting other data.
+                raise ValueError("String input cannot contain a null character")
 
 class UInt8(u8):
     '''Type stub to match FIDL'''
@@ -297,6 +396,29 @@ if __name__ == "__main__":
     class TestEnum2(u16IntEnum):
         THINGY = 3
 
+    @dataclass(frozen=True)
+    class ThingStruct(BinarySerdeStruct):
+        some_value: u8
+        some_value2: f32
+
+    @dataclass(frozen=True)
+    class ThingStruct2(BinarySerdeStruct):
+        some_value: i64
+        some_value2: ThingStruct
+
+    @dataclass(frozen=True)
+    class ThingStruct3(BinarySerdeStruct):
+        some_value: i64
+        some_value2: TestEnum
+
+    @dataclass(frozen=True)
+    class ThingStruct4(BinarySerdeStruct):
+        some_value: i64
+        some_value2: String
+        some_value3: u32
+
+    
+
     x = UInt8(20)
     y = u16(20)
     print(x, y, x == y)
@@ -337,3 +459,45 @@ if __name__ == "__main__":
     print(z)
     print(f2.from_bytes(z))
 
+    f = ThingStruct(u8(2), f32(0.5))
+    z = bytes(f)
+    print(z, len(z))
+
+    f2 = ThingStruct.from_bytes(z)
+    print(f"Sizeof: {f2.size()}")
+
+    print(f2)
+
+
+    f = ThingStruct2(i64(20), ThingStruct(u8(2), f32(0.5)))
+    print(f"Sizeof: {f.size()}")
+    print(f)    
+    z = bytes(f)
+    print(z, len(z))
+
+    f2 = ThingStruct2.from_bytes(z)
+    print(f2)
+
+
+    f = ThingStruct3(i64(20), TestEnum.THING)
+    print(f"Sizeof: {f.size()}")
+    print(f)    
+    z = bytes(f)
+    print(z, len(z))
+
+    f2 = ThingStruct3.from_bytes(z)
+    print(f2, f2.some_value2)
+
+    f = String("teataogaiwg")
+    print(f)
+    f2 = bytes(f)
+    print(f2)
+    f3 = String.from_bytes(f2)
+    print(f3)
+
+    f = ThingStruct4(i64(20), String("Whatever"), u32(5))
+    print(f)
+    f2 = bytes(f)
+    print(f2, len(f2))
+    f3 = ThingStruct4.from_bytes(f2)
+    print(f3)

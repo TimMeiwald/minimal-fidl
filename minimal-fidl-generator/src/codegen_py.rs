@@ -18,7 +18,8 @@ use minimal_fidl_collect::{
     variable_declaration::VariableDeclaration,
     version::Version,
 };
-use minimal_fidl_collect::{fidl_file, FidlProject};
+use minimal_fidl_collect::{enum_value, fidl_file, FidlProject};
+use num_traits::int;
 
 pub struct PythonCodeGen {
     // Generate file creates a vector of strings because one fidl file can generate multiple source code files
@@ -359,7 +360,7 @@ impl PythonCodeGen {
     fn structure(&self, structure: &Structure) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
         let header: IndentedString;
-        header = IndentedString::new(0, FidlType::Structure, format!("@dataclass"));
+        header = IndentedString::new(0, FidlType::Structure, format!("@dataclass(frozen=True)"));
 
         res.push(header);
         let header: IndentedString;
@@ -444,42 +445,90 @@ impl PythonCodeGen {
         res.push(IndentedString::new(1, FidlType::Method, format!("pass\n")));
         res
     }
-    fn enumeration(&self, enumeration: &Enumeration) -> Vec<IndentedString> {
-        let mut res: Vec<IndentedString> = Vec::new();
-        let header: IndentedString;
-        header = IndentedString::new(
-            0,
-            FidlType::Enumeration,
-            format!("class {}(IntEnum): ", enumeration.name),
-        );
-        res.push(header);
-        let mut count = 0;
-        let mut value_map: HashMap<i64, ()> = HashMap::new();
+
+    fn enumeration_value_gatherer(&self, enumeration: &Enumeration) -> (u64, HashMap<String, u64>) {
+        // The goal is to have as compact a representation as possible
+        // So we need to do some work to allow for hardcoded enum values and autovalued enum values
+        // in the same enum structure that don't waste numbers to keep things compact.
+
+        let mut enum_name_value: HashMap<String, u64> = HashMap::new(); // Largest supported enum value u64, UB if larger.
+        let mut exists_already: HashMap<u64, ()> = HashMap::new();
+
+        // Assign all hardcoded values.
         for enum_value in &enumeration.values {
-            let var_dec: String;
             match enum_value.value {
                 Some(value) => {
-                    println!("Warning: Value: {:?} for {} in {}, Enum Values behaviour is currently language defined.", value, enum_value.name, enumeration.name);
-                    var_dec = format!("{} = {:?},", enum_value.name, value);
-                    value_map.insert(value as i64, ());
+                    enum_name_value.insert(enum_value.name.clone(), value);
+
+                    let result = exists_already.insert(value, ());
+                    if result.is_some() {
+                        panic!("Cannot have two identical values assigned to different enum values in {}", enumeration.name);
+                    }
+                }
+                None => {
+                    // Do nothing we handle this in next loop
+                }
+            }
+        }
+
+        let mut count: u64 = 0;
+        for enum_value in &enumeration.values {
+            match enum_value.value {
+                Some(value) => {
+                    // Do nothing since this has already been handled.
                 }
                 None => {
                     loop {
-                        if value_map.contains_key(&count) {
+                        if exists_already.contains_key(&count) {
                             count += 1;
-                            continue;
                         } else {
                             break;
                         }
                     }
-                    var_dec = format!("{} = {:?},", enum_value.name, count);
+                    let value = count;
                     count += 1;
+                    enum_name_value.insert(enum_value.name.clone(), value);
                 }
             }
-            res.push(IndentedString::new(1, FidlType::Enumeration, var_dec));
         }
-        let header = IndentedString::new(0, FidlType::Enumeration, format!(""));
+        let mut largest_value = 0;
+        for (_name, value) in &enum_name_value {
+            if *value >= largest_value {
+                largest_value = *value;
+            }
+        }
+        (largest_value, enum_name_value)
+    }
+
+    fn enumeration(&self, enumeration: &Enumeration) -> Vec<IndentedString> {
+        let mut res: Vec<IndentedString> = Vec::new();
+        let (largest_value, enumeration_map) = self.enumeration_value_gatherer(enumeration);
+        let mut size = 8;
+        if largest_value > 255 {
+            size = 16;
+        } else if largest_value > 65535 {
+            size = 32
+        } else if largest_value > 4294967295 {
+            size = 64
+        }
+        let header = IndentedString::new(
+            0,
+            FidlType::Structure,
+            format!("class {}(u{size}IntEnum):", enumeration.name),
+        );
         res.push(header);
+        let size = size;
+        for enum_value in &enumeration.values{
+            let value = enumeration_map.get(&enum_value.name).expect("We expect them to exist since we put them there in the gather function");
+            let header = IndentedString::new(
+                1,
+                FidlType::Structure,
+                format!("{} = {},", enum_value.name, value),
+            );
+            res.push(header);
+        }
+
+
         res
     }
 }
