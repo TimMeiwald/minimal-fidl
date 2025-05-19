@@ -269,6 +269,7 @@ impl PythonCodeGen {
 
     fn interface(&self, interface: &Interface) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
+        let id = Self::method_and_interface_split_annotation_content(&interface.annotations);
         let header: IndentedString;
         header = IndentedString::new(
             0,
@@ -298,6 +299,14 @@ impl PythonCodeGen {
         );
         res.push(header);
 
+        if id.is_some(){
+            let id = id.unwrap();
+            res.push(IndentedString::new(
+                0,
+                FidlType::Interface,
+                format!("ID = {:?}", id),
+            ));
+        }
         res.extend(self.version(&interface.version));
         for typedef in &interface.typedefs {
             let typedef: Vec<IndentedString> = self.typedef(typedef);
