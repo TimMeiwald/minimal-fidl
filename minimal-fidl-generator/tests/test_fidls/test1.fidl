@@ -124,6 +124,8 @@ interface MyInterface {
             D
             E
         }
+
+        <**@details: id = 0x20 **>
         method thing {
             in {
                 ThingStruct param

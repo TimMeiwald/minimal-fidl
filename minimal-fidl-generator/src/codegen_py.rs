@@ -404,6 +404,7 @@ impl PythonCodeGen {
 
     fn method(&self, method: &Method) -> Vec<IndentedString> {
         let mut input_params = "".to_string();
+        let id = Self::method_and_interface_split_annotation_content(&method.annotations);
         for param in &method.input_parameters {
             input_params += &param.name;
             input_params += ": ";
@@ -443,7 +444,10 @@ impl PythonCodeGen {
             )
             .to_string(),
         ));
-
+        if id.is_some() {
+            let id = id.unwrap();
+            res.push(IndentedString::new(1, FidlType::Method, format!("Id: int = {:?}", id)));
+        }
         res.push(IndentedString::new(1, FidlType::Method, format!("pass\n")));
         res
     }
@@ -507,7 +511,26 @@ impl PythonCodeGen {
         for annotation in annotations {
             if annotation.name.trim() == "details" {
                 let contents = annotation.contents.trim();
-                if contents.starts_with("size"){
+                if contents.trim().to_lowercase().starts_with("size"){
+                    let contents: Vec<&str> = contents.split("=").collect();
+                    assert!(contents.len() == 2, "Expected only one equals sign");
+                    let value = EnumValue::convert_string_representation_of_number_to_value(
+                        contents[1].trim().to_string(),
+                    )
+                    .expect("Expected a valid positive integer.");
+                    return Some(value);
+                }
+                
+            }
+        }
+        None
+    }
+    fn method_and_interface_split_annotation_content(annotations: &Vec<Annotation>) -> Option<u64> {
+        // Returns size element that can be used to hardcode enum size.
+        for annotation in annotations {
+            if annotation.name.trim() == "details" {
+                let contents = annotation.contents.trim();
+                if contents.trim().to_lowercase().starts_with("id"){
                     let contents: Vec<&str> = contents.split("=").collect();
                     assert!(contents.len() == 2, "Expected only one equals sign");
                     let value = EnumValue::convert_string_representation_of_number_to_value(
