@@ -31,7 +31,7 @@ impl TypeDef {
             match child.rule {
                 Rules::comment | Rules::multiline_comment => {}
                 Rules::annotation_block => {
-                    annotations = annotation_constructor(source, publisher, node)?;
+                    annotations = annotation_constructor(source, publisher, child)?;
                 }
                 Rules::type_dec => {
                     println!("Need to actually do this stuff. Types need to be checked for duplicates and whether they exist if using external import after reading file.");

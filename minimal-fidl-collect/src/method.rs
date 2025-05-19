@@ -32,7 +32,7 @@ impl Method {
                 | Rules::open_bracket
                 | Rules::close_bracket => {}
                 Rules::annotation_block => {
-                    annotations = annotation_constructor(source, publisher, node)?;
+                    annotations = annotation_constructor(source, publisher, child)?;
                 }
                 Rules::variable_name => {
                     name = Ok(child.get_string(source));

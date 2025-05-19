@@ -52,7 +52,7 @@ impl TypeCollection {
                     enumeration.push_if_not_exists_else_err(&mut enumerations)?;
                 }
                 Rules::annotation_block => {
-                    annotations = annotation_constructor(source, publisher, node)?;
+                    annotations = annotation_constructor(source, publisher, child)?;
                 }
 
                 Rules::comment

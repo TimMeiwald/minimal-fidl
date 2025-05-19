@@ -27,7 +27,7 @@ impl EnumValue {
             match child.rule {
                 Rules::comment | Rules::multiline_comment => {}
                 Rules::annotation_block => {
-                    annotations = annotation_constructor(source, publisher, node)?;
+                    annotations = annotation_constructor(source, publisher, child)?;
                 }
                 Rules::number => {
                     let res = child.get_string(source);

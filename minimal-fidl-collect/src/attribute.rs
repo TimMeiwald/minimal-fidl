@@ -28,7 +28,7 @@ impl Attribute {
             match child.rule {
                 Rules::comment | Rules::multiline_comment => {}
                 Rules::annotation_block => {
-                    annotations = annotation_constructor(source, publisher, node)?;
+                    annotations = annotation_constructor(source, publisher, child)?;
                 }
                 Rules::type_ref => {
                     type_n = Ok(child.get_string(source));

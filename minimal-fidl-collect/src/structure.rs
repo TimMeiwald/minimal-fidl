@@ -30,7 +30,7 @@ impl Structure {
                 | Rules::open_bracket
                 | Rules::close_bracket => {},
                 Rules::annotation_block => {
-                    annotations = annotation_constructor(source, publisher, node)?;
+                    annotations = annotation_constructor(source, publisher, child)?;
                 }
                 Rules::type_dec => {
                     name = Ok(child.get_string(source));
