@@ -3,12 +3,13 @@ use std::{
     str::FromStr,
 };
 
-use crate::{fidl_file::FileError, VariableDeclaration};
+use crate::{annotation::{annotation_constructor, Annotation}, fidl_file::FileError, VariableDeclaration};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Method {
     start_position: u32,
     end_position: u32,
+    pub annotations: Vec<Annotation>,
     pub name: String,
     pub input_parameters: Vec<VariableDeclaration>,
     pub output_parameters: Vec<VariableDeclaration>,
@@ -21,6 +22,7 @@ impl Method {
         ));
         let mut input_parameters: Vec<VariableDeclaration> = Vec::new();
         let mut output_parameters: Vec<VariableDeclaration> = Vec::new();
+        let mut annotations: Vec<Annotation> = Vec::new();
 
         for child in node.get_children() {
             let child = publisher.get_node(*child);
@@ -28,8 +30,10 @@ impl Method {
                 Rules::comment
                 | Rules::multiline_comment
                 | Rules::open_bracket
-                | Rules::annotation_block
                 | Rules::close_bracket => {}
+                Rules::annotation_block => {
+                    annotations = annotation_constructor(source, publisher, node)?;
+                }
                 Rules::variable_name => {
                     name = Ok(child.get_string(source));
                 }
@@ -50,6 +54,7 @@ impl Method {
         Ok(Self {
             name: name?,
             start_position: node.start_position,
+            annotations,
             end_position: node.end_position,
             input_parameters,
             output_parameters,

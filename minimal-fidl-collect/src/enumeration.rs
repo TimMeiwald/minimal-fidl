@@ -3,12 +3,13 @@ use std::{
     str::FromStr,
 };
 
-use crate::{enum_value::EnumValue, fidl_file::FileError, VariableDeclaration};
+use crate::{annotation::{annotation_constructor, Annotation}, enum_value::EnumValue, fidl_file::FileError, VariableDeclaration};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Enumeration {
     start_position: u32,
     end_position: u32,
+    pub annotations: Vec<Annotation>,
     pub name: String,
     pub values: Vec<EnumValue>,
 }
@@ -18,6 +19,8 @@ impl Enumeration {
         let mut name: Result<String, FileError> = Err(FileError::InternalLogicError(
             "Uninitialized value: name in Enumeration::new".to_string(),
         ));
+        let mut annotations: Vec<Annotation> = Vec::new();
+
         let mut values: Vec<EnumValue> = Vec::new();
         for child in node.get_children() {
             let child = publisher.get_node(*child);
@@ -25,8 +28,10 @@ impl Enumeration {
                 Rules::comment
                 | Rules::multiline_comment
                 | Rules::open_bracket
-                | Rules::annotation_block
                 | Rules::close_bracket => {}
+                Rules::annotation_block => {
+                    annotations = annotation_constructor(source, publisher, node)?;
+                }
                 Rules::type_dec => {
                     name = Ok(child.get_string(source));
                 }
@@ -46,6 +51,7 @@ impl Enumeration {
         Ok(Self {
             name: name?,
             values,
+            annotations,
             start_position: node.start_position,
             end_position: node.end_position,
         })
