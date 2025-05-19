@@ -67,11 +67,13 @@
             }
         
             // empty enumeration
+            <** @details : size = 16 **>
             enumeration MyEnum01 {
                 ENUM00
             }
         
             // enumeration without values
+            <** @details: size = 0x8 **>
             enumeration MyEnum02 {
                 ENUM01
                 ENUM02

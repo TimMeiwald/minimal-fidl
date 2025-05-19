@@ -363,7 +363,7 @@ mod tests {
         let mut path = PathBuf::new();
         path.push("tests");
         path.push("test_python_code");
-        remove_dir_all("tests/test_python_code")?;
+        let x = remove_dir_all("tests/test_python_code");
         codegen.emit_project(path).unwrap();
         Ok(())
     }

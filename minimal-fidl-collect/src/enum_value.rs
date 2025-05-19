@@ -67,7 +67,7 @@ impl EnumValue {
         Ok(())
     }
 
-    fn convert_string_representation_of_number_to_value(input: String) -> Result<u64, FileError> {
+    pub fn convert_string_representation_of_number_to_value(input: String) -> Result<u64, FileError> {
         let value = input.parse::<u64>();
 
         match value {

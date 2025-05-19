@@ -6,6 +6,9 @@ use std::{fmt::format, path::PathBuf};
 use crate::codegen_trait::{CodeGenerator, GeneratorError};
 use crate::indented_string::IndentedString;
 use crate::FidlType;
+use minimal_fidl_collect::annotation::Annotation;
+use minimal_fidl_collect::enum_value::EnumValue;
+use minimal_fidl_collect::{annotation, enum_value, fidl_file, FidlProject};
 use minimal_fidl_collect::{
     attribute::{self, Attribute},
     enumeration::Enumeration,
@@ -18,7 +21,6 @@ use minimal_fidl_collect::{
     variable_declaration::VariableDeclaration,
     version::Version,
 };
-use minimal_fidl_collect::{enum_value, fidl_file, FidlProject};
 use num_traits::int;
 
 pub struct PythonCodeGen {
@@ -500,9 +502,30 @@ impl PythonCodeGen {
         (largest_value, enum_name_value)
     }
 
+    fn enumeration_split_annotation_content(annotations: &Vec<Annotation>) -> Option<u64> {
+        // Returns size element that can be used to hardcode enum size.
+        for annotation in annotations {
+            if annotation.name.trim() == "details" {
+                let contents = annotation.contents.trim();
+                if contents.starts_with("size"){
+                    let contents: Vec<&str> = contents.split("=").collect();
+                    assert!(contents.len() == 2, "Expected only one equals sign");
+                    let value = EnumValue::convert_string_representation_of_number_to_value(
+                        contents[1].trim().to_string(),
+                    )
+                    .expect("Expected a valid positive integer.");
+                    return Some(value);
+                }
+                
+            }
+        }
+        None
+    }
+
     fn enumeration(&self, enumeration: &Enumeration) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
         let (largest_value, enumeration_map) = self.enumeration_value_gatherer(enumeration);
+        let hardcoded_size: Option<u64> = Self::enumeration_split_annotation_content(&enumeration.annotations);
         let mut size = 8;
         if largest_value > 255 {
             size = 16;
@@ -511,13 +534,27 @@ impl PythonCodeGen {
         } else if largest_value > 4294967295 {
             size = 64
         }
+        if hardcoded_size.is_some(){
+            let hardcoded_size = hardcoded_size.unwrap();
+            // If the hardcoded sise is not large enough for the number of enum variants we panic
+            // due to the mismatch between user demanded behaviour and reality. 
+            if size > hardcoded_size {
+                panic!("The hardcoded size {:?} is not large enough for the number of enum variants. Expected at least: {:?}", hardcoded_size, size);
+            }
+            else{
+                if hardcoded_size != 8 && hardcoded_size != 16 && hardcoded_size != 32 && hardcoded_size != 64{
+                    panic!("The hardcoded size {:?} must be 8, 16, 32 or 64", hardcoded_size);
+                }
+                size = hardcoded_size
+            }
+            
+        }
         let header = IndentedString::new(
             0,
             FidlType::Structure,
             format!("class {}(u{size}IntEnum):", enumeration.name),
         );
         res.push(header);
-        let size = size;
         for enum_value in &enumeration.values {
             let value = enumeration_map
                 .get(&enum_value.name)

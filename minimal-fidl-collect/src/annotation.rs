@@ -4,8 +4,8 @@ use crate::{annotation, FileError};
 
 #[derive(Debug, Clone)]
 pub struct Annotation {
-    name: String,
-    contents: String,
+    pub name: String,
+    pub contents: String,
 }
 
 impl Annotation {
