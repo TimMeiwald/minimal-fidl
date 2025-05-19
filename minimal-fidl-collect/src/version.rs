@@ -71,7 +71,9 @@ impl Version {
                 }
             }
         }
-        return Err(FileError::InternalLogicError("If Version node exists it should have a major and minor version".to_string()))
+        return Err(FileError::InternalLogicError(
+            "If Version node exists it should have a major and minor version".to_string(),
+        ));
     }
 
     fn convert_string_representation_of_number_to_value(input: String) -> Result<u64, FileError> {

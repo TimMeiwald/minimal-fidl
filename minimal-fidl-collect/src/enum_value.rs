@@ -11,14 +11,9 @@ pub struct EnumValue {
     end_position: u32,
     pub name: String,
     pub value: Option<u64>,
-
 }
 impl EnumValue {
-    pub fn new(
-        source: &str,
-        publisher: &BasicPublisher,
-        node: &Node,
-    ) -> Result<Self, FileError> {
+    pub fn new(source: &str, publisher: &BasicPublisher, node: &Node) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::enum_value);
         let mut value: Option<u64> = None;
         let mut name: Result<String, FileError> = Err(FileError::InternalLogicError(
@@ -45,7 +40,12 @@ impl EnumValue {
                 }
             }
         }
-        Ok(Self { name: name?, value , start_position: node.start_position, end_position: node.end_position})
+        Ok(Self {
+            name: name?,
+            value,
+            start_position: node.start_position,
+            end_position: node.end_position,
+        })
     }
 
     pub fn push_if_not_exists_else_err(
@@ -54,19 +54,14 @@ impl EnumValue {
     ) -> Result<(), FileError> {
         for s in &mut *enum_values {
             if s.name == self.name {
-                return Err(FileError::EnumValueAlreadyExists(
-                    s.clone(),
-                    self.clone(),
-                ));
+                return Err(FileError::EnumValueAlreadyExists(s.clone(), self.clone()));
             }
         }
         enum_values.push(self);
         Ok(())
     }
 
-    fn convert_string_representation_of_number_to_value(
-        input: String,
-    ) -> Result<u64, FileError> {
+    fn convert_string_representation_of_number_to_value(input: String) -> Result<u64, FileError> {
         let value = input.parse::<u64>();
 
         match value {

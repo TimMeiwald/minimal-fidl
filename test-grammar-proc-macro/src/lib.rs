@@ -2,9 +2,7 @@ extern crate proc_macro;
 extern crate quote;
 extern crate syn;
 
-use std::{
-    path::{self, Path},
-};
+use std::path::{self, Path};
 
 use proc_macro2::{Span, TokenStream};
 use syn::{parse_macro_input, LitStr};

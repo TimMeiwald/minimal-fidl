@@ -56,12 +56,10 @@ pub enum FileError {
     #[error["The Type Collection: 'TODO' already exists.\nFirst Type Collection\n{0:#?}\nSecond Type Collection\n{1:#?}"]]
     TypeCollectionAlreadyExists(TypeCollection, TypeCollection),
     #[error["The Type collection requires a name"]]
-    TypeCollectionRequiresAName
-
-
+    TypeCollectionRequiresAName,
 }
 
-pub struct FidlFile{
+pub struct FidlFile {
     pub source: String,
     pub package: Option<Package>,
     pub namespaces: Vec<ImportNamespace>,
@@ -123,7 +121,6 @@ impl FidlFile {
         }
     }
 
-   
     fn create_symbol_table(&mut self, publisher: &BasicPublisher) -> Result<(), FileError> {
         let root_node = publisher.get_node(Key(0));
         debug_assert_eq!(root_node.rule, Rules::Grammar);
@@ -139,8 +136,7 @@ impl FidlFile {
                     package.push_if_not_exists_else_err(&mut self.package)?;
                 }
                 Rules::import_namespace => {
-                    let import_namespace =
-                        ImportNamespace::new(&self.source, &publisher, child)?;
+                    let import_namespace = ImportNamespace::new(&self.source, &publisher, child)?;
                     self.namespaces.push(import_namespace);
                 }
                 Rules::import_model => {
@@ -159,7 +155,7 @@ impl FidlFile {
                 | Rules::multiline_comment
                 | Rules::open_bracket
                 | Rules::annotation_block
-                | Rules::close_bracket => {},
+                | Rules::close_bracket => {}
                 rule => {
                     return Err(FileError::UnexpectedNode(
                         rule,

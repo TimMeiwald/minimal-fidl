@@ -3,19 +3,17 @@ use minimal_fidl_parser::{
     BasicContext, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
 };
 use std::cell::RefCell;
-use std::path::PathBuf;
 use std::path::Path;
+use std::path::PathBuf;
 use std::process::exit;
 use std::time::Instant;
-
 
 pub fn minimal_fidl_fmt(paths: &[PathBuf], dry_run: bool) {
     let paths = walk_dirs(&paths[0]).expect("Some error occurred");
     // Context should be reuseable if cleared after each parse but that's unstable so we pretend we can do this but actualy make a new
     // Context in the format file.
     //Dummy context since it should be reusable but not sure if it is right now
-    let ctx: RefCell<BasicContext> =
-        RefCell::new(BasicContext::new(0_usize, RULES_SIZE as usize));
+    let ctx: RefCell<BasicContext> = RefCell::new(BasicContext::new(0_usize, RULES_SIZE as usize));
     let start = Instant::now();
     let mut success_count = 0;
     let mut err_count = 0;
@@ -46,30 +44,29 @@ pub fn minimal_fidl_fmt(paths: &[PathBuf], dry_run: bool) {
                 }
             }
             Err(_e) => {
-                err_count +=1 ;
+                err_count += 1;
                 println!("Error formatting file: {:?}", path);
             }
         }
     }
     let end = Instant::now();
-    println!("Successfully formatted: {}/{}", success_count, err_count + success_count);
-    println!("Total time elapsed {:#?}", end-start);
-    if success_count == (err_count + success_count){
+    println!(
+        "Successfully formatted: {}/{}",
+        success_count,
+        err_count + success_count
+    );
+    println!("Total time elapsed {:#?}", end - start);
+    if success_count == (err_count + success_count) {
         exit(0)
-    }
-    else{
+    } else {
         exit(1)
     }
-
-
 }
 
 fn is_fidl_file(path: &Path) -> bool {
     let extension = path.extension();
     match extension {
-        Some(extension) => {
-            extension == "fidl"
-        }
+        Some(extension) => extension == "fidl",
         None => false,
     }
 }

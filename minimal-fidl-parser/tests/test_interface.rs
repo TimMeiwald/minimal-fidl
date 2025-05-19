@@ -261,4 +261,3 @@ fn test_interface_5() {
     let result = shared(src, interface::<BasicContext>, Rules::interface);
     assert_eq!(result, (true, src.len() as u32));
 }
-

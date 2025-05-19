@@ -4,7 +4,14 @@ use std::{
 };
 
 use crate::{
-    annotation::{annotation_constructor, Annotation}, attribute::{self, Attribute}, enumeration::{self, Enumeration}, fidl_file::FileError, method::Method, structure::Structure, type_def::TypeDef, Version
+    annotation::{annotation_constructor, Annotation},
+    attribute::{self, Attribute},
+    enumeration::{self, Enumeration},
+    fidl_file::FileError,
+    method::Method,
+    structure::Structure,
+    type_def::TypeDef,
+    Version,
 };
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
@@ -18,14 +25,10 @@ pub struct Interface {
     pub structures: Vec<Structure>,
     pub typedefs: Vec<TypeDef>,
     pub methods: Vec<Method>,
-    pub enumerations: Vec<Enumeration>
+    pub enumerations: Vec<Enumeration>,
 }
 impl Interface {
-    pub fn new(
-        source: &str,
-        publisher: &BasicPublisher,
-        node: &Node,
-    ) -> Result<Self, FileError> {
+    pub fn new(source: &str, publisher: &BasicPublisher, node: &Node) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::interface);
         let mut name: Result<String, FileError> = Err(FileError::InternalLogicError(
             "Uninitialized value: 'name' in Interface::new".to_string(),
@@ -36,7 +39,7 @@ impl Interface {
         let mut typedefs: Vec<TypeDef> = Vec::new();
         let mut methods: Vec<Method> = Vec::new();
         let mut enumerations: Vec<Enumeration> = Vec::new();
-        let mut annotations: Vec<Annotation> = Vec::new(); 
+        let mut annotations: Vec<Annotation> = Vec::new();
 
         for child in node.get_children() {
             let child = publisher.get_node(*child);
@@ -69,7 +72,7 @@ impl Interface {
                     let enumeration = Enumeration::new(source, publisher, child)?;
                     enumeration.push_if_not_exists_else_err(&mut enumerations)?;
                 }
-                Rules::annotation_block => {    
+                Rules::annotation_block => {
                     annotations = annotation_constructor(source, publisher, child)?;
                 }
                 Rules::comment
@@ -92,9 +95,9 @@ impl Interface {
             attributes,
             typedefs,
             methods,
-            enumerations, 
-            start_position : node.start_position,
-            end_position : node.end_position,
+            enumerations,
+            start_position: node.start_position,
+            end_position: node.end_position,
         })
     }
 
@@ -102,15 +105,16 @@ impl Interface {
         node.get_string(source)
     }
 
-    pub fn push_if_not_exists_else_err(self, interfaces: &mut Vec<Interface>) -> Result<(), FileError> {
-        for s in &mut *interfaces{
-            if s.name == self.name{
+    pub fn push_if_not_exists_else_err(
+        self,
+        interfaces: &mut Vec<Interface>,
+    ) -> Result<(), FileError> {
+        for s in &mut *interfaces {
+            if s.name == self.name {
                 return Err(FileError::InterfaceAlreadyExists(s.clone(), self.clone()));
-
             }
         }
         interfaces.push(self);
         Ok(())
-
     }
 }

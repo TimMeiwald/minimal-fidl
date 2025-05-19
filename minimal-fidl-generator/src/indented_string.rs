@@ -3,18 +3,17 @@ use std::fmt::{self};
 use std::ops::AddAssign;
 
 #[derive(PartialEq, Debug, Copy, Clone)]
-pub enum FidlType{
+pub enum FidlType {
     File,
-    Package, 
-    Interface, 
-    Enumeration, 
+    Package,
+    Interface,
+    Enumeration,
     EnumValue,
     Method,
     Attribute,
     Structure,
-    TypeCollection
+    TypeCollection,
 }
-
 
 #[derive(PartialEq, Debug)]
 pub struct IndentedString {
@@ -64,4 +63,3 @@ impl AddAssign for IndentedString {
         };
     }
 }
-

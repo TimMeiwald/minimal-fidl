@@ -518,8 +518,10 @@ impl PythonCodeGen {
         );
         res.push(header);
         let size = size;
-        for enum_value in &enumeration.values{
-            let value = enumeration_map.get(&enum_value.name).expect("We expect them to exist since we put them there in the gather function");
+        for enum_value in &enumeration.values {
+            let value = enumeration_map
+                .get(&enum_value.name)
+                .expect("We expect them to exist since we put them there in the gather function");
             let header = IndentedString::new(
                 1,
                 FidlType::Structure,
@@ -527,7 +529,6 @@ impl PythonCodeGen {
             );
             res.push(header);
         }
-
 
         res
     }

@@ -14,11 +14,7 @@ pub struct Method {
     pub output_parameters: Vec<VariableDeclaration>,
 }
 impl Method {
-    pub fn new(
-        source: &str,
-        publisher: &BasicPublisher,
-        node: &Node,
-    ) -> Result<Self, FileError> {
+    pub fn new(source: &str, publisher: &BasicPublisher, node: &Node) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::method);
         let mut name: Result<String, FileError> = Err(FileError::InternalLogicError(
             "Uninitialized value: name in Method::new".to_string(),
@@ -33,7 +29,7 @@ impl Method {
                 | Rules::multiline_comment
                 | Rules::open_bracket
                 | Rules::annotation_block
-                | Rules::close_bracket => {},
+                | Rules::close_bracket => {}
                 Rules::variable_name => {
                     name = Ok(child.get_string(source));
                 }
@@ -47,10 +43,7 @@ impl Method {
                     Self::params(source, publisher, child, &mut output_parameters)?;
                 }
                 rule => {
-                    return Err(FileError::UnexpectedNode(
-                        rule,
-                        "Method::new".to_string(),
-                    ));
+                    return Err(FileError::UnexpectedNode(rule, "Method::new".to_string()));
                 }
             }
         }
@@ -63,15 +56,13 @@ impl Method {
         })
     }
     pub fn push_if_not_exists_else_err(self, methods: &mut Vec<Method>) -> Result<(), FileError> {
-        for s in &mut *methods{
-            if s.name == self.name{
+        for s in &mut *methods {
+            if s.name == self.name {
                 return Err(FileError::MethodAlreadyExists(s.clone(), self.clone()));
-
             }
         }
         methods.push(self);
         Ok(())
-
     }
 
     fn params(
@@ -91,7 +82,7 @@ impl Method {
                 | Rules::multiline_comment
                 | Rules::open_bracket
                 | Rules::annotation_block
-                | Rules::close_bracket => {},
+                | Rules::close_bracket => {}
                 rule => {
                     return Err(FileError::UnexpectedNode(
                         rule,

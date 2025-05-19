@@ -1,39 +1,35 @@
-
 mod formatter;
 mod indented_string;
 pub use formatter::Formatter;
 pub use formatter::FormatterError;
 
-
 #[cfg(test)]
 mod tests {
+    use crate::formatter;
     use minimal_fidl_parser::{
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };
-    use crate::formatter;
     use std::cell::RefCell;
 
+    pub fn parse(input: &str) -> Option<BasicPublisher> {
+        let string = input.to_string();
+        let src_len = string.len() as u32;
+        let source = Source::new(&string);
+        let position: u32 = 0;
+        let result: (bool, u32);
+        let context = RefCell::new(BasicContext::new(src_len as usize, RULES_SIZE as usize));
+        {
+            let executor = _var_name(Rules::Grammar, &context, grammar);
+            result = executor(Key(0), &source, position);
+        }
+        if result != (true, src_len) {
+            println!("Failed with : {:?}", result);
+            return None;
+        }
 
-pub fn parse(input: &str) -> Option<BasicPublisher> {
-    let string = input.to_string();
-    let src_len = string.len() as u32;
-    let source = Source::new(&string);
-    let position: u32 = 0;
-    let result: (bool, u32);
-    let context = RefCell::new(BasicContext::new(src_len as usize, RULES_SIZE as usize));
-    {
-        let executor = _var_name(Rules::Grammar, &context, grammar);
-        result = executor(Key(0), &source, position);
+        let publisher = context.into_inner().get_publisher().clear_false();
+        Some(publisher)
     }
-    if result != (true, src_len) {
-        println!("Failed with : {:?}", result);
-        return None;
-    }
-
-    let publisher = context.into_inner().get_publisher().clear_false();
-    Some(publisher)
-}
-    
 
     #[test]
     fn test_formatter_1() {

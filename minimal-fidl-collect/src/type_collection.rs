@@ -4,7 +4,13 @@ use std::{
 };
 
 use crate::{
-    attribute::{self, Attribute}, enumeration::{self, Enumeration}, method::Method, structure::Structure, fidl_file::FileError, type_def::TypeDef, Version
+    attribute::{self, Attribute},
+    enumeration::{self, Enumeration},
+    fidl_file::FileError,
+    method::Method,
+    structure::Structure,
+    type_def::TypeDef,
+    Version,
 };
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
@@ -18,18 +24,13 @@ pub struct TypeCollection {
     pub enumerations: Vec<Enumeration>,
 }
 impl TypeCollection {
-    pub fn new(
-        source: &str,
-        publisher: &BasicPublisher,
-        node: &Node,
-    ) -> Result<Self, FileError> {
+    pub fn new(source: &str, publisher: &BasicPublisher, node: &Node) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::type_collection);
         let mut name: String = "".to_string(); // Cos the type collection name can be seemingly empty.
         let mut version: Option<Version> = None;
         let mut structures: Vec<Structure> = Vec::new();
         let mut typedefs: Vec<TypeDef> = Vec::new();
         let mut enumerations: Vec<Enumeration> = Vec::new();
-
 
         for child in node.get_children() {
             let child = publisher.get_node(*child);
@@ -68,7 +69,7 @@ impl TypeCollection {
                 }
             }
         }
-        if name.len() == 0{
+        if name.len() == 0 {
             return Err(FileError::TypeCollectionRequiresAName);
         }
         Ok(Self {
@@ -86,15 +87,19 @@ impl TypeCollection {
         node.get_string(source)
     }
 
-    pub fn push_if_not_exists_else_err(self, type_collections: &mut Vec<TypeCollection>) -> Result<(), FileError> {
-        for s in &mut *type_collections{
-            if s.name == self.name{
-                return Err(FileError::TypeCollectionAlreadyExists(s.clone(), self.clone()));
-
+    pub fn push_if_not_exists_else_err(
+        self,
+        type_collections: &mut Vec<TypeCollection>,
+    ) -> Result<(), FileError> {
+        for s in &mut *type_collections {
+            if s.name == self.name {
+                return Err(FileError::TypeCollectionAlreadyExists(
+                    s.clone(),
+                    self.clone(),
+                ));
             }
         }
         type_collections.push(self);
         Ok(())
-
     }
 }

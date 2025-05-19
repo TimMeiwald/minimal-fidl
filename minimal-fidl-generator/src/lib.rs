@@ -22,7 +22,10 @@ mod tests {
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };
     use std::{
-        cell::RefCell, fs::remove_dir_all, io::{stdout, Write}, path::{Path, PathBuf}
+        cell::RefCell,
+        fs::remove_dir_all,
+        io::{stdout, Write},
+        path::{Path, PathBuf},
     };
 
     use crate::{codegen_py::PythonCodeGen, CodeGenerator, RustCodeGen};
@@ -50,7 +53,7 @@ mod tests {
     // #[test]
     // fn test_generator_1() {
     //     let src = "package org.javaohjavawhyareyouso
-	// interface endOfPlaylist { }
+    // interface endOfPlaylist { }
     // interface endOfPlaylist2 { }	";
     //     let file = FidlProject::generate_file_from_string(src.to_string()).unwrap();
     //     let mut codegen = PythonCodeGen::new();
@@ -60,7 +63,7 @@ mod tests {
     // #[test]
     // fn test_generator_2() {
     //     let src = "package org.javaohjavawhyareyouso
-	// interface endOfPlaylist { }	";
+    // interface endOfPlaylist { }	";
     //     let file = FidlProject::generate_file_from_string(src.to_string()).unwrap();
     //     let mut codegen = PythonCodeGen::new();
     //     codegen.generate_file(PathBuf::new(), file).unwrap();
@@ -100,7 +103,6 @@ mod tests {
     //             <** @Annotation: block **>
 
     //             out {
-                    
 
     //                 Param2 param2
     //                 <** @Annotation: block **>
@@ -136,12 +138,12 @@ mod tests {
     //             D
     //             E = 10
     //         }
-        
+
     //     }
     //     <** @Annotation: block **>
 
     //     typeCollection MustHaveName {
-        
+
     //         typedef aTypedef is Int16
     //         enumeration aEnum {
     //             A = 3
@@ -150,8 +152,7 @@ mod tests {
     //             D
     //             E = 10
     //         }
-        
-        
+
     //         struct thing {
     //             p1 p1
     //             p2 p2
@@ -173,7 +174,7 @@ mod tests {
     //             which can be done within one type collection.
     //     **>
     //     typeCollection MyTypeCollection10 {
-        
+
     //         // struct with all basic types
     //         struct MyStruct01 {
     //             Int8 se01
@@ -188,7 +189,7 @@ mod tests {
     //             String se10
     //             ByteBuffer se11
     //         }
-        
+
     //         // struct for checking alignment/padding
     //         struct MyStruct02 {
     //             UInt8 se01
@@ -201,7 +202,7 @@ mod tests {
     //             UInt8 se08
     //             UInt32 se09
     //         }
-        
+
     //         // struct of arrays
     //         struct MyStruct04 {
     //             MyArray05 se01
@@ -218,7 +219,7 @@ mod tests {
     //             MyStruct02[] se11
     //             MyEnum03[] se12
     //         }
-        
+
     //         // struct of enums
     //         struct MyStruct06 {
     //             MyEnum01 se01
@@ -226,7 +227,7 @@ mod tests {
     //             MyEnum03 se03
     //             MyEnum10 se10
     //         }
-        
+
     //         // struct of maps and typedefs
     //         struct MyStruct08 {
     //             MyMap05 se01
@@ -234,19 +235,19 @@ mod tests {
     //             MyType01 se03
     //             MyType03 se04
     //         }
-        
+
     //         // empty enumeration
     //         enumeration MyEnum01 {
     //             ENUM00
     //         }
-        
+
     //         // enumeration without values
     //         enumeration MyEnum02 {
     //             ENUM01
     //             ENUM02
     //             ENUM03
     //         }
-        
+
     //         // enumeration with values
     //         enumeration MyEnum03 {
     //             ENUM01 = 1
@@ -256,7 +257,7 @@ mod tests {
     //             ENUM05 = 20
     //             ENUM06 = 0x20
     //         }
-        
+
     //         // typedefs from basic types
     //         typedef MyType01 is UInt16
     //         typedef MyType02 is String
@@ -282,7 +283,7 @@ mod tests {
     // #[test]
     // fn test_generator_5() {
     //     let src = "package org.javaohjavawhyareyouso
-	// interface MyInterface {
+    // interface MyInterface {
     //     typedef CustomDouble is Double
     //     attribute UInt8 some_value
 
@@ -302,7 +303,7 @@ mod tests {
     //             ThingStruct param
     //         }
     //         out {
-                
+
     //             CustomDouble param2
     //             Double param3
     //         }
@@ -318,7 +319,7 @@ mod tests {
     // #[test]
     // fn test_generator_6() {
     //     let src = "package org.javaohjavawhyareyouso
-	// interface MyInterface {
+    // interface MyInterface {
     //     typedef CustomDouble is Double
     //     attribute UInt8 some_value
 
@@ -338,7 +339,7 @@ mod tests {
     //             ThingStruct param
     //         }
     //         out {
-                
+
     //             CustomDouble param2
     //             Double param3
     //         }
