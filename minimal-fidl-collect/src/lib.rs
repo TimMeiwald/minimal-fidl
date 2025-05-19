@@ -6,6 +6,7 @@ pub mod type_ref;
 pub mod import_model;
 pub mod import_namespace;
 pub mod interface;
+pub mod annotation;
 pub mod method;
 pub mod package;
 pub mod structure;
@@ -23,6 +24,8 @@ use import_namespace::ImportNamespace;
 use interface::Interface;
 use method::Method;
 use package::Package;
+use annotation::Annotation;
+use annotation::annotation_constructor;
 use structure::Structure;
 use type_collection::TypeCollection;
 use type_def::TypeDef;
@@ -476,9 +479,9 @@ attribute uint16 thing}   ".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
         let fmt = FidlFile::new(src, &publisher);
-        let output = fmt;
-        //println!("Formatted:\n\n{:#?}", output.unwrap());
-        output.unwrap();
+        let output = fmt.unwrap();
+        println!("Formatted:\n\n{:#?}", output);
+        output;
     }
 
     #[test]
