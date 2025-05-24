@@ -6,6 +6,7 @@ members = [ "minimal-fidl-parser",
             "minimal-fidl-cli",
             "minimal-fidl-collect", 
             "minimal-fidl-generator",
+	    "minimal-fidl-python",
             ]
 
 

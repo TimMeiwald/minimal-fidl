@@ -1,0 +1,21 @@
+[project]
+name = "franca-idl"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "TimMeiwald",email = "tim.meiwald@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.8"
+
+
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+
+[dependencies.pyo3]
+version = "0.25.0"
+# "abi3-py38" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.8
+features = ["abi3-py38"]
