@@ -5,7 +5,7 @@ use std::io;
 
 
 #[pyfunction]
-fn respond_42() -> u8{
+fn _respond_42() -> u8{
     42
 }
 
@@ -15,7 +15,7 @@ fn respond_42() -> u8{
 /// import the module.
 #[pymodule]
 fn franca_idl_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(respond_42, m)?)?;
+    m.add_function(wrap_pyfunction!(_respond_42, m)?)?;
 
     Ok(())
 }
