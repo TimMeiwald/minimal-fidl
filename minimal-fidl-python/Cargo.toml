@@ -10,7 +10,7 @@ name = "franca_idl_rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-rand = "0.9.0"
+minimal-fidl-collect = {path = "../minimal-fidl-collect"}
 
 [dependencies.pyo3]
 version = "0.25.0"
