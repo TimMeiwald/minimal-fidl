@@ -6,7 +6,7 @@ use crate::FidlType;
 use minimal_fidl_collect::{
     attribute::{self, Attribute},
     enumeration::Enumeration,
-    fidl_file::FidlFile,
+    fidl_file::FidlFileRs,
     interface::Interface,
     method::Method,
     structure::Structure,
@@ -127,7 +127,7 @@ impl RustCodeGen {
         res
     }
 
-    fn file(&self, file: &FidlFile) -> Vec<IndentedString> {
+    fn file(&self, file: &FidlFileRs) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
 
         // Below is temporary, file should really be called by and from project not this way around.

@@ -4,7 +4,7 @@ use crate::indented_string::IndentedString;
 use minimal_fidl_collect::{
     attribute::{self, Attribute},
     enumeration::Enumeration,
-    fidl_file::FidlFile,
+    fidl_file::FidlFileRs,
     interface::Interface,
     method::Method,
     structure::Structure,
@@ -20,7 +20,7 @@ pub enum GeneratorError {
     #[error["This error means the program has a bug: {0}"]]
     InternalLogicError(String),
     #[error["Could not generate code. {:?}", 0]]
-    CouldNotGeneratCodeForFile(FidlFile),
+    CouldNotGeneratCodeForFile(FidlFileRs),
     #[error["{:?}", 0]]
     FidlFileError(#[from] FileError),
     #[error["{:?}", 0]]

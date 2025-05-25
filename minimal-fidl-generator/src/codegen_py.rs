@@ -12,7 +12,7 @@ use minimal_fidl_collect::{annotation, enum_value, fidl_file, FidlProject};
 use minimal_fidl_collect::{
     attribute::{self, Attribute},
     enumeration::Enumeration,
-    fidl_file::FidlFile,
+    fidl_file::FidlFileRs,
     interface::Interface,
     method::Method,
     structure::Structure,
@@ -67,7 +67,7 @@ impl CodeGenerator for PythonCodeGen {
         Ok(())
     }
 
-    // fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError> {
+    // fn generate_file(&mut self, path: PathBuf, fidl: FidlFileRs) -> Result<(), GeneratorError> {
     //     let file = self.file(path.clone(), &fidl);
     //     let mut str: String = "".to_string();
 
@@ -159,7 +159,7 @@ impl PythonCodeGen {
             .insert(dir.with_file_name(path), comm_handler);
     }
 
-    fn file(&mut self, path: PathBuf, file: &FidlFile) -> () {
+    fn file(&mut self, path: PathBuf, file: &FidlFileRs) -> () {
         let init_path = path.clone().join("__init__.py");
         self.python_code.insert(init_path, Vec::new());
 

@@ -20,7 +20,7 @@ pub use annotation::Annotation;
 pub use attribute::Attribute;
 pub use enum_value::EnumValue;
 pub use enumeration::Enumeration;
-pub use fidl_file::FidlFile;
+pub use fidl_file::FidlFileRs;
 pub use fidl_file::FileError;
 pub use fidl_project::FidlProject;
 pub use import_model::ImportModel;
@@ -37,7 +37,7 @@ pub use version::Version;
 
 #[cfg(test)]
 mod tests {
-    use crate::{FidlFile, FidlProject};
+    use crate::{FidlFileRs, FidlProject};
     use minimal_fidl_parser::{
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };
@@ -71,7 +71,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("{:?}", output);
         println!(
@@ -88,7 +88,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("{:?}", output);
         println!(
@@ -103,7 +103,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!(
             "Formatted:\n\n{:#?}",
@@ -117,7 +117,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -129,7 +129,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         let err = output.unwrap_err();
         println!("Err: {:?}", err)
@@ -143,7 +143,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -155,7 +155,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
@@ -168,7 +168,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{}", output.unwrap_err());
     }
@@ -180,7 +180,7 @@ mod tests {
 }   ".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -192,7 +192,7 @@ mod tests {
 attribute uint16 thing2}   ".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -204,7 +204,7 @@ attribute uint16 thing2}   ".to_string();
 attribute uint16 thing}   ".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{}", output.unwrap_err());
     }
@@ -220,7 +220,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -234,7 +234,7 @@ attribute uint16 thing}   ".to_string();
 }	".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
@@ -259,7 +259,7 @@ attribute uint16 thing}   ".to_string();
 }	".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -272,7 +272,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
@@ -288,7 +288,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
@@ -385,7 +385,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         //println!("Formatted:\n\n{:#?}", output.unwrap());
         output.unwrap();
@@ -492,7 +492,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt.unwrap();
         println!("Formatted:\n\n{:#?}", output);
         output;
@@ -602,7 +602,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         //println!("Formatted:\n\n{:?}", output.unwrap());
         output.unwrap();
@@ -623,7 +623,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -750,7 +750,7 @@ typeCollection MyTypeCollection10 {
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFile::new(src, &publisher);
+        let fmt = FidlFileRs::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }

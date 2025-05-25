@@ -62,7 +62,7 @@ pub enum FileError {
     TypeCollectionRequiresAName,
 }
 
-pub struct FidlFile {
+pub struct FidlFileRs {
     pub source: String,
     pub package: Option<Package>,
     pub namespaces: Vec<ImportNamespace>,
@@ -71,13 +71,13 @@ pub struct FidlFile {
     pub type_collections: Vec<TypeCollection>,
 }
 
-impl fmt::Debug for FidlFile {
+impl fmt::Debug for FidlFileRs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // The below is some kind of magic I don't fully understand but basically
         // it let's me print just specific fields(the ones deifned in SymbolTable below) and
         // not print source or BasicPublisher
         #[derive(Debug)]
-        struct FidlFile<'a> {
+        struct FidlFileRs<'a> {
             package: &'a Option<Package>,
             namespaces: &'a Vec<ImportNamespace>,
             import_models: &'a Vec<ImportModel>,
@@ -95,7 +95,7 @@ impl fmt::Debug for FidlFile {
             type_collections,
         } = self;
         fmt::Debug::fmt(
-            &FidlFile {
+            &FidlFileRs {
                 package,
                 namespaces,
                 import_models,
@@ -107,7 +107,7 @@ impl fmt::Debug for FidlFile {
     }
 }
 
-impl FidlFile {
+impl FidlFileRs {
 
     pub fn new(source: String, publisher: &BasicPublisher) -> Result<Self, FileError> {
         let mut resp = Self {

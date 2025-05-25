@@ -114,6 +114,12 @@ mod franca_idl_rs {
         #[pyo3(get)]
         pub enumerations: Vec<FidlEnumeration>,
     }
+    #[pymethods]
+    impl FidlTypeCollection {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
+    }
     impl From<&TypeCollection> for FidlTypeCollection {
         fn from(iface: &TypeCollection) -> Self {
             let version = match &iface.version {
@@ -134,7 +140,11 @@ mod franca_idl_rs {
                     .iter()
                     .map(|a| FidlStructure::from(a))
                     .collect(),
-                typedefs: iface.typedefs.iter().map(|a| FidlTypeDef::from(a)).collect(),
+                typedefs: iface
+                    .typedefs
+                    .iter()
+                    .map(|a| FidlTypeDef::from(a))
+                    .collect(),
                 enumerations: iface
                     .enumerations
                     .iter()
@@ -164,6 +174,12 @@ mod franca_idl_rs {
         #[pyo3(get)]
         pub enumerations: Vec<FidlEnumeration>,
     }
+    #[pymethods]
+    impl FidlInterface {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
+    }
     impl From<&Interface> for FidlInterface {
         fn from(iface: &Interface) -> Self {
             let version = match &iface.version {
@@ -189,7 +205,11 @@ mod franca_idl_rs {
                     .iter()
                     .map(|a| FidlStructure::from(a))
                     .collect(),
-                typedefs: iface.typedefs.iter().map(|a| FidlTypeDef::from(a)).collect(),
+                typedefs: iface
+                    .typedefs
+                    .iter()
+                    .map(|a| FidlTypeDef::from(a))
+                    .collect(),
                 methods: iface.methods.iter().map(|a| FidlMethod::from(a)).collect(),
                 enumerations: iface
                     .enumerations
@@ -208,6 +228,12 @@ mod franca_idl_rs {
         #[pyo3(get)]
         pub minor: Option<u32>,
     }
+    #[pymethods]
+    impl FidlVersion {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
+    }
     impl From<&Version> for FidlVersion {
         fn from(item: &Version) -> Self {
             FidlVersion {
@@ -224,6 +250,12 @@ mod franca_idl_rs {
         pub name: String,
         #[pyo3(get)]
         pub contents: String,
+    }
+    #[pymethods]
+    impl FidlAnnotation {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
     }
     impl From<&Annotation> for FidlAnnotation {
         fn from(item: &Annotation) -> Self {
@@ -243,6 +275,12 @@ mod franca_idl_rs {
         pub name: String,
         #[pyo3(get)]
         pub type_name: String,
+    }
+    #[pymethods]
+    impl FidlAttribute {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
     }
     impl From<&Attribute> for FidlAttribute {
         fn from(item: &Attribute) -> Self {
@@ -266,6 +304,12 @@ mod franca_idl_rs {
         pub name: String,
         #[pyo3(get)]
         pub contents: Vec<FidlVariableDeclaration>,
+    }
+    #[pymethods]
+    impl FidlStructure {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
     }
     impl From<&Structure> for FidlStructure {
         fn from(item: &Structure) -> Self {
@@ -296,6 +340,12 @@ mod franca_idl_rs {
         #[pyo3(get)]
         pub is_array: bool,
     }
+    #[pymethods]
+    impl FidlVariableDeclaration {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
+    }
     impl From<&VariableDeclaration> for FidlVariableDeclaration {
         fn from(item: &VariableDeclaration) -> Self {
             FidlVariableDeclaration {
@@ -323,6 +373,12 @@ mod franca_idl_rs {
         #[pyo3(get)]
         pub is_array: bool,
     }
+    #[pymethods]
+    impl FidlTypeDef {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
+    }
     impl From<&TypeDef> for FidlTypeDef {
         fn from(item: &TypeDef) -> Self {
             FidlTypeDef {
@@ -349,6 +405,12 @@ mod franca_idl_rs {
         pub input_parameters: Vec<FidlVariableDeclaration>,
         #[pyo3(get)]
         pub output_parameters: Vec<FidlVariableDeclaration>,
+    }
+    #[pymethods]
+    impl FidlMethod {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
     }
     impl From<&Method> for FidlMethod {
         fn from(item: &Method) -> Self {
@@ -382,6 +444,12 @@ mod franca_idl_rs {
         #[pyo3(get)]
         pub values: Vec<FidlEnumValue>,
     }
+    #[pymethods]
+    impl FidlEnumeration {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
+    }
     impl From<&Enumeration> for FidlEnumeration {
         fn from(item: &Enumeration) -> Self {
             FidlEnumeration {
@@ -405,6 +473,12 @@ mod franca_idl_rs {
         #[pyo3(get)]
         pub value: Option<u64>,
     }
+    #[pymethods]
+    impl FidlEnumValue {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
+    }
     impl From<&EnumValue> for FidlEnumValue {
         fn from(item: &EnumValue) -> Self {
             FidlEnumValue {
@@ -425,6 +499,12 @@ mod franca_idl_rs {
         #[pyo3(get)]
         file_path: PathBuf,
     }
+    #[pymethods]
+    impl FidlImportModel {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
+    }
     impl From<&ImportModel> for FidlImportModel {
         fn from(item: &ImportModel) -> Self {
             FidlImportModel {
@@ -443,6 +523,12 @@ mod franca_idl_rs {
         #[pyo3(get)]
         wildcard: bool,
     }
+    #[pymethods]
+    impl FidlImportNamespace {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
+    }
     impl From<&ImportNamespace> for FidlImportNamespace {
         fn from(item: &ImportNamespace) -> Self {
             FidlImportNamespace {
@@ -457,6 +543,12 @@ mod franca_idl_rs {
     struct FidlPackage {
         #[pyo3(get)]
         path: Vec<String>,
+    }
+    #[pymethods]
+    impl FidlPackage {
+        fn __str__(&self) -> String {
+            format!("{:#?}", self)
+        }
     }
     impl From<&Package> for FidlPackage {
         fn from(item: &Package) -> Self {

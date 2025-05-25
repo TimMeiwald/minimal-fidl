@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use minimal_fidl_collect::fidl_file::FileError;
 use minimal_fidl_collect::{
-    enumeration::Enumeration, fidl_file::FidlFile, interface::Interface, method::Method,
+    enumeration::Enumeration, fidl_file::FidlFileRs, interface::Interface, method::Method,
 };
 use minimal_fidl_parser::BasicPublisher;
 mod codegen_js;
@@ -17,7 +17,7 @@ use indented_string::IndentedString;
 
 #[cfg(test)]
 mod tests {
-    use minimal_fidl_collect::{FidlFile, FidlProject};
+    use minimal_fidl_collect::{FidlFileRs, FidlProject};
     use minimal_fidl_parser::{
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };
