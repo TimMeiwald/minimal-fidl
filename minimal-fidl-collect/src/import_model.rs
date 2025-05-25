@@ -7,7 +7,7 @@ use crate::fidl_file::FileError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug)]
 pub struct ImportModel {
-    file_path: PathBuf,
+    pub file_path: PathBuf,
 }
 impl ImportModel {
     pub fn new(source: &str, publisher: &BasicPublisher, node: &Node) -> Result<Self, FileError> {

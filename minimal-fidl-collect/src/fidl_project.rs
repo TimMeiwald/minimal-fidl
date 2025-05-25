@@ -2,10 +2,9 @@ use minimal_fidl_parser::{
     BasicContext, BasicPublisher, Context, Rules, Source, _var_name, grammar, Key, RULES_SIZE,
 };
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::fidl_file::{self, FidlFile, FileError};
+use crate::fidl_file::{FidlFile, FileError};
 
 #[derive(Debug)]
 pub struct FidlProject {}

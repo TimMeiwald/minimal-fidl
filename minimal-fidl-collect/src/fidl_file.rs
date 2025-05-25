@@ -1,4 +1,5 @@
 use core::fmt;
+use std::fs;
 use std::path::PathBuf;
 
 use crate::attribute::Attribute;
@@ -6,7 +7,6 @@ use crate::enum_value::EnumValue;
 use crate::enumeration::Enumeration;
 use crate::method::Method;
 use crate::structure::Structure;
-use crate::type_collection;
 use crate::type_def::TypeDef;
 use crate::version::Version;
 use crate::ImportModel;
@@ -14,7 +14,10 @@ use crate::ImportNamespace;
 use crate::Interface;
 use crate::Package;
 use crate::TypeCollection;
-use minimal_fidl_parser::{BasicPublisher, Key, Rules};
+use minimal_fidl_parser::{
+    BasicContext, Context, Source, _var_name, grammar, BasicPublisher, Key, Rules, RULES_SIZE,
+};
+use std::cell::RefCell;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -105,6 +108,7 @@ impl fmt::Debug for FidlFile {
 }
 
 impl FidlFile {
+
     pub fn new(source: String, publisher: &BasicPublisher) -> Result<Self, FileError> {
         let mut resp = Self {
             source,
