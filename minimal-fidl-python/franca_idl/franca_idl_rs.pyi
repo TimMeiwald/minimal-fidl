@@ -13,6 +13,10 @@ def _respond_42() -> int:
     :return: Returns 42
     """
 
+class FidlAnnotation:
+    name: str
+    contents: str
+
 class FidlVersion:
     major: Optional[int]
     minor: Optional[int]

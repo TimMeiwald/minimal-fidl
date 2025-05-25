@@ -6,7 +6,9 @@ use pyo3::prelude::*;
 #[pymodule]
 mod franca_idl_rs {
     use minimal_fidl_collect::fidl_file::{FidlFile, FileError};
-    use minimal_fidl_collect::{FidlProject, Interface, Version};
+    use minimal_fidl_collect::{
+        Annotation, Attribute, FidlProject, Interface, Structure, VariableDeclaration, Version,
+    };
     use pyo3::exceptions::PyValueError;
     use pyo3::prelude::*;
     #[pyfunction]
@@ -77,28 +79,48 @@ mod franca_idl_rs {
     #[pyclass(name = "FidlInterface", frozen)]
     #[derive(Clone, Debug)]
     struct PyInterface {
-        // start_position: u32,
-        // end_position: u32,
-        // pub annotations: Vec<Annotation>,
+        #[pyo3(get)]
+        pub annotations: Vec<PyAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
         pub version: Option<PyVersion>,
-        // pub attributes: Vec<Attribute>,
-        // pub structures: Vec<Structure>,
-        // pub typedefs: Vec<TypeDef>,
-        // pub methods: Vec<Method>,
-        // pub enumerations: Vec<Enumeration>,
+        #[pyo3(get)]
+        pub attributes: Vec<PyAttribute>,
+        #[pyo3(get)]
+        pub structures: Vec<PyStructure>,
+        #[pyo3(get)]
+        pub typedefs: Vec<PyTypeDef>,
+        // #[pyo3(get)]
+        // pub methods: Vec<PyMethod>,
+        // #[pyo3(get)]
+        // pub enumerations: Vec<PyEnumeration>,
     }
     impl From<&Interface> for PyInterface {
         fn from(iface: &Interface) -> Self {
-            let version = match &iface.version{
+            let version = match &iface.version {
                 None => None,
-                Some(version) => {Some(PyVersion::from(version))}
+                Some(version) => Some(PyVersion::from(version)),
             };
+            let annotations = iface
+                .annotations
+                .iter()
+                .map(|a| PyAnnotation::from(a))
+                .collect();
             PyInterface {
                 name: iface.name.clone(),
                 version,
+                annotations,
+                attributes: iface
+                    .attributes
+                    .iter()
+                    .map(|a| PyAttribute::from(a))
+                    .collect(),
+                structures: iface
+                    .structures
+                    .iter()
+                    .map(|a| PyStructure::from(a))
+                    .collect(),
             }
         }
     }
@@ -116,6 +138,101 @@ mod franca_idl_rs {
             PyVersion {
                 major: item.major,
                 minor: item.minor,
+            }
+        }
+    }
+
+    #[pyclass(name = "FidlAnnotation", frozen)]
+    #[derive(Clone, Debug)]
+    struct PyAnnotation {
+        #[pyo3(get)]
+        pub name: String,
+        #[pyo3(get)]
+        pub contents: String,
+    }
+    impl From<&Annotation> for PyAnnotation {
+        fn from(item: &Annotation) -> Self {
+            PyAnnotation {
+                name: item.name.clone(),
+                contents: item.contents.clone(),
+            }
+        }
+    }
+
+    #[pyclass(name = "FidlAttribute", frozen)]
+    #[derive(Clone, Debug)]
+    struct PyAttribute {
+        #[pyo3(get)]
+        pub annotations: Vec<PyAnnotation>,
+        #[pyo3(get)]
+        pub name: String,
+        #[pyo3(get)]
+        pub type_name: String,
+    }
+    impl From<&Attribute> for PyAttribute {
+        fn from(item: &Attribute) -> Self {
+            PyAttribute {
+                annotations: item
+                    .annotations
+                    .iter()
+                    .map(|a| PyAnnotation::from(a))
+                    .collect(),
+                name: item.name.clone(),
+                type_name: item.type_n.clone(),
+            }
+        }
+    }
+    #[pyclass(name = "FidlStructure", frozen)]
+    #[derive(Clone, Debug)]
+    struct PyStructure {
+        #[pyo3(get)]
+        pub annotations: Vec<PyAnnotation>,
+        #[pyo3(get)]
+        pub name: String,
+        #[pyo3(get)]
+        pub contents: Vec<PyVariableDeclaration>,
+    }
+    impl From<&Structure> for PyStructure {
+        fn from(item: &Structure) -> Self {
+            PyStructure {
+                annotations: item
+                    .annotations
+                    .iter()
+                    .map(|a| PyAnnotation::from(a))
+                    .collect(),
+                name: item.name.clone(),
+                contents: item
+                    .contents
+                    .iter()
+                    .map(|a| PyVariableDeclaration::from(a))
+                    .collect(),
+            }
+        }
+    }
+    #[pyclass(name = "FidlVariableDeclaration", frozen)]
+    #[derive(Clone, Debug)]
+    struct PyVariableDeclaration {
+        #[pyo3(get)]
+        pub annotations: Vec<PyAnnotation>,
+        #[pyo3(get)]
+        pub name: String,
+        #[pyo3(get)]
+        pub type_name: String,
+        #[pyo3(get)]
+        pub is_array: bool,
+
+    }
+    impl From<&VariableDeclaration> for PyVariableDeclaration {
+        fn from(item: &VariableDeclaration) -> Self {
+            PyVariableDeclaration {
+                annotations: item
+                    .annotations
+                    .iter()
+                    .map(|a| PyAnnotation::from(a))
+                    .collect(),
+                name: item.name.clone(),
+                type_name: item.type_n.clone(),
+                is_array: item.is_array
             }
         }
     }
