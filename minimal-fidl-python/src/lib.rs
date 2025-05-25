@@ -9,7 +9,9 @@ mod franca_idl_rs {
 
     use minimal_fidl_collect::fidl_file::{FidlFile, FileError};
     use minimal_fidl_collect::{
-        Annotation, Attribute, EnumValue, Enumeration, FidlProject, ImportModel, Interface, Method, Structure, TypeCollection, TypeDef, VariableDeclaration, Version
+        Annotation, Attribute, EnumValue, Enumeration, FidlProject, ImportModel, ImportNamespace,
+        Interface, Method, Package, Structure, TypeCollection, TypeDef, VariableDeclaration,
+        Version,
     };
     use pyo3::exceptions::PyValueError;
     use pyo3::prelude::*;
@@ -37,10 +39,10 @@ mod franca_idl_rs {
     struct PyFidlFile {
         // #[pyo3(get)]
         // pub source: String,
-        // #[pyo3(get)]
-        // pub package: Option<PyPackage>,
-        // #[pyo3(get)]
-        // pub namespaces: Vec<PyImportNamespace>,
+        #[pyo3(get)]
+        pub package: Option<PyPackage>,
+        #[pyo3(get)]
+        pub namespaces: Vec<PyImportNamespace>,
         #[pyo3(get)]
         pub import_models: Vec<PyImportModel>,
         #[pyo3(get)]
@@ -58,15 +60,23 @@ mod franca_idl_rs {
                     .collect(),
 
                 type_collections: item
-                .type_collections
-                .iter()
-                .map(|iface| PyTypeCollection::from(iface))
-                .collect(),
+                    .type_collections
+                    .iter()
+                    .map(|iface| PyTypeCollection::from(iface))
+                    .collect(),
                 import_models: item
-                .import_models
-                .iter()
-                .map(|iface| PyImportModel::from(iface))
-                .collect(),
+                    .import_models
+                    .iter()
+                    .map(|iface| PyImportModel::from(iface))
+                    .collect(),
+                namespaces: item
+                    .namespaces
+                    .iter()
+                    .map(|iface| PyImportNamespace::from(iface))
+                    .collect(),
+                package: item
+                    .package
+                    .and_then(|package| Some(PyPackage::from(&package))),
             }
         }
     }
@@ -125,7 +135,11 @@ mod franca_idl_rs {
                     .map(|a| PyStructure::from(a))
                     .collect(),
                 typedefs: iface.typedefs.iter().map(|a| PyTypeDef::from(a)).collect(),
-                enumerations: iface.enumerations.iter().map(|a| PyEnumeration::from(a)).collect()
+                enumerations: iface
+                    .enumerations
+                    .iter()
+                    .map(|a| PyEnumeration::from(a))
+                    .collect(),
             }
         }
     }
@@ -177,7 +191,11 @@ mod franca_idl_rs {
                     .collect(),
                 typedefs: iface.typedefs.iter().map(|a| PyTypeDef::from(a)).collect(),
                 methods: iface.methods.iter().map(|a| PyMethod::from(a)).collect(),
-                enumerations: iface.enumerations.iter().map(|a| PyEnumeration::from(a)).collect()
+                enumerations: iface
+                    .enumerations
+                    .iter()
+                    .map(|a| PyEnumeration::from(a))
+                    .collect(),
             }
         }
     }
@@ -373,11 +391,7 @@ mod franca_idl_rs {
                     .map(|a| PyAnnotation::from(a))
                     .collect(),
                 name: item.name.clone(),
-                values: item
-                    .values
-                    .iter()
-                    .map(|a| PyEnumValue::from(a))
-                    .collect(),
+                values: item.values.iter().map(|a| PyEnumValue::from(a)).collect(),
             }
         }
     }
@@ -414,7 +428,40 @@ mod franca_idl_rs {
     impl From<&ImportModel> for PyImportModel {
         fn from(item: &ImportModel) -> Self {
             PyImportModel {
-                file_path: item.file_path.clone()
+                file_path: item.file_path.clone(),
+            }
+        }
+    }
+
+    #[pyclass(name = "FidlImportNamespace", frozen)]
+    #[derive(Clone, Debug)]
+    struct PyImportNamespace {
+        #[pyo3(get)]
+        from_: PathBuf,
+        #[pyo3(get)]
+        imports: Vec<String>,
+        #[pyo3(get)]
+        wildcard: bool,
+    }
+    impl From<&ImportNamespace> for PyImportNamespace {
+        fn from(item: &ImportNamespace) -> Self {
+            PyImportNamespace {
+                imports: item.import.clone(),
+                from_: item.from.clone(),
+                wildcard: item.wildcard,
+            }
+        }
+    }
+    #[pyclass(name = "FidlPackage", frozen)]
+    #[derive(Clone, Debug)]
+    struct PyPackage {
+        #[pyo3(get)]
+        path: Vec<String>,
+    }
+    impl From<&Package> for PyPackage {
+        fn from(item: &Package) -> Self {
+            PyPackage {
+                path: item.path.clone(),
             }
         }
     }

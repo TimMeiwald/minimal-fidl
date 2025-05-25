@@ -7,9 +7,9 @@ use crate::fidl_file::FileError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug)]
 pub struct ImportNamespace {
-    import: Vec<String>,
-    from: PathBuf,
-    wildcard: bool,
+    pub from: PathBuf,
+    pub import: Vec<String>,
+    pub wildcard: bool,
 }
 impl ImportNamespace {
     pub fn new(source: &str, publisher: &BasicPublisher, node: &Node) -> Result<Self, FileError> {

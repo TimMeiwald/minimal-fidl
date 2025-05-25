@@ -2,7 +2,7 @@ use crate::fidl_file::FileError;
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Package {
-    path: Vec<String>,
+    pub path: Vec<String>,
 }
 impl Package {
     pub fn new(source: &str, publisher: &BasicPublisher, node: &Node) -> Result<Self, FileError> {
