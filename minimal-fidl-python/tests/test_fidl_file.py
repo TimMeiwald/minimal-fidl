@@ -22,14 +22,5 @@ def test_thing2():
             print(f"Type: {type(j)}")
     assert 0 == 1
 
-def test_package():
-    pass
-
-def test_import_model():
-    pass
-
-def test_import_namespace():
-    pass
-
-def test_method_namespace():
+def test_project():
     pass

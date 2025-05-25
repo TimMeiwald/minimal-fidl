@@ -7,7 +7,7 @@ use pyo3::prelude::*;
 mod franca_idl_rs {
     use std::path::PathBuf;
 
-    use minimal_fidl_collect::fidl_file::{FidlFile, FileError};
+    use minimal_fidl_collect::fidl_file::{FidlFileRs, FileError};
     use minimal_fidl_collect::{
         Annotation, Attribute, EnumValue, Enumeration, FidlProject, ImportModel, ImportNamespace,
         Interface, Method, Package, Structure, TypeCollection, TypeDef, VariableDeclaration,
@@ -20,78 +20,78 @@ mod franca_idl_rs {
         42
     }
 
-    struct PyFileError(FileError);
+    struct FidlFileError(FileError);
 
-    impl From<PyFileError> for PyErr {
-        fn from(error: PyFileError) -> Self {
+    impl From<FidlFileError> for PyErr {
+        fn from(error: FidlFileError) -> Self {
             PyValueError::new_err(error.0.to_string())
         }
     }
 
-    impl From<FileError> for PyFileError {
+    impl From<FileError> for FidlFileError {
         fn from(other: FileError) -> Self {
             Self(other)
         }
     }
 
-    #[pyclass(name = "FidlFile", frozen)] // We need to rename it so it's not PyFidlFile but we can't use that since
+    #[pyclass(name = "FidlFile", frozen)] // We need to rename it so it's not FidlFidlFile but we can't use that since
     #[derive(Debug, Clone)] // The rust type is also FidlFile
-    struct PyFidlFile {
+    struct FidlFile {
         // #[pyo3(get)]
         // pub source: String,
         #[pyo3(get)]
-        pub package: Option<PyPackage>,
+        pub package: Option<FidlPackage>,
         #[pyo3(get)]
-        pub namespaces: Vec<PyImportNamespace>,
+        pub namespaces: Vec<FidlImportNamespace>,
         #[pyo3(get)]
-        pub import_models: Vec<PyImportModel>,
+        pub import_models: Vec<FidlImportModel>,
         #[pyo3(get)]
-        pub interfaces: Vec<PyInterface>,
+        pub interfaces: Vec<FidlInterface>,
         #[pyo3(get)]
-        pub type_collections: Vec<PyTypeCollection>,
+        pub type_collections: Vec<FidlTypeCollection>,
     }
-    impl From<FidlFile> for PyFidlFile {
-        fn from(item: FidlFile) -> Self {
-            PyFidlFile {
+    impl From<FidlFileRs> for FidlFile {
+        fn from(item: FidlFileRs) -> Self {
+            FidlFile {
                 interfaces: item
                     .interfaces
                     .iter()
-                    .map(|iface| PyInterface::from(iface))
+                    .map(|iface| FidlInterface::from(iface))
                     .collect(),
 
                 type_collections: item
                     .type_collections
                     .iter()
-                    .map(|iface| PyTypeCollection::from(iface))
+                    .map(|iface| FidlTypeCollection::from(iface))
                     .collect(),
                 import_models: item
                     .import_models
                     .iter()
-                    .map(|iface| PyImportModel::from(iface))
+                    .map(|iface| FidlImportModel::from(iface))
                     .collect(),
                 namespaces: item
                     .namespaces
                     .iter()
-                    .map(|iface| PyImportNamespace::from(iface))
+                    .map(|iface| FidlImportNamespace::from(iface))
                     .collect(),
                 package: item
                     .package
-                    .and_then(|package| Some(PyPackage::from(&package))),
+                    .and_then(|package| Some(FidlPackage::from(&package))),
             }
         }
     }
     #[pymethods]
-    impl PyFidlFile {
+    impl FidlFile {
         #[new]
-        fn new(file_path: String) -> Result<Self, PyFileError> {
+        fn new(file_path: String) -> Result<Self, FidlFileError> {
             let result = FidlProject::generate_file(file_path)?;
-            Ok(PyFidlFile::from(result))
+            Ok(FidlFile::from(result))
         }
 
         #[staticmethod]
-        fn new_from_string(file_string: String) -> Result<Self, PyFileError> {
+        fn new_from_string(file_string: String) -> Result<Self, FidlFileError> {
             let result = FidlProject::generate_file_from_string(file_string)?;
-            Ok(PyFidlFile::from(result))
+            Ok(FidlFile::from(result))
         }
 
         fn __str__(&self) -> String {
@@ -100,45 +100,45 @@ mod franca_idl_rs {
     }
     #[pyclass(name = "FidlTypeCollection", frozen)]
     #[derive(Clone, Debug)]
-    struct PyTypeCollection {
+    struct FidlTypeCollection {
         #[pyo3(get)]
-        pub annotations: Vec<PyAnnotation>,
+        pub annotations: Vec<FidlAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
-        pub version: Option<PyVersion>,
+        pub version: Option<FidlVersion>,
         #[pyo3(get)]
-        pub typedefs: Vec<PyTypeDef>,
+        pub typedefs: Vec<FidlTypeDef>,
         #[pyo3(get)]
-        pub structures: Vec<PyStructure>,
+        pub structures: Vec<FidlStructure>,
         #[pyo3(get)]
-        pub enumerations: Vec<PyEnumeration>,
+        pub enumerations: Vec<FidlEnumeration>,
     }
-    impl From<&TypeCollection> for PyTypeCollection {
+    impl From<&TypeCollection> for FidlTypeCollection {
         fn from(iface: &TypeCollection) -> Self {
             let version = match &iface.version {
                 None => None,
-                Some(version) => Some(PyVersion::from(version)),
+                Some(version) => Some(FidlVersion::from(version)),
             };
             let annotations = iface
                 .annotations
                 .iter()
-                .map(|a| PyAnnotation::from(a))
+                .map(|a| FidlAnnotation::from(a))
                 .collect();
-            PyTypeCollection {
+            FidlTypeCollection {
                 name: iface.name.clone(),
                 version,
                 annotations,
                 structures: iface
                     .structures
                     .iter()
-                    .map(|a| PyStructure::from(a))
+                    .map(|a| FidlStructure::from(a))
                     .collect(),
-                typedefs: iface.typedefs.iter().map(|a| PyTypeDef::from(a)).collect(),
+                typedefs: iface.typedefs.iter().map(|a| FidlTypeDef::from(a)).collect(),
                 enumerations: iface
                     .enumerations
                     .iter()
-                    .map(|a| PyEnumeration::from(a))
+                    .map(|a| FidlEnumeration::from(a))
                     .collect(),
             }
         }
@@ -146,55 +146,55 @@ mod franca_idl_rs {
 
     #[pyclass(name = "FidlInterface", frozen)]
     #[derive(Clone, Debug)]
-    struct PyInterface {
+    struct FidlInterface {
         #[pyo3(get)]
-        pub annotations: Vec<PyAnnotation>,
+        pub annotations: Vec<FidlAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
-        pub version: Option<PyVersion>,
+        pub version: Option<FidlVersion>,
         #[pyo3(get)]
-        pub attributes: Vec<PyAttribute>,
+        pub attributes: Vec<FidlAttribute>,
         #[pyo3(get)]
-        pub structures: Vec<PyStructure>,
+        pub structures: Vec<FidlStructure>,
         #[pyo3(get)]
-        pub typedefs: Vec<PyTypeDef>,
+        pub typedefs: Vec<FidlTypeDef>,
         #[pyo3(get)]
-        pub methods: Vec<PyMethod>,
+        pub methods: Vec<FidlMethod>,
         #[pyo3(get)]
-        pub enumerations: Vec<PyEnumeration>,
+        pub enumerations: Vec<FidlEnumeration>,
     }
-    impl From<&Interface> for PyInterface {
+    impl From<&Interface> for FidlInterface {
         fn from(iface: &Interface) -> Self {
             let version = match &iface.version {
                 None => None,
-                Some(version) => Some(PyVersion::from(version)),
+                Some(version) => Some(FidlVersion::from(version)),
             };
             let annotations = iface
                 .annotations
                 .iter()
-                .map(|a| PyAnnotation::from(a))
+                .map(|a| FidlAnnotation::from(a))
                 .collect();
-            PyInterface {
+            FidlInterface {
                 name: iface.name.clone(),
                 version,
                 annotations,
                 attributes: iface
                     .attributes
                     .iter()
-                    .map(|a| PyAttribute::from(a))
+                    .map(|a| FidlAttribute::from(a))
                     .collect(),
                 structures: iface
                     .structures
                     .iter()
-                    .map(|a| PyStructure::from(a))
+                    .map(|a| FidlStructure::from(a))
                     .collect(),
-                typedefs: iface.typedefs.iter().map(|a| PyTypeDef::from(a)).collect(),
-                methods: iface.methods.iter().map(|a| PyMethod::from(a)).collect(),
+                typedefs: iface.typedefs.iter().map(|a| FidlTypeDef::from(a)).collect(),
+                methods: iface.methods.iter().map(|a| FidlMethod::from(a)).collect(),
                 enumerations: iface
                     .enumerations
                     .iter()
-                    .map(|a| PyEnumeration::from(a))
+                    .map(|a| FidlEnumeration::from(a))
                     .collect(),
             }
         }
@@ -202,15 +202,15 @@ mod franca_idl_rs {
 
     #[pyclass(name = "FidlVersion", frozen)]
     #[derive(Clone, Debug)]
-    struct PyVersion {
+    struct FidlVersion {
         #[pyo3(get)]
         pub major: Option<u32>,
         #[pyo3(get)]
         pub minor: Option<u32>,
     }
-    impl From<&Version> for PyVersion {
+    impl From<&Version> for FidlVersion {
         fn from(item: &Version) -> Self {
-            PyVersion {
+            FidlVersion {
                 major: item.major,
                 minor: item.minor,
             }
@@ -219,15 +219,15 @@ mod franca_idl_rs {
 
     #[pyclass(name = "FidlAnnotation", frozen)]
     #[derive(Clone, Debug)]
-    struct PyAnnotation {
+    struct FidlAnnotation {
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
         pub contents: String,
     }
-    impl From<&Annotation> for PyAnnotation {
+    impl From<&Annotation> for FidlAnnotation {
         fn from(item: &Annotation) -> Self {
-            PyAnnotation {
+            FidlAnnotation {
                 name: item.name.clone(),
                 contents: item.contents.clone(),
             }
@@ -236,21 +236,21 @@ mod franca_idl_rs {
 
     #[pyclass(name = "FidlAttribute", frozen)]
     #[derive(Clone, Debug)]
-    struct PyAttribute {
+    struct FidlAttribute {
         #[pyo3(get)]
-        pub annotations: Vec<PyAnnotation>,
+        pub annotations: Vec<FidlAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
         pub type_name: String,
     }
-    impl From<&Attribute> for PyAttribute {
+    impl From<&Attribute> for FidlAttribute {
         fn from(item: &Attribute) -> Self {
-            PyAttribute {
+            FidlAttribute {
                 annotations: item
                     .annotations
                     .iter()
-                    .map(|a| PyAnnotation::from(a))
+                    .map(|a| FidlAnnotation::from(a))
                     .collect(),
                 name: item.name.clone(),
                 type_name: item.type_n.clone(),
@@ -259,36 +259,36 @@ mod franca_idl_rs {
     }
     #[pyclass(name = "FidlStructure", frozen)]
     #[derive(Clone, Debug)]
-    struct PyStructure {
+    struct FidlStructure {
         #[pyo3(get)]
-        pub annotations: Vec<PyAnnotation>,
+        pub annotations: Vec<FidlAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
-        pub contents: Vec<PyVariableDeclaration>,
+        pub contents: Vec<FidlVariableDeclaration>,
     }
-    impl From<&Structure> for PyStructure {
+    impl From<&Structure> for FidlStructure {
         fn from(item: &Structure) -> Self {
-            PyStructure {
+            FidlStructure {
                 annotations: item
                     .annotations
                     .iter()
-                    .map(|a| PyAnnotation::from(a))
+                    .map(|a| FidlAnnotation::from(a))
                     .collect(),
                 name: item.name.clone(),
                 contents: item
                     .contents
                     .iter()
-                    .map(|a| PyVariableDeclaration::from(a))
+                    .map(|a| FidlVariableDeclaration::from(a))
                     .collect(),
             }
         }
     }
     #[pyclass(name = "FidlVariableDeclaration", frozen)]
     #[derive(Clone, Debug)]
-    struct PyVariableDeclaration {
+    struct FidlVariableDeclaration {
         #[pyo3(get)]
-        pub annotations: Vec<PyAnnotation>,
+        pub annotations: Vec<FidlAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
@@ -296,13 +296,13 @@ mod franca_idl_rs {
         #[pyo3(get)]
         pub is_array: bool,
     }
-    impl From<&VariableDeclaration> for PyVariableDeclaration {
+    impl From<&VariableDeclaration> for FidlVariableDeclaration {
         fn from(item: &VariableDeclaration) -> Self {
-            PyVariableDeclaration {
+            FidlVariableDeclaration {
                 annotations: item
                     .annotations
                     .iter()
-                    .map(|a| PyAnnotation::from(a))
+                    .map(|a| FidlAnnotation::from(a))
                     .collect(),
                 name: item.name.clone(),
                 type_name: item.type_n.clone(),
@@ -313,9 +313,9 @@ mod franca_idl_rs {
 
     #[pyclass(name = "FidlTypeDef", frozen)]
     #[derive(Clone, Debug)]
-    struct PyTypeDef {
+    struct FidlTypeDef {
         #[pyo3(get)]
-        pub annotations: Vec<PyAnnotation>,
+        pub annotations: Vec<FidlAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
@@ -323,13 +323,13 @@ mod franca_idl_rs {
         #[pyo3(get)]
         pub is_array: bool,
     }
-    impl From<&TypeDef> for PyTypeDef {
+    impl From<&TypeDef> for FidlTypeDef {
         fn from(item: &TypeDef) -> Self {
-            PyTypeDef {
+            FidlTypeDef {
                 annotations: item
                     .annotations
                     .iter()
-                    .map(|a| PyAnnotation::from(a))
+                    .map(|a| FidlAnnotation::from(a))
                     .collect(),
                 name: item.name.clone(),
                 type_name: item.type_n.clone(),
@@ -340,78 +340,78 @@ mod franca_idl_rs {
 
     #[pyclass(name = "FidlMethod", frozen)]
     #[derive(Clone, Debug)]
-    struct PyMethod {
+    struct FidlMethod {
         #[pyo3(get)]
-        pub annotations: Vec<PyAnnotation>,
+        pub annotations: Vec<FidlAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
-        pub input_parameters: Vec<PyVariableDeclaration>,
+        pub input_parameters: Vec<FidlVariableDeclaration>,
         #[pyo3(get)]
-        pub output_parameters: Vec<PyVariableDeclaration>,
+        pub output_parameters: Vec<FidlVariableDeclaration>,
     }
-    impl From<&Method> for PyMethod {
+    impl From<&Method> for FidlMethod {
         fn from(item: &Method) -> Self {
-            PyMethod {
+            FidlMethod {
                 annotations: item
                     .annotations
                     .iter()
-                    .map(|a| PyAnnotation::from(a))
+                    .map(|a| FidlAnnotation::from(a))
                     .collect(),
                 name: item.name.clone(),
                 input_parameters: item
                     .input_parameters
                     .iter()
-                    .map(|a| PyVariableDeclaration::from(a))
+                    .map(|a| FidlVariableDeclaration::from(a))
                     .collect(),
                 output_parameters: item
                     .output_parameters
                     .iter()
-                    .map(|a| PyVariableDeclaration::from(a))
+                    .map(|a| FidlVariableDeclaration::from(a))
                     .collect(),
             }
         }
     }
     #[pyclass(name = "FidlEnumeration", frozen)]
     #[derive(Clone, Debug)]
-    struct PyEnumeration {
+    struct FidlEnumeration {
         #[pyo3(get)]
-        pub annotations: Vec<PyAnnotation>,
+        pub annotations: Vec<FidlAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
-        pub values: Vec<PyEnumValue>,
+        pub values: Vec<FidlEnumValue>,
     }
-    impl From<&Enumeration> for PyEnumeration {
+    impl From<&Enumeration> for FidlEnumeration {
         fn from(item: &Enumeration) -> Self {
-            PyEnumeration {
+            FidlEnumeration {
                 annotations: item
                     .annotations
                     .iter()
-                    .map(|a| PyAnnotation::from(a))
+                    .map(|a| FidlAnnotation::from(a))
                     .collect(),
                 name: item.name.clone(),
-                values: item.values.iter().map(|a| PyEnumValue::from(a)).collect(),
+                values: item.values.iter().map(|a| FidlEnumValue::from(a)).collect(),
             }
         }
     }
     #[pyclass(name = "FidlEnumValue", frozen)]
     #[derive(Clone, Debug)]
-    struct PyEnumValue {
+    struct FidlEnumValue {
         #[pyo3(get)]
-        pub annotations: Vec<PyAnnotation>,
+        pub annotations: Vec<FidlAnnotation>,
         #[pyo3(get)]
         pub name: String,
         #[pyo3(get)]
         pub value: Option<u64>,
     }
-    impl From<&EnumValue> for PyEnumValue {
+    impl From<&EnumValue> for FidlEnumValue {
         fn from(item: &EnumValue) -> Self {
-            PyEnumValue {
+            FidlEnumValue {
                 annotations: item
                     .annotations
                     .iter()
-                    .map(|a| PyAnnotation::from(a))
+                    .map(|a| FidlAnnotation::from(a))
                     .collect(),
                 name: item.name.clone(),
                 value: item.value,
@@ -421,13 +421,13 @@ mod franca_idl_rs {
 
     #[pyclass(name = "FidlImportModel", frozen)]
     #[derive(Clone, Debug)]
-    struct PyImportModel {
+    struct FidlImportModel {
         #[pyo3(get)]
         file_path: PathBuf,
     }
-    impl From<&ImportModel> for PyImportModel {
+    impl From<&ImportModel> for FidlImportModel {
         fn from(item: &ImportModel) -> Self {
-            PyImportModel {
+            FidlImportModel {
                 file_path: item.file_path.clone(),
             }
         }
@@ -435,7 +435,7 @@ mod franca_idl_rs {
 
     #[pyclass(name = "FidlImportNamespace", frozen)]
     #[derive(Clone, Debug)]
-    struct PyImportNamespace {
+    struct FidlImportNamespace {
         #[pyo3(get)]
         from_: PathBuf,
         #[pyo3(get)]
@@ -443,9 +443,9 @@ mod franca_idl_rs {
         #[pyo3(get)]
         wildcard: bool,
     }
-    impl From<&ImportNamespace> for PyImportNamespace {
+    impl From<&ImportNamespace> for FidlImportNamespace {
         fn from(item: &ImportNamespace) -> Self {
-            PyImportNamespace {
+            FidlImportNamespace {
                 imports: item.import.clone(),
                 from_: item.from.clone(),
                 wildcard: item.wildcard,
@@ -454,13 +454,13 @@ mod franca_idl_rs {
     }
     #[pyclass(name = "FidlPackage", frozen)]
     #[derive(Clone, Debug)]
-    struct PyPackage {
+    struct FidlPackage {
         #[pyo3(get)]
         path: Vec<String>,
     }
-    impl From<&Package> for PyPackage {
+    impl From<&Package> for FidlPackage {
         fn from(item: &Package) -> Self {
-            PyPackage {
+            FidlPackage {
                 path: item.path.clone(),
             }
         }
