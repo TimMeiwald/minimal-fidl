@@ -34,7 +34,8 @@ impl TypeDef {
                     annotations = annotation_constructor(source, publisher, child)?;
                 }
                 Rules::type_dec => {
-                    println!("Need to actually do this stuff. Types need to be checked for duplicates and whether they exist if using external import after reading file.");
+                    // TODO!
+                    // println!("Need to actually do this stuff. Types need to be checked for duplicates and whether they exist if using external import after reading file.");
                     name = Ok(child.get_string(source))
                 }
                 Rules::type_ref => {

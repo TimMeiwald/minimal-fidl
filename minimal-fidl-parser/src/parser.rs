@@ -1224,10 +1224,10 @@ pub fn grammar<T: Context>(
     let closure_26 =
         move |parent: Key, source: &Source, position: u32| wsn(parent, context, source, position);
     let closure_27 = _sequence(&closure_25, &closure_26);
-    let instant = Instant::now();
+    // let instant = Instant::now();
     let result = closure_27(parent, source, position);
-    let instant_after = Instant::now();
-    let duration = instant_after - instant;
-    println!("Time to parse {:#?}", duration);
+    // let instant_after = Instant::now();
+    // let duration = instant_after - instant;
+    // println!("Time to parse {:#?}", duration);
     result
 }

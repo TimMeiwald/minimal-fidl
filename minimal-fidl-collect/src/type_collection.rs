@@ -68,7 +68,7 @@ impl TypeCollection {
             }
         }
         if name.len() == 0 {
-            return Err(FileError::TypeCollectionRequiresAName);
+            return Err(FileError::TypeCollectionRequiresAName(source.to_string()));
         }
         Ok(Self {
             annotations,

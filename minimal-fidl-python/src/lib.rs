@@ -7,17 +7,30 @@ use pyo3::prelude::*;
 mod franca_idl_rs {
     use std::path::PathBuf;
 
-    use minimal_fidl_collect::fidl_file::{FidlFileRs, FileError};
     use minimal_fidl_collect::{
-        Annotation, Attribute, EnumValue, Enumeration, FidlProject, ImportModel, ImportNamespace,
-        Interface, Method, Package, Structure, TypeCollection, TypeDef, VariableDeclaration,
-        Version,
+        Annotation, Attribute, EnumValue, Enumeration, FidlFileRs, FidlProject, FileError,
+        ImportModel, ImportNamespace, Interface, Method, Package, Structure, TypeCollection,
+        TypeDef, VariableDeclaration, Version,
     };
     use pyo3::exceptions::PyValueError;
     use pyo3::prelude::*;
     #[pyfunction]
     fn _respond_42() -> u8 {
         42
+    }
+    #[pyfunction]
+    fn load_fidl_project(dir: PathBuf) -> Result<Vec<FidlFile>, PyErr> {
+        match FidlProject::new(dir) {
+            Err(e) => Err(PyValueError::new_err(e.to_string())),
+            Ok(file_paths) => {
+                let mut fidl_files: Vec<FidlFile> = Vec::new();
+                for path in file_paths {
+                    let fidl_file = FidlFile::new(path.as_os_str().to_string_lossy().to_string())?;
+                    fidl_files.push(fidl_file);
+                }
+                Ok(fidl_files)
+            }
+        }
     }
 
     struct FidlFileError(FileError);
@@ -40,6 +53,8 @@ mod franca_idl_rs {
         // #[pyo3(get)]
         // pub source: String,
         #[pyo3(get)]
+        pub file_path: Option<String>,
+        #[pyo3(get)]
         pub package: Option<FidlPackage>,
         #[pyo3(get)]
         pub namespaces: Vec<FidlImportNamespace>,
@@ -53,6 +68,7 @@ mod franca_idl_rs {
     impl From<FidlFileRs> for FidlFile {
         fn from(item: FidlFileRs) -> Self {
             FidlFile {
+                file_path: None,
                 interfaces: item
                     .interfaces
                     .iter()
@@ -84,8 +100,10 @@ mod franca_idl_rs {
     impl FidlFile {
         #[new]
         fn new(file_path: String) -> Result<Self, FidlFileError> {
-            let result = FidlProject::generate_file(file_path)?;
-            Ok(FidlFile::from(result))
+            let result = FidlProject::generate_file(file_path.clone())?;
+            let mut fidl_file = FidlFile::from(result);
+            fidl_file.file_path = Some(file_path);
+            Ok(fidl_file)
         }
 
         #[staticmethod]

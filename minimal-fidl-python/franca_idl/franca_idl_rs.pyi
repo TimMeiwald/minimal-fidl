@@ -12,6 +12,11 @@ def _respond_42() -> int:
 
     :return: Returns 42
     """
+def load_fidl_project(dir: Path) -> Optional[list[FidlFile]]:
+    '''
+    Returns a list of FidlFiles
+    Throws a ValueError if it cannot read or parse a fidl file for some reason.
+    '''
 
 class FidlTypeCollection:
     annotations: list[FidlAnnotation]
@@ -90,6 +95,7 @@ class FidlInterface:
     enumerations: list[FidlEnumeration]
 
 class FidlFile:
+    file_path: Optional[str]
     package: Optional[FidlPackage]
     namespaces: list[FidlImportNamespace]
     import_models: list[FidlImportModel]

@@ -1,0 +1,4 @@
+
+// This is a comment
+package fidl
+interface EmptyInterface {}
