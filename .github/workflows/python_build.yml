@@ -198,11 +198,11 @@ jobs:
         with:
           subject-path: 'wheels-*/*'
       - name: Publish to PyPI
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        # if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: PyO3/maturin-action@v1
         # env:
         #   MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
           command: upload
-          working-directory: /minimal-fidl-python/
+          working-directory: ./minimal-fidl-python/
           args: --non-interactive --skip-existing wheels-*/* -- -r testpypi
