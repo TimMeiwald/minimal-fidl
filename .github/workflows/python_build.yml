@@ -204,6 +204,4 @@ jobs:
         #   MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
           command: upload
-          working-directory: ../minimal-fidl-python/
-          before-script-linux: ls
-          args: --non-interactive --skip-existing wheels-*/*
+          args: --non-interactive --skip-existing wheels-*/* -- -r testpypi
