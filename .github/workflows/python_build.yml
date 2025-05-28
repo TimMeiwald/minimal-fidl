@@ -205,4 +205,5 @@ jobs:
         with:
           command: upload
           working-directory: ../minimal-fidl-python/
+          before-script-linux: ls
           args: --non-interactive --skip-existing wheels-*/* -- -r testpypi
