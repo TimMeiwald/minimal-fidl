@@ -5,7 +5,7 @@ edition = "2021"
 
 
 [lib]
-name = "franca_idl_rs"
+name = "franca_idl"
 # "cdylib" is necessary to produce a shared library for Python to import from.
 crate-type = ["cdylib"]
 

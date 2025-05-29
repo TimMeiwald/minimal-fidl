@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
-mod franca_idl_rs {
+mod franca_idl {
     use std::path::PathBuf;
 
     use minimal_fidl_collect::{
