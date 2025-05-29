@@ -1,6 +1,6 @@
 [project]
 name = "franca-idl"
-version = "0.1.0"
+version = "0.1.6"
 description = "Franca IDL tooling - Includes a Parser for the implemented subset of FIDL."
 authors = [
 ]
