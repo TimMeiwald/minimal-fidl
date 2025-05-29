@@ -1,15 +1,15 @@
 [project]
 name = "franca-idl"
-version = "0.1.7"
+version = "0.1.8"
 description = "Franca IDL tooling - Includes a Parser for the implemented subset of FIDL."
 authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.8"
-url="https://github.com/TimMeiwald/minimal-fidl"
 keywords=["franca", "franca-idl", "idl", "fidl", "parsing"]
 license = "MIT"
-
+[project.urls]
+Repository = "https://github.com/TimMeiwald/minimal-fidl"
 
 [build-system]
 requires = ["maturin>=1.8.6,<2.0"]
