@@ -1,9 +1,8 @@
 [project]
 name = "franca-idl"
 version = "0.1.0"
-description = ""
+description = "Franca IDL tooling - Includes a Parser for the implemented subset of FIDL."
 authors = [
-    {name = "TimMeiwald",email = "tim.meiwald@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.8"
