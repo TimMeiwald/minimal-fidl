@@ -6,7 +6,9 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.8"
-
+url="https://github.com/TimMeiwald/minimal-fidl"
+keywords=["franca", "franca-idl", "idl", "fidl", "parsing"]
+license = "MIT"
 
 
 [build-system]
