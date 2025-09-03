@@ -3,7 +3,12 @@ use std::{
     str::FromStr,
 };
 
-use crate::{annotation::{annotation_constructor, Annotation}, enum_value::EnumValue, fidl_file::FileError, VariableDeclaration};
+use crate::{
+    annotation::{annotation_constructor, Annotation},
+    enum_value::EnumValue,
+    fidl_file::FileError,
+    VariableDeclaration,
+};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Enumeration {

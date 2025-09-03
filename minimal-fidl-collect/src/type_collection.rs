@@ -4,7 +4,14 @@ use std::{
 };
 
 use crate::{
-    annotation::{annotation_constructor, Annotation}, attribute::{self, Attribute}, enumeration::{self, Enumeration}, fidl_file::FileError, method::Method, structure::Structure, type_def::TypeDef, Version
+    annotation::{annotation_constructor, Annotation},
+    attribute::{self, Attribute},
+    enumeration::{self, Enumeration},
+    fidl_file::FileError,
+    method::Method,
+    structure::Structure,
+    type_def::TypeDef,
+    Version,
 };
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]

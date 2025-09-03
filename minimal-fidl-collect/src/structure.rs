@@ -3,7 +3,11 @@ use std::{
     str::FromStr,
 };
 
-use crate::{annotation::{annotation_constructor, Annotation}, fidl_file::FileError, VariableDeclaration};
+use crate::{
+    annotation::{annotation_constructor, Annotation},
+    fidl_file::FileError,
+    VariableDeclaration,
+};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct Structure {
@@ -28,7 +32,7 @@ impl Structure {
                 Rules::comment
                 | Rules::multiline_comment
                 | Rules::open_bracket
-                | Rules::close_bracket => {},
+                | Rules::close_bracket => {}
                 Rules::annotation_block => {
                     annotations = annotation_constructor(source, publisher, child)?;
                 }
