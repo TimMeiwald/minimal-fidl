@@ -26,7 +26,39 @@ mod franca_idl {
     use pyo3::exceptions::PyValueError;
     use pyo3::prelude::*;
 
+    #[pymodule_export]
+    use crate::annotation::FidlAnnotation;
+    #[pymodule_export]
+    use crate::attribute::FidlAttribute;
+    #[pymodule_export]
+    use crate::collection::FidlTypeCollection;
+    #[pymodule_export]
+    use crate::diff::FidlDiff;
+    #[pymodule_export]
+    use crate::enum_value::FidlEnumValue;
+    #[pymodule_export]
+    use crate::enumeration::FidlEnumeration;
+    #[pymodule_export]
     use crate::file::FidlFile;
+    #[pymodule_export]
+    use crate::import_model::FidlImportModel;
+    #[pymodule_export]
+    use crate::import_namespace::FidlImportNamespace;
+    #[pymodule_export]
+    use crate::interface::FidlInterface;
+    #[pymodule_export]
+    use crate::method::FidlMethod;
+    #[pymodule_export]
+    use crate::package::FidlPackage;
+    #[pymodule_export]
+    use crate::structure::FidlStructure;
+    #[pymodule_export]
+    use crate::type_def::FidlTypeDef;
+    #[pymodule_export]
+    use crate::variable_declaration::FidlVariableDeclaration;
+    #[pymodule_export]
+    use crate::version::FidlVersion;
+
     #[pyfunction]
     fn _respond_42() -> u8 {
         42

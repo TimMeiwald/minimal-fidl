@@ -31,4 +31,3 @@ def test_project():
 
     for fidl_file in result:
         print(fidl_file.__str__() + "\n\n\n")
-    assert 0 == 1
