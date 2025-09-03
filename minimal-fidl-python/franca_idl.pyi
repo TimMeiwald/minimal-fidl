@@ -1,5 +1,6 @@
 # Should provide typestub for franca_idl_rs
-from typing import Optional
+from enum import Enum
+from typing import Optional, Self
 from pathlib import Path
 
 def _respond_42() -> int:
@@ -60,6 +61,12 @@ class FidlStructure:
     name: str
     ontents: list[FidlVariableDeclaration]
 
+class FidlDiff(Enum):
+    MAJOR = 1
+    MINOR = 2
+    PATCH = 3
+    IDENTICAL = 4
+
 class FidlAttribute:
     annotations: list[FidlAnnotation]
     name: str
@@ -83,6 +90,9 @@ class FidlAnnotation:
 class FidlVersion:
     major: Optional[int]
     minor: Optional[int]
+
+    def diff(self, other: Self) -> FidlDiff:
+        pass
 
 class FidlInterface:
     name: str

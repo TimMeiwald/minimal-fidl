@@ -1,4 +1,4 @@
-from franca_idl import FidlFile, load_fidl_project
+from franca_idl import FidlFile, load_fidl_project, FidlDiff
 from pathlib import Path
 '''
 Turn on full type checking with pylance
@@ -27,7 +27,13 @@ def test_project():
         print(fidl_file.file_path)
         for iface in fidl_file.interfaces:
             print(f"Version: {iface.version}")
-
+            if iface.version is not None:
+                print(iface.version.diff(iface.version))
+                assert iface.version.diff(iface.version) == FidlDiff.IDENTICAL
 
     for fidl_file in result:
         print(fidl_file.__str__() + "\n\n\n")
+
+
+def test_fidl_diff_enum():
+    assert FidlDiff.IDENTICAL == FidlDiff.IDENTICAL # Checks it exists or something

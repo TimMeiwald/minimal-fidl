@@ -1,4 +1,4 @@
-use crate::annotation::FidlAnnotation;
+use crate::{annotation::FidlAnnotation, diff::FidlDiff};
 use minimal_fidl_collect::VariableDeclaration;
 use pyo3::prelude::*;
 
@@ -14,6 +14,15 @@ pub struct FidlVariableDeclaration {
     #[pyo3(get)]
     pub is_array: bool,
 }
+impl FidlVariableDeclaration {
+    pub fn diff_fidl_variable_declaration_list(
+        annotations: &Vec<FidlAnnotation>,
+        other_annotations: &Vec<FidlAnnotation>,
+    ) -> FidlDiff {
+        todo!("Do the diff for two lists.");
+    }
+}
+
 #[pymethods]
 impl FidlVariableDeclaration {
     fn __str__(&self) -> String {

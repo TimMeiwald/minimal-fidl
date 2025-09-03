@@ -1,5 +1,9 @@
 package fidl
 interface InlineArrayInterface {
+    version {
+        major 0
+        minor 1
+    }
     attribute Int8[] someInt8Array
     attribute UInt32[] someUInt32Array
     attribute Boolean[] someBooleanArray

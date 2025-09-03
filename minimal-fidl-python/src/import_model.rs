@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use minimal_fidl_collect::ImportModel;
 use pyo3::prelude::*;
 
+use crate::diff::FidlDiff;
+
 #[pyclass(name = "FidlImportModel", frozen)]
 #[derive(Clone, Debug)]
 pub struct FidlImportModel {
@@ -13,6 +15,13 @@ pub struct FidlImportModel {
 impl FidlImportModel {
     fn __str__(&self) -> String {
         format!("{:#?}", self)
+    }
+    fn diff(&self, other: &Self) -> FidlDiff {
+        if self.file_path != other.file_path {
+            FidlDiff::MAJOR
+        } else {
+            FidlDiff::IDENTICAL
+        }
     }
 }
 impl From<&ImportModel> for FidlImportModel {

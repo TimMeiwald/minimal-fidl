@@ -17,8 +17,15 @@ impl FidlVersion {
         format!("{:#?}", self)
     }
 
-    fn diff(&self) -> Result<FidlDiff, ()>{
-        Ok(FidlDiff::IDENTICAL)
+    // The version defines the version so 
+    // it always returns FidlDiff::IDENTICAL as 
+    // it makes little sense to diff it. 
+    fn diff(&self, other: &Self) -> FidlDiff {
+        FidlDiff::IDENTICAL
+    }
+
+    fn __eq__(&self, other: &Self) -> bool{
+        self.major == other.major && self.minor == self.minor
     }
 }
 impl From<&Version> for FidlVersion {
