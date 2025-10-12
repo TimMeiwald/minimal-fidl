@@ -20,10 +20,16 @@ impl FidlStructure {
     }
     fn diff(&self, other: &Self) -> FidlDiff {
         if self.name != other.name {
-            FidlDiff::MAJOR
+            return FidlDiff::MAJOR
         } 
-        FidlVariableDeclaration::diff_fidl_variable_declaration_list(&self.contents, &other.contents)
-        FidlAnnotation::diff_fidl_annotation_list(&self.annotations, &other.annotations)
+        let diff_var_decl = FidlVariableDeclaration::diff_list(&self.contents, &other.contents);
+        let diff_fidl_annotation = FidlAnnotation::diff_list(&self.annotations, &other.annotations);
+        if diff_var_decl > diff_fidl_annotation{
+            diff_var_decl
+        }
+        else{
+            diff_fidl_annotation
+        }
     
     }
 }

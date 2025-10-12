@@ -22,7 +22,7 @@ impl FidlEnumValue {
         if self.name != other.name || self.value != other.value {
             FidlDiff::MAJOR
         } else {
-            FidlAnnotation::diff_fidl_annotation_list(&self.annotations, &other.annotations)
+            FidlAnnotation::diff_list(&self.annotations, &other.annotations)
         }
     }
 }

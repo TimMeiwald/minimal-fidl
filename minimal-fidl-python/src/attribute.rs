@@ -22,7 +22,7 @@ impl FidlAttribute {
         if self.name != other.name || self.type_name != other.type_name {
             FidlDiff::MAJOR
         } else {
-            FidlAnnotation::diff_fidl_annotation_list(&self.annotations, &other.annotations)
+            FidlAnnotation::diff_list(&self.annotations, &other.annotations)
         }
     }
 }
