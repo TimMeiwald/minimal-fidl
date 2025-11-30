@@ -3,33 +3,47 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as path from 'path';
 import { workspace, ExtensionContext } from 'vscode';
 
 import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
-	TransportKind
+	Executable,
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export function activate(_context: ExtensionContext) {
 	// The server is implemented in node
-	const serverModule = context.asAbsolutePath(
-		path.join('server', 'out', 'server.js')
-	);
+	// const serverModule = context.asAbsolutePath(
+	// 	path.join('server', 'out', 'server.js')
+	// );
+	const command = process.env.SERVER_PATH || "nrs-language-server";
+	const run: Executable = {
+		command,
+		options: {
+			env: {
+				...process.env,
 
-	// If the extension is launched in debug mode then the debug server options are used
-	// Otherwise the run options are used
-	const serverOptions: ServerOptions = {
-		run: { module: serverModule, transport: TransportKind.ipc },
-		debug: {
-			module: serverModule,
-			transport: TransportKind.ipc,
-		}
+				RUST_LOG: "debug",
+			},
+		},
 	};
+	const serverOptions: ServerOptions = {
+		run,
+		debug: run,
+	};
+
+	// // If the extension is launched in debug mode then the debug server options are used
+	// // Otherwise the run options are used
+	// const serverOptions: ServerOptions = {
+	// 	run: { module: serverModule, transport: TransportKind.ipc },
+	// 	debug: {
+	// 		module: serverModule,
+	// 		transport: TransportKind.ipc,
+	// 	}
+	// };
 
 	// Options to control the language client
 	const clientOptions: LanguageClientOptions = {
