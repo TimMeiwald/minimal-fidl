@@ -20,7 +20,7 @@ impl FidlVersion {
     // The version defines the version so 
     // it always returns FidlDiff::IDENTICAL as 
     // it makes little sense to diff it. 
-    fn diff(&self, other: &Self) -> FidlDiff {
+    fn diff(&self, _other: &Self) -> FidlDiff {
         FidlDiff::IDENTICAL
     }
 

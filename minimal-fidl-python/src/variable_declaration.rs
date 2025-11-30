@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 
 use crate::{annotation::FidlAnnotation, diff::FidlDiff};
-use minimal_fidl_collect::{variable_declaration, Annotation, VariableDeclaration};
+use minimal_fidl_collect::{VariableDeclaration};
 use pyo3::prelude::*;
 
 #[pyclass(name = "FidlVariableDeclaration", frozen)]
@@ -39,7 +39,7 @@ impl FidlVariableDeclaration {
         for key in all_keys {
             let s = map.get(&key);
             let o = map.get(&key);
-            let mut diff: FidlDiff = FidlDiff::IDENTICAL;
+            let diff: FidlDiff;
             if s.is_none() {
                 // If the left hand side is None, then it means we added a variable declaration to a struct/method.
                 // Since this changes the size or function signature it's a major.

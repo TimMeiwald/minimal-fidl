@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use pyo3::prelude::*;
 
 /// This enum represents whether a diffed result
@@ -8,7 +6,7 @@ use pyo3::prelude::*;
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum FidlDiff {
     IDENTICAL = 1, // The number order is used by partial ord for semantic ordering
-    PATCH = 2,     // I.e MAJOR > MINOR etc. 
+    PATCH = 2,     // I.e MAJOR > MINOR etc.
     MINOR = 3,
     MAJOR = 4,
 }

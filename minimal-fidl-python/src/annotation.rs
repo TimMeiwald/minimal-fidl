@@ -37,7 +37,7 @@ impl FidlAnnotation {
         for key in all_keys {
             let s = map.get(&key);
             let o = map.get(&key);
-            let mut diff: FidlDiff = FidlDiff::IDENTICAL;
+            let diff: FidlDiff;
             if s.is_none() {
                 // If the left hand side is None, then it means we added an annotation
                 // Which is a minor change
