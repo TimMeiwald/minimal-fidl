@@ -3,7 +3,10 @@ use std::{
     str::FromStr,
 };
 
-use crate::{annotation::{annotation_constructor, Annotation}, fidl_file::FileError};
+use crate::{
+    annotation::{annotation_constructor, Annotation},
+    fidl_file::FileError,
+};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct EnumValue {
@@ -67,7 +70,9 @@ impl EnumValue {
         Ok(())
     }
 
-    pub fn convert_string_representation_of_number_to_value(input: String) -> Result<u64, FileError> {
+    pub fn convert_string_representation_of_number_to_value(
+        input: String,
+    ) -> Result<u64, FileError> {
         let value = input.parse::<u64>();
 
         match value {

@@ -108,7 +108,6 @@ impl fmt::Debug for FidlFileRs {
 }
 
 impl FidlFileRs {
-
     pub fn new(source: String, publisher: &BasicPublisher) -> Result<Self, FileError> {
         let mut resp = Self {
             source,

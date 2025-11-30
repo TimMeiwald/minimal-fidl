@@ -299,7 +299,7 @@ impl PythonCodeGen {
         );
         res.push(header);
 
-        if id.is_some(){
+        if id.is_some() {
             let id = id.unwrap();
             res.push(IndentedString::new(
                 0,
@@ -455,7 +455,11 @@ impl PythonCodeGen {
         ));
         if id.is_some() {
             let id = id.unwrap();
-            res.push(IndentedString::new(1, FidlType::Method, format!("Id: int = {:?}", id)));
+            res.push(IndentedString::new(
+                1,
+                FidlType::Method,
+                format!("Id: int = {:?}", id),
+            ));
         }
         res.push(IndentedString::new(1, FidlType::Method, format!("pass\n")));
         res
@@ -520,7 +524,7 @@ impl PythonCodeGen {
         for annotation in annotations {
             if annotation.name.trim() == "details" {
                 let contents = annotation.contents.trim();
-                if contents.trim().to_lowercase().starts_with("size"){
+                if contents.trim().to_lowercase().starts_with("size") {
                     let contents: Vec<&str> = contents.split("=").collect();
                     assert!(contents.len() == 2, "Expected only one equals sign");
                     let value = EnumValue::convert_string_representation_of_number_to_value(
@@ -529,7 +533,6 @@ impl PythonCodeGen {
                     .expect("Expected a valid positive integer.");
                     return Some(value);
                 }
-                
             }
         }
         None
@@ -539,7 +542,7 @@ impl PythonCodeGen {
         for annotation in annotations {
             if annotation.name.trim() == "details" {
                 let contents = annotation.contents.trim();
-                if contents.trim().to_lowercase().starts_with("id"){
+                if contents.trim().to_lowercase().starts_with("id") {
                     let contents: Vec<&str> = contents.split("=").collect();
                     assert!(contents.len() == 2, "Expected only one equals sign");
                     let value = EnumValue::convert_string_representation_of_number_to_value(
@@ -548,7 +551,6 @@ impl PythonCodeGen {
                     .expect("Expected a valid positive integer.");
                     return Some(value);
                 }
-                
             }
         }
         None
@@ -557,7 +559,8 @@ impl PythonCodeGen {
     fn enumeration(&self, enumeration: &Enumeration) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
         let (largest_value, enumeration_map) = self.enumeration_value_gatherer(enumeration);
-        let hardcoded_size: Option<u64> = Self::enumeration_split_annotation_content(&enumeration.annotations);
+        let hardcoded_size: Option<u64> =
+            Self::enumeration_split_annotation_content(&enumeration.annotations);
         let mut size = 8;
         if largest_value > 255 {
             size = 16;
@@ -566,20 +569,25 @@ impl PythonCodeGen {
         } else if largest_value > 4294967295 {
             size = 64
         }
-        if hardcoded_size.is_some(){
+        if hardcoded_size.is_some() {
             let hardcoded_size = hardcoded_size.unwrap();
             // If the hardcoded sise is not large enough for the number of enum variants we panic
-            // due to the mismatch between user demanded behaviour and reality. 
+            // due to the mismatch between user demanded behaviour and reality.
             if size > hardcoded_size {
                 panic!("The hardcoded size {:?} is not large enough for the number of enum variants. Expected at least: {:?}", hardcoded_size, size);
-            }
-            else{
-                if hardcoded_size != 8 && hardcoded_size != 16 && hardcoded_size != 32 && hardcoded_size != 64{
-                    panic!("The hardcoded size {:?} must be 8, 16, 32 or 64", hardcoded_size);
+            } else {
+                if hardcoded_size != 8
+                    && hardcoded_size != 16
+                    && hardcoded_size != 32
+                    && hardcoded_size != 64
+                {
+                    panic!(
+                        "The hardcoded size {:?} must be 8, 16, 32 or 64",
+                        hardcoded_size
+                    );
                 }
                 size = hardcoded_size
             }
-            
         }
         let header = IndentedString::new(
             0,

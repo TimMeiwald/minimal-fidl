@@ -3,7 +3,11 @@ use std::{
     str::FromStr,
 };
 
-use crate::{annotation::{annotation_constructor, Annotation}, fidl_file::FileError, type_ref::TypeRef};
+use crate::{
+    annotation::{annotation_constructor, Annotation},
+    fidl_file::FileError,
+    type_ref::TypeRef,
+};
 use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct VariableDeclaration {
@@ -26,11 +30,10 @@ impl VariableDeclaration {
         let mut is_array = false;
         let mut annotations: Vec<Annotation> = Vec::new();
 
-
         for child in node.get_children() {
             let child = publisher.get_node(*child);
             match child.rule {
-                Rules::comment | Rules::multiline_comment=> {}
+                Rules::comment | Rules::multiline_comment => {}
                 Rules::annotation_block => {
                     annotations = annotation_constructor(source, publisher, child)?;
                 }
