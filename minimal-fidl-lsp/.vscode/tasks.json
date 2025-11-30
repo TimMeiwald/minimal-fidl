@@ -13,6 +13,19 @@
 				"$tsc"
 			]
 		},
+		{	
+			"label": "build-lsp-server",
+			"command": "cd minimal-fidl-lsp-server && cargo build && cd ../",
+			"type": "shell",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
 		{
 			"type": "npm",
 			"script": "watch",
@@ -27,6 +40,17 @@
 			},
 			"problemMatcher": [
 				"$tsc-watch"
+			]
+		},
+		{
+			"label": "buildAndWatch",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"build-lsp-server",
+				{
+					"type": "npm",
+					"script": "watch"
+				}
 			]
 		}
 	]
