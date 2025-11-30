@@ -19,7 +19,8 @@ export function activate(_context: ExtensionContext) {
 	// const serverModule = context.asAbsolutePath(
 	// 	path.join('server', 'out', 'server.js')
 	// );
-	const command = process.env.SERVER_PATH || "nrs-language-server";
+	// const command = process.env.SERVER_PATH || "nrs-language-server";
+	const command = "/home/t/Code/minimal-fidl/target/debug/minimal-fidl-lsp-server";
 	const run: Executable = {
 		command,
 		options: {

@@ -15,7 +15,7 @@ impl LanguageServer for Backend {
 
     async fn initialized(&self, _: InitializedParams) {
         self.client
-            .log_message(MessageType::INFO, "server initialized!")
+            .log_message(MessageType::INFO, "Rust Server Initialized!")
             .await;
     }
 
