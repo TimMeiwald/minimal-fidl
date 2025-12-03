@@ -1,7 +1,8 @@
-use tower_lsp::jsonrpc::Result;
+use tower_lsp::jsonrpc::{self, Error, ErrorCode, Result};
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
-
+mod format_file;
+use format_file::format_file_one_shot_context;
 #[derive(Debug)]
 struct Backend {
     client: Client,
@@ -90,11 +91,48 @@ impl LanguageServer for Backend {
         self.client
             .log_message(
                 MessageType::INFO,
-                format!("Formatting {:?}", params.text_document.uri),
+                format!("Formatting {:?}", params.text_document.uri.path()),
             )
             .await;
-        
-        Ok(None)
+        // Ideally we store and reuse contexts but not sure if that's implemented yet and also just for test.
+        match format_file_one_shot_context(params.text_document.uri.path()) {
+            Ok(formatted_text) => {
+                self.client
+                    .log_message(
+                        MessageType::INFO,
+                        format!(
+                            "Successfully formatted {:?}",
+                            params.text_document.uri.path()
+                        ),
+                    )
+                    .await;
+                let text_edit = TextEdit {
+                    range: Range {
+                        start: Position {
+                            line: 0,
+                            character: 0,
+                        },
+                        end: formatted_text.0,
+                    },
+                    new_text: formatted_text.1,
+                };
+
+                Ok(Some(vec![text_edit]))
+            }
+            Err(err) => {
+                self.client
+                    .log_message(
+                        MessageType::ERROR,
+                        format!("Could not format {:?}", params.text_document.uri.path()),
+                    )
+                    .await;
+                Err(Error {
+                    code: ErrorCode::InternalError,
+                    message: err.into(),
+                    data: None,
+                })
+            }
+        }
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
