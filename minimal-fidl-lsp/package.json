@@ -17,7 +17,6 @@
 		"vscode": "^1.100.0"
 	},
 	"activationEvents": [
-		"onLanguage:plaintext",
 		"onLanguage:fidl"
 	],
 	"main": "./client/out/extension",
