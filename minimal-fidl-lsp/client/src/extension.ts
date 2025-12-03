@@ -48,10 +48,10 @@ export function activate(_context: ExtensionContext) {
 
 	// Options to control the language client
 	const clientOptions: LanguageClientOptions = {
-		// Register the server for plain text documents
+		// Register the server for fidl documents
 		documentSelector: [{ scheme: 'file', language: 'fidl' }],
 		synchronize: {
-			// Notify the server about file changes to '.clientrc files contained in the workspace
+			// Notify the server about file changes to '.fidl' files contained in the workspace
 			fileEvents: workspace.createFileSystemWatcher('**/.fidl')
 		}
 	};
