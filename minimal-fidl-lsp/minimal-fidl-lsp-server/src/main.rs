@@ -86,6 +86,16 @@ impl LanguageServer for Backend {
             .log_message(MessageType::INFO, "Rust Server initialized!")
             .await;
     }
+    async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
+        self.client
+            .log_message(
+                MessageType::INFO,
+                format!("Formatting {:?}", params.text_document.uri),
+            )
+            .await;
+        
+        Ok(None)
+    }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         self.client
@@ -100,7 +110,9 @@ impl LanguageServer for Backend {
     }
 
     async fn shutdown(&self) -> Result<()> {
-        self.client.log_message(MessageType::INFO, "Shutting down Rust Server!").await;
+        self.client
+            .log_message(MessageType::INFO, "Shutting down Rust Server!")
+            .await;
         Ok(())
     }
 }
