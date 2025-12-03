@@ -19,6 +19,11 @@ impl LanguageServer for Backend {
             .await;
     }
 
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        self.client.log_message(MessageType::INFO, format!("File Opened: {:?}", params)).await;
+    }
+
+
     async fn shutdown(&self) -> Result<()> {
         Ok(())
     }
