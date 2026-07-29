@@ -1,6 +1,6 @@
 # minimal-fidl-collect: AST design
 
-Status: **all phases (0–7) implemented.** See §13.
+Status: **all phases (0–7) plus phase 9 implemented.** See §13.
 Scope: turning the CST produced by `minimal-fidl-parser` into a mutable, ordered,
 round-trippable AST for `.fidl` files.
 
@@ -56,8 +56,34 @@ round-trippable AST for `.fidl` files.
 - PyO3 rejects macro invocations inside `#[pymethods]`, so the `handle!` macro
   emits the whole block and takes the type's own methods as a token tree.
 - A minimal Python mutation surface (`remove_method`, `remove_attribute`) landed
-  because the stale-handle guard cannot be tested without one. The full mutable
-  API is still future work.
+  because the stale-handle guard cannot be tested without one. Phase 9 replaced
+  it with the full API.
+- Those two methods had a live bug, and it is the reason `get_mut` exists.
+  Lacking one, they read their own `name` back and called
+  `file.interface_mut(&name)` — which returns the *first* interface of that name.
+  Since duplicate names are only a `validate()` diagnostic, a handle to the second
+  of two same-named interfaces mutated the first one instead. The stale-handle
+  guard cannot catch it: the node it resolves is perfectly valid, just not the one
+  that was asked for. **Resolve by id, never by name, whenever an id is in hand.**
+- Removing a member now marks its container dirty. It did not before, and
+  `Mode::Preserve` would happily re-emit the container from its span — removed
+  member included. In practice the `*_mut()` accessor on the way in had already
+  marked it, which is why no test saw this; going through `get_mut` made the gap
+  reachable, so `member_mutators!` and `container_ops!` mark it themselves now.
+- Two things the implemented grammar subset does not allow, discovered while
+  writing builders for them, both now enforced by the builder rather than
+  discovered by the user at reparse time:
+  - `package` is **mandatory** (`grammar` sequences it without `_optional`), so a
+    file with no package cannot be read back. `remove_package` exists to replace
+    one, not to leave a file without one.
+  - `import_namespace` **requires** the `.*`: `wildcard` is a mandatory element of
+    the rule, not an option. `ImportNamespace::create` therefore always sets
+    `wildcard: true`. The field stays public for anyone modelling something the
+    parser will not accept.
+- File-level insertion computes an index rather than appending. `grammar` is
+  `package (import)* (interface | typeCollection)*` and enforces that order, so
+  `push_member(FileMember::ImportModel(..))` would print the import after the
+  interfaces and the output would not reparse.
 - The diff's sibling match key carries an occurrence counter on *every* key, not
   just anonymous ones. Since duplicate names are legal enough to parse, two
   same-named interfaces otherwise collide in the map and a file reports
@@ -307,7 +333,42 @@ impl<'a> NodeRef<'a> {
 }
 ```
 
-`NodeRef` is the object-safe replacement for the `Ordered` trait. `NodeRefMut` mirrors it.
+`NodeRef` is the object-safe replacement for the `Ordered` trait. `NodeRefMut`
+mirrors it, with two differences that follow from `&mut` not being shareable:
+
+```rust
+pub enum NodeRefMut<'a> { File(&'a mut FidlFile), Interface(&'a mut Interface), /* ... */ }
+
+impl<'a> NodeRefMut<'a> {
+    pub fn children_mut(self) -> Vec<NodeRefMut<'a>>;   // takes self by value
+    pub fn annotations_mut(&mut self) -> Option<&mut Vec<Annotation>>;
+    pub fn mark_dirty(&mut self);
+}
+
+impl FidlFile {
+    pub fn get_mut(&mut self, id: NodeId) -> Option<NodeRefMut<'_>>;
+}
+```
+
+- It cannot be `Copy`, so `children_mut` takes `self` by value. Gathering a node's
+  children into a `Vec` is possible despite the usual objection: they live in
+  disjoint fields (`members`, `annotations`, the three comment lists on `meta`),
+  and disjoint `&mut` borrows may coexist.
+- **There is deliberately no mutable `Descendants`.** `VisitMut` covers whole-tree
+  transforms and `get_mut` covers single-node lookup; between them nothing is
+  missing, and a mutable iterator is the one genuinely awkward piece. `get_mut` is
+  recursive descent rather than an iterator scan precisely because the borrow has
+  to move down the tree and stop at the match.
+
+`get_mut` marks the node it returns dirty, on the same conservative rule as the
+`*_mut()` accessors. It does *not* mark the ancestors it descended through:
+`Mode::Preserve` already refuses to reuse a span whose subtree contains anything
+dirty, so marking the path would cost output fidelity for nothing.
+
+`children()` and `children_mut()` must yield the same nodes in the same order.
+`tests/node_ref_mut.rs` pins that against every node of a rich tree; without it a
+mutable walk could silently skip the comments and annotations that live on `meta`
+rather than in `members`.
 
 ```rust
 pub trait Annotated {
@@ -340,10 +401,17 @@ Every node carries `id: NodeId(u32)`, allocated from a per-file counter. IDs are
 - **not** stable across a reparse (a fresh parse allocates fresh IDs).
 
 Resolution is `FidlFile::get(id) -> Option<NodeRef>`, implemented as a
-`descendants()` scan. `.fidl` files are small (hundreds of nodes), so this is
-negligible; if profiling disagrees, add a lazily-rebuilt `HashMap<NodeId, NodePath>`
-behind a dirty flag. **Do not build the index speculatively** — gate it on a
-criterion benchmark (§12, Phase 8).
+`descendants()` scan, and `FidlFile::get_mut(id) -> Option<NodeRefMut>` by recursive
+descent. `.fidl` files are small (hundreds of nodes), so this is negligible; if
+profiling disagrees, add a lazily-rebuilt `HashMap<NodeId, NodePath>` behind a
+dirty flag. **Do not build the index speculatively** — gate it on a criterion
+benchmark (§12, Phase 8).
+
+**Resolve by id, not by name, whenever an id is in hand.** Duplicate names are
+legal enough to parse (§3), so `interface_mut("A")` answers "the first interface
+called A", which is not the same question as "the interface this handle names".
+Getting those two confused is a bug that no stale-handle guard can catch, because
+the node it resolves is valid — just the wrong one.
 
 This exists for the Python binding (§10): a handle is `(Arc<RwLock<FidlFile>>, NodeId)`,
 two words, and stays valid when siblings change.
@@ -572,18 +640,76 @@ GIL for field access, so this is strictly better than unfreezing them.
 and the getter raises a Python `StaleNodeError`. This is the safety story for handles
 and must be tested explicitly.
 
-**Mutation surface** (Python):
+**Two families of class, and the split is the whole API.**
+
+- `Fidl*` is a **handle** on a node already in a tree. Not constructible from
+  Python; you get one by reading or by inserting.
+- `New*` is a **description** of a node to create — plain constructible data
+  belonging to no file. Insertion consumes one and returns the handle.
 
 ```python
+from franca_idl import FidlFile, NewMethod, NewParameter
+
 f = FidlFile("player.fidl")
 iface = f.interfaces[0]
-iface.add_method(Method("play", inputs=[("track", "UInt32")]))
-del iface.methods_by_name["stop"]
-for node in f.walk():
-    if node.annotation("deprecated"):
-        print(node.path)
-f.save()
+
+play = iface.add_method(NewMethod("play",
+                                 inputs=[NewParameter("track", "UInt32")],
+                                 outputs=[NewParameter("ok", "Boolean")]))
+play.set_annotation("description", " start playback")
+iface.remove_method("stop")
+
+for node in f.nodes():
+    if node.kind != "file" and node.annotation("deprecated"):
+        print(node.node_path)
+
+for change in old.diff(f):
+    if change.change_type == "removed":
+        print("breaking:", change)
+
+f.save(preserve=True)   # untouched subtrees come back byte for byte
 ```
+
+Decisions worth keeping:
+
+- **Typed `New*` classes, not keyword arguments.** More work to build, but the call
+  site says what it is constructing and the types show up in editors and type
+  checkers. Rejected: `(name, type)` tuples and `**kwargs`, which degenerate into
+  tuples of tuples once nodes nest; and detached handles that are either attached
+  or owning, where every accessor grows a branch.
+- **Containers take one ordered `members` list**, mixed `New*` types, rather than a
+  list per kind. Member order is intrinsic to this tree (§1.1) and per-kind lists
+  would discard the interleaving at construction time.
+- **`NewParameter` covers struct fields too.** A field and a parameter are the same
+  node in the grammar, so there is no `NewField`.
+- **Insertion returns the handle, under one lock.** A node from a `New*` carries
+  `NodeId::UNASSIGNED` and is invisible to `get()` until ids are handed out, so the
+  handle cannot exist until after the edit. `edit_then(mutate, locate)` does the
+  mutation, calls `assign_missing_ids()`, and then reads the id back out — all
+  inside one write guard, rather than mutating and looking the node up again by
+  name afterwards.
+- **`diff` is one flat `FidlChange` class** with `change_type: str`, plus `path`,
+  `kind` and `Optional` fields for the rest. This keeps the case it exists for a
+  one-liner: `[c for c in changes if c.change_type == "removed"]`. Rejected:
+  `list[str]` (useless for filtering) and one class per variant (most ceremony).
+- **Paths are objects, not strings.** `FidlNodePath` and `FidlPathSegment` are
+  exposed so `at_path` can resolve what `path_of` produced. There is no parser for
+  the printed form. The getter is `node_path`, not `path`, because a package's
+  `path` is its dotted name and that name was there first.
+- **The stub is enforced.** `franca_idl.pyi` is still written by hand, but
+  `tests/test_stub.py` walks it with `ast` and compares it to the module in both
+  directions — a stub entry that does not exist is a lie, and a public member the
+  stub omits is a gap.
+
+Two PyO3 constraints shape the code and are easy to rediscover the hard way:
+
+- Macro invocations are illegal inside `#[pymethods]`, so `handle!` emits the whole
+  block and takes the type's own methods as a token tree. Its arms (`annotated`,
+  `meta`, `bare`) delegate downwards so each level's methods are written once.
+- `#[pymodule]` cannot see macro-generated pyclasses — it processes the module body
+  before expansion — so they are registered by hand in `#[pymodule_init]`. Anything
+  new must be added there or it works as a return value but cannot be imported or
+  used with `isinstance`.
 
 ---
 
@@ -613,6 +739,7 @@ mechanical but touches:
 | **5** ✅ | `to_fidl()` + `Mode::{Format,Preserve}`; formatter delegates to AST; delete CST walker | Idempotency, reparse, and comment-preservation properties hold over the full corpus |
 | **6** ✅ | Structural diff + `Change` model | Detects add/remove/modify/move; `ignore_comments` and `ignore_layout` behave; unformatted-vs-unformatted diff is clean |
 | **7** ✅ | File/project IO; migrate generator + CLI; rewrite Python binding to handles | Whole workspace builds; existing Python tests pass; stale-handle test raises |
+| **9** ✅ | `NodeRefMut` + `get_mut`; file-level package/import mutation and builders; the whole AST API exposed to Python (`New*` inputs, insertion, diff, paths, traversal, `Preserve` output) | The wrong-duplicate mutation is fixed and pinned; `children_mut` agrees with `children`; every node reachable after an insertion resolves by id; the stub matches the module |
 | **8** | *Optional:* `NodeId` index if benchmarks justify it | criterion benchmark shows a real win first |
 
 ---

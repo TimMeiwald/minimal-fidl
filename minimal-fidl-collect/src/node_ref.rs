@@ -1,4 +1,5 @@
-//! Uniform read-only traversal over the AST.
+//! Uniform traversal over the AST, shared ([`NodeRef`]) and mutable
+//! ([`NodeRefMut`]).
 //!
 //! [`NodeRef`] is the object-safe replacement for the abandoned `Ordered` trait:
 //! an enum can hold heterogeneous children, `impl Trait` in a trait method cannot.
@@ -259,9 +260,272 @@ impl<'a> Iterator for Descendants<'a> {
     }
 }
 
+/// A mutable reference to any node in the tree.
+///
+/// The mutable mirror of [`NodeRef`]. Two differences follow from `&mut` not being
+/// shareable:
+///
+/// - it cannot be `Copy`, so [`Self::children_mut`] takes `self` by value;
+/// - there is no mutable `Descendants`. Whole-tree rewrites go through
+///   [`crate::VisitMut`] and single-node lookup through [`FidlFile::get_mut`];
+///   between them nothing is missing, and a mutable iterator is the genuinely
+///   awkward part.
+///
+/// Gathering a node's children into a `Vec` *is* possible, despite the usual
+/// objection: they live in disjoint fields (`members`, `annotations`, the three
+/// comment lists on `meta`), and disjoint `&mut` borrows may coexist.
+pub enum NodeRefMut<'a> {
+    File(&'a mut FidlFile),
+    Package(&'a mut Package),
+    ImportNamespace(&'a mut ImportNamespace),
+    ImportModel(&'a mut ImportModel),
+    Interface(&'a mut Interface),
+    TypeCollection(&'a mut TypeCollection),
+    Version(&'a mut Version),
+    Method(&'a mut Method),
+    ParamList(&'a mut ParamList),
+    Attribute(&'a mut Attribute),
+    Structure(&'a mut Structure),
+    Enumeration(&'a mut Enumeration),
+    EnumValue(&'a mut EnumValue),
+    TypeDef(&'a mut TypeDef),
+    VariableDeclaration(&'a mut VariableDeclaration),
+    Annotation(&'a mut Annotation),
+    Comment(&'a mut Comment),
+}
+
+/// [`dispatch_meta`] for [`NodeRefMut`].
+macro_rules! dispatch_meta_mut {
+    ($self:expr, $n:ident => $body:expr) => {
+        match $self {
+            NodeRefMut::File($n) => $body,
+            NodeRefMut::Package($n) => $body,
+            NodeRefMut::ImportNamespace($n) => $body,
+            NodeRefMut::ImportModel($n) => $body,
+            NodeRefMut::Interface($n) => $body,
+            NodeRefMut::TypeCollection($n) => $body,
+            NodeRefMut::Version($n) => $body,
+            NodeRefMut::Method($n) => $body,
+            NodeRefMut::ParamList($n) => $body,
+            NodeRefMut::Attribute($n) => $body,
+            NodeRefMut::Structure($n) => $body,
+            NodeRefMut::Enumeration($n) => $body,
+            NodeRefMut::EnumValue($n) => $body,
+            NodeRefMut::TypeDef($n) => $body,
+            NodeRefMut::VariableDeclaration($n) => $body,
+            NodeRefMut::Annotation($n) => $body,
+            NodeRefMut::Comment(_) => unreachable!("comments are handled by the caller"),
+        }
+    };
+}
+
+/// A node's own comments, in the same order [`NodeRef::children`] yields them.
+fn meta_comments_mut(meta: &mut NodeMeta) -> impl Iterator<Item = NodeRefMut<'_>> {
+    meta.leading_comments
+        .iter_mut()
+        .chain(meta.header_comments.iter_mut())
+        .chain(meta.trailing_comments.iter_mut())
+        .map(NodeRefMut::Comment)
+}
+
+fn annotations_mut_iter(annotations: &mut [Annotation]) -> impl Iterator<Item = NodeRefMut<'_>> {
+    annotations.iter_mut().map(NodeRefMut::Annotation)
+}
+
+impl<'a> NodeRefMut<'a> {
+    pub fn id(&self) -> NodeId {
+        match self {
+            NodeRefMut::Comment(c) => c.id,
+            other => dispatch_meta_mut!(other, n => n.meta().id),
+        }
+    }
+
+    pub fn span(&self) -> Option<Span> {
+        match self {
+            NodeRefMut::Comment(c) => c.span,
+            other => dispatch_meta_mut!(other, n => n.meta().span),
+        }
+    }
+
+    /// `None` for comments, which have no [`NodeMeta`].
+    pub fn meta_mut(&mut self) -> Option<&mut NodeMeta> {
+        match self {
+            NodeRefMut::Comment(_) => None,
+            other => Some(dispatch_meta_mut!(other, n => n.meta_mut())),
+        }
+    }
+
+    /// Mark the node modified, so `Mode::Preserve` reformats it rather than
+    /// reusing stale source text. A no-op for comments, which have no flag.
+    pub fn mark_dirty(&mut self) {
+        if let Some(meta) = self.meta_mut() {
+            meta.dirty = true;
+        }
+    }
+
+    pub fn kind_name(&self) -> &'static str {
+        match self {
+            NodeRefMut::File(_) => "file",
+            NodeRefMut::Package(_) => "package",
+            NodeRefMut::ImportNamespace(_) => "import_namespace",
+            NodeRefMut::ImportModel(_) => "import_model",
+            NodeRefMut::Interface(_) => "interface",
+            NodeRefMut::TypeCollection(_) => "type_collection",
+            NodeRefMut::Version(_) => "version",
+            NodeRefMut::Method(_) => "method",
+            NodeRefMut::ParamList(_) => "param_list",
+            NodeRefMut::Attribute(_) => "attribute",
+            NodeRefMut::Structure(_) => "struct",
+            NodeRefMut::Enumeration(_) => "enum",
+            NodeRefMut::EnumValue(_) => "enum_value",
+            NodeRefMut::TypeDef(_) => "typedef",
+            NodeRefMut::VariableDeclaration(_) => "variable_declaration",
+            NodeRefMut::Annotation(_) => "annotation",
+            NodeRefMut::Comment(_) => "comment",
+        }
+    }
+
+    /// The node's declared name, where it has one.
+    pub fn name(&self) -> Option<&str> {
+        match self {
+            NodeRefMut::Interface(n) => Some(&n.name),
+            NodeRefMut::TypeCollection(n) => Some(&n.name),
+            NodeRefMut::Method(n) => Some(&n.name),
+            NodeRefMut::Attribute(n) => Some(&n.name),
+            NodeRefMut::Structure(n) => Some(&n.name),
+            NodeRefMut::Enumeration(n) => Some(&n.name),
+            NodeRefMut::EnumValue(n) => Some(&n.name),
+            NodeRefMut::TypeDef(n) => Some(&n.name),
+            NodeRefMut::VariableDeclaration(n) => Some(&n.name),
+            NodeRefMut::Annotation(n) => Some(&n.name),
+            _ => None,
+        }
+    }
+
+    /// The node's annotations, or `None` for nodes that cannot carry them.
+    pub fn annotations_mut(&mut self) -> Option<&mut Vec<Annotation>> {
+        match self {
+            NodeRefMut::Interface(n) => Some(&mut n.annotations),
+            NodeRefMut::TypeCollection(n) => Some(&mut n.annotations),
+            NodeRefMut::Method(n) => Some(&mut n.annotations),
+            NodeRefMut::ParamList(n) => Some(&mut n.annotations),
+            NodeRefMut::Attribute(n) => Some(&mut n.annotations),
+            NodeRefMut::Structure(n) => Some(&mut n.annotations),
+            NodeRefMut::Enumeration(n) => Some(&mut n.annotations),
+            NodeRefMut::EnumValue(n) => Some(&mut n.annotations),
+            NodeRefMut::TypeDef(n) => Some(&mut n.annotations),
+            NodeRefMut::VariableDeclaration(n) => Some(&mut n.annotations),
+            _ => None,
+        }
+    }
+
+    /// Direct children in the same order as [`NodeRef::children`].
+    ///
+    /// Takes `self` by value: the returned borrows are carved out of it, so it
+    /// cannot survive the call.
+    pub fn children_mut(self) -> Vec<NodeRefMut<'a>> {
+        let mut out: Vec<NodeRefMut<'a>> = Vec::new();
+        match self {
+            NodeRefMut::File(f) => {
+                out.extend(meta_comments_mut(&mut f.meta));
+                out.extend(f.members.iter_mut().map(|m| match m {
+                    FileMember::Package(x) => NodeRefMut::Package(x),
+                    FileMember::ImportNamespace(x) => NodeRefMut::ImportNamespace(x),
+                    FileMember::ImportModel(x) => NodeRefMut::ImportModel(x),
+                    FileMember::Interface(x) => NodeRefMut::Interface(x),
+                    FileMember::TypeCollection(x) => NodeRefMut::TypeCollection(x),
+                    FileMember::Comment(x) => NodeRefMut::Comment(x),
+                }));
+            }
+            NodeRefMut::Interface(i) => {
+                out.extend(meta_comments_mut(&mut i.meta));
+                out.extend(annotations_mut_iter(&mut i.annotations));
+                out.extend(i.version.iter_mut().map(NodeRefMut::Version));
+                out.extend(i.members.iter_mut().map(|m| match m {
+                    InterfaceMember::Method(x) => NodeRefMut::Method(x),
+                    InterfaceMember::Attribute(x) => NodeRefMut::Attribute(x),
+                    InterfaceMember::Structure(x) => NodeRefMut::Structure(x),
+                    InterfaceMember::Enumeration(x) => NodeRefMut::Enumeration(x),
+                    InterfaceMember::TypeDef(x) => NodeRefMut::TypeDef(x),
+                    InterfaceMember::Comment(x) => NodeRefMut::Comment(x),
+                }));
+            }
+            NodeRefMut::TypeCollection(t) => {
+                out.extend(meta_comments_mut(&mut t.meta));
+                out.extend(annotations_mut_iter(&mut t.annotations));
+                out.extend(t.version.iter_mut().map(NodeRefMut::Version));
+                out.extend(t.members.iter_mut().map(|m| match m {
+                    TypeCollectionMember::TypeDef(x) => NodeRefMut::TypeDef(x),
+                    TypeCollectionMember::Structure(x) => NodeRefMut::Structure(x),
+                    TypeCollectionMember::Enumeration(x) => NodeRefMut::Enumeration(x),
+                    TypeCollectionMember::Comment(x) => NodeRefMut::Comment(x),
+                }));
+            }
+            NodeRefMut::Method(m) => {
+                out.extend(meta_comments_mut(&mut m.meta));
+                out.extend(annotations_mut_iter(&mut m.annotations));
+                out.push(NodeRefMut::ParamList(&mut m.inputs));
+                out.push(NodeRefMut::ParamList(&mut m.outputs));
+            }
+            NodeRefMut::ParamList(p) => {
+                out.extend(meta_comments_mut(&mut p.meta));
+                out.extend(annotations_mut_iter(&mut p.annotations));
+                out.extend(p.members.iter_mut().map(|m| match m {
+                    ParamMember::Param(x) => NodeRefMut::VariableDeclaration(x),
+                    ParamMember::Comment(x) => NodeRefMut::Comment(x),
+                }));
+            }
+            NodeRefMut::Structure(s) => {
+                out.extend(meta_comments_mut(&mut s.meta));
+                out.extend(annotations_mut_iter(&mut s.annotations));
+                out.extend(s.members.iter_mut().map(|m| match m {
+                    StructMember::Field(x) => NodeRefMut::VariableDeclaration(x),
+                    StructMember::Comment(x) => NodeRefMut::Comment(x),
+                }));
+            }
+            NodeRefMut::Enumeration(e) => {
+                out.extend(meta_comments_mut(&mut e.meta));
+                out.extend(annotations_mut_iter(&mut e.annotations));
+                out.extend(e.members.iter_mut().map(|m| match m {
+                    EnumMember::Value(x) => NodeRefMut::EnumValue(x),
+                    EnumMember::Comment(x) => NodeRefMut::Comment(x),
+                }));
+            }
+            // Leaves: trivia and annotations only.
+            NodeRefMut::Package(n) => out.extend(meta_comments_mut(&mut n.meta)),
+            NodeRefMut::ImportNamespace(n) => out.extend(meta_comments_mut(&mut n.meta)),
+            NodeRefMut::ImportModel(n) => out.extend(meta_comments_mut(&mut n.meta)),
+            NodeRefMut::Version(n) => out.extend(meta_comments_mut(&mut n.meta)),
+            NodeRefMut::Annotation(n) => out.extend(meta_comments_mut(&mut n.meta)),
+            NodeRefMut::Attribute(n) => {
+                out.extend(meta_comments_mut(&mut n.meta));
+                out.extend(annotations_mut_iter(&mut n.annotations));
+            }
+            NodeRefMut::EnumValue(n) => {
+                out.extend(meta_comments_mut(&mut n.meta));
+                out.extend(annotations_mut_iter(&mut n.annotations));
+            }
+            NodeRefMut::TypeDef(n) => {
+                out.extend(meta_comments_mut(&mut n.meta));
+                out.extend(annotations_mut_iter(&mut n.annotations));
+            }
+            NodeRefMut::VariableDeclaration(n) => {
+                out.extend(meta_comments_mut(&mut n.meta));
+                out.extend(annotations_mut_iter(&mut n.annotations));
+            }
+            NodeRefMut::Comment(_) => {}
+        }
+        out
+    }
+}
+
 impl FidlFile {
     pub fn as_node(&self) -> NodeRef<'_> {
         NodeRef::File(self)
+    }
+
+    pub fn as_node_mut(&mut self) -> NodeRefMut<'_> {
+        NodeRefMut::File(self)
     }
 
     /// Every node in the file, pre-order, starting with the file itself.
@@ -276,5 +540,37 @@ impl FidlFile {
     /// Returns `None` if the node has been removed from the tree.
     pub fn get(&self, id: NodeId) -> Option<NodeRef<'_>> {
         self.nodes().find(|n| n.id() == id)
+    }
+
+    /// Resolve a [`NodeId`] to the node it names, mutably.
+    ///
+    /// Recursive descent rather than an iterator scan: the borrow has to move
+    /// down the tree and stop at the match, which is exactly what a mutable
+    /// `Descendants` cannot express.
+    ///
+    /// The returned node is marked dirty, on the same conservative rule as the
+    /// `*_mut()` accessors: handing out a `&mut` counts as a modification whether
+    /// or not the caller writes through it (`DESIGN.md` §8). Use [`Self::get`]
+    /// when only reading.
+    ///
+    /// Prefer this over looking a node up by name when you already hold its id:
+    /// duplicate names are legal enough to parse, so a name lookup can resolve to
+    /// a different node than the one the id names.
+    pub fn get_mut(&mut self, id: NodeId) -> Option<NodeRefMut<'_>> {
+        fn descend<'a>(node: NodeRefMut<'a>, target: NodeId) -> Option<NodeRefMut<'a>> {
+            if node.id() == target {
+                return Some(node);
+            }
+            for child in node.children_mut() {
+                if let Some(found) = descend(child, target) {
+                    return Some(found);
+                }
+            }
+            None
+        }
+
+        let mut found = descend(self.as_node_mut(), id)?;
+        found.mark_dirty();
+        Some(found)
     }
 }

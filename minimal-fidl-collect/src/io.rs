@@ -19,7 +19,12 @@ impl FidlFile {
 
     /// Write the formatted file to `path`. Does not change the remembered path.
     pub fn write_to(&self, path: impl AsRef<Path>) -> std::io::Result<()> {
-        std::fs::write(path, self.to_fidl())
+        self.write_to_with(path, Mode::Format)
+    }
+
+    /// Write to `path` in the given [`Mode`].
+    pub fn write_to_with(&self, path: impl AsRef<Path>, mode: Mode) -> std::io::Result<()> {
+        std::fs::write(path, self.to_fidl_with(mode))
     }
 
     /// Write the file back where it was read from.
@@ -27,25 +32,22 @@ impl FidlFile {
     /// Errors if the file was built from a string and has no path — use
     /// [`Self::write_to`], or set `path` first.
     pub fn save(&self) -> std::io::Result<()> {
-        let path = self.path.as_ref().ok_or_else(|| {
-            std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "this FidlFile has no path; use write_to()",
-            )
-        })?;
-        self.write_to(path)
+        self.write_to_with(self.own_path()?, Mode::Format)
     }
 
     /// Write back preserving untouched subtrees byte-for-byte, so an edit shows
     /// up as a minimal diff. See `DESIGN.md` §8.
     pub fn save_preserving(&self) -> std::io::Result<()> {
-        let path = self.path.as_ref().ok_or_else(|| {
+        self.write_to_with(self.own_path()?, Mode::Preserve)
+    }
+
+    fn own_path(&self) -> std::io::Result<&Path> {
+        self.path.as_deref().ok_or_else(|| {
             std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 "this FidlFile has no path; use write_to()",
             )
-        })?;
-        std::fs::write(path, self.to_fidl_with(Mode::Preserve))
+        })
     }
 }
 

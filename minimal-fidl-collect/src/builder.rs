@@ -4,6 +4,8 @@
 //! real id when [`crate::FidlFile::assign_missing_ids`] next runs. Synthesised
 //! nodes are always formatted on output, since there is no original text to reuse.
 
+use std::path::PathBuf;
+
 use crate::{
     enumeration::EnumMember,
     interface::InterfaceMember,
@@ -11,8 +13,8 @@ use crate::{
     node::{Comment, NodeMeta},
     structure::StructMember,
     type_collection::TypeCollectionMember,
-    Annotation, Attribute, EnumValue, Enumeration, Interface, Method, Structure, TypeCollection,
-    TypeDef, VariableDeclaration, Version,
+    Annotation, Attribute, EnumValue, Enumeration, ImportModel, ImportNamespace, Interface, Method,
+    Package, Structure, TypeCollection, TypeDef, VariableDeclaration, Version,
 };
 
 /// Fresh metadata for a synthesised node.
@@ -20,6 +22,51 @@ fn new_meta() -> NodeMeta {
     NodeMeta {
         dirty: true,
         ..NodeMeta::default()
+    }
+}
+
+impl Package {
+    /// `package a.b.c`, from the dot-separated segments.
+    pub fn create(path: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        Self {
+            meta: new_meta(),
+            path: path.into_iter().map(Into::into).collect(),
+        }
+    }
+
+    /// `package a.b.c` from `"a.b.c"`.
+    pub fn parse(path: &str) -> Self {
+        Self::create(path.split('.'))
+    }
+}
+
+impl ImportModel {
+    /// `import model "path"`.
+    pub fn create(file_path: impl Into<PathBuf>) -> Self {
+        Self {
+            meta: new_meta(),
+            file_path: file_path.into(),
+        }
+    }
+}
+
+impl ImportNamespace {
+    /// `import a.b.* from "path"`.
+    ///
+    /// Always a wildcard: the grammar's `import_namespace` rule requires the `.*`
+    /// — it is a mandatory element, not an option — so an import built without it
+    /// would print text that cannot be read back. The `wildcard` field stays
+    /// public for anyone who needs to model one anyway.
+    pub fn create(
+        import: impl IntoIterator<Item = impl Into<String>>,
+        from: impl Into<PathBuf>,
+    ) -> Self {
+        Self {
+            meta: new_meta(),
+            from: from.into(),
+            import: import.into_iter().map(Into::into).collect(),
+            wildcard: true,
+        }
     }
 }
 
@@ -62,6 +109,14 @@ impl TypeDef {
             name: name.into(),
             type_n: type_n.into(),
             is_array: false,
+        }
+    }
+
+    /// `typedef name is Type[]`.
+    pub fn array(name: impl Into<String>, type_n: impl Into<String>) -> Self {
+        Self {
+            is_array: true,
+            ..Self::create(name, type_n)
         }
     }
 }

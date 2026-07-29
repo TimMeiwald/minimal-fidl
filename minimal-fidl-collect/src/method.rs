@@ -49,9 +49,11 @@ impl ParamList {
         &mut self,
         param: VariableDeclaration,
     ) -> Result<&mut VariableDeclaration, FileError> {
+        use crate::node::AstNode as _;
         if self.param(&param.name).is_some() {
             return Err(FileError::FieldAlreadyExists(param.name.clone()));
         }
+        self.mark_dirty();
         self.members.push(ParamMember::Param(param));
         match self.members.last_mut() {
             Some(ParamMember::Param(v)) => Ok(v),
@@ -60,10 +62,12 @@ impl ParamList {
     }
 
     pub fn remove_param(&mut self, name: &str) -> Option<VariableDeclaration> {
+        use crate::node::AstNode as _;
         let index = self.members.iter().position(|m| match m {
             ParamMember::Param(v) => v.name == name,
             _ => false,
         })?;
+        self.mark_dirty();
         match self.members.remove(index) {
             ParamMember::Param(v) => Some(v),
             _ => unreachable!("index came from this variant"),
