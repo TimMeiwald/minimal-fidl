@@ -142,8 +142,11 @@ jobs:
     strategy:
       matrix:
         platform:
-          - runner: macos-13
-            target: x86_64
+          # macos-13 (x86_64) was removed: GitHub has retired those runners, so
+          # the job sat unschedulable and never started. Intel Macs fall back to
+          # building from the sdist. To ship Intel wheels again, cross-compile by
+          # adding `- runner: macos-14` with `target: x86_64` rather than
+          # bringing macos-13 back.
           - runner: macos-14
             target: aarch64
     steps:
