@@ -82,16 +82,84 @@ mod franca_idl {
         42
     }
 
+    /// One file under the project directory that would not load, and why.
+    #[pyclass(name = "FidlLoadError", frozen)]
+    #[derive(Clone)]
+    struct FidlLoadError {
+        #[pyo3(get)]
+        path: PathBuf,
+        #[pyo3(get)]
+        message: String,
+    }
+
+    #[pymethods]
+    impl FidlLoadError {
+        fn __repr__(&self) -> String {
+            format!("<FidlLoadError {:?}: {}>", self.path, self.message)
+        }
+
+        fn __str__(&self) -> String {
+            format!("{}: {}", self.path.display(), self.message)
+        }
+    }
+
+    /// What [`load_fidl_project`] returns: the files that parsed and the ones
+    /// that did not.
+    ///
+    /// A class rather than a `(files, errors)` tuple so call sites read for
+    /// themselves, and so counts or helpers can be added later without breaking
+    /// anyone again.
+    #[pyclass(name = "FidlProjectLoad", frozen)]
+    struct FidlProjectLoad {
+        // Handles, so cloning these vectors on attribute access is two words
+        // per element — no subtree is copied.
+        #[pyo3(get)]
+        files: Vec<FidlFile>,
+        #[pyo3(get)]
+        errors: Vec<FidlLoadError>,
+    }
+
+    #[pymethods]
+    impl FidlProjectLoad {
+        fn __repr__(&self) -> String {
+            format!(
+                "<FidlProjectLoad {} file(s), {} error(s)>",
+                self.files.len(),
+                self.errors.len()
+            )
+        }
+    }
+
+    /// Parse every `.fidl` file under `dir`.
+    ///
+    /// Raises `ValueError` only if `dir` itself cannot be read. Individual file
+    /// failures are returned in `.errors`, all of them, alongside whatever
+    /// parsed.
     #[pyfunction]
-    fn load_fidl_project(dir: PathBuf) -> Result<Vec<FidlFile>, PyErr> {
-        let project = Project::load(dir).map_err(FidlFileError::from)?;
-        Ok(project
-            .files
-            .into_iter()
-            .map(|file| FidlFile {
-                inner: Arc::new(RwLock::new(file)),
-            })
-            .collect())
+    fn load_fidl_project(dir: PathBuf) -> PyResult<FidlProjectLoad> {
+        let project = Project::load(&dir).map_err(|err| {
+            PyValueError::new_err(format!(
+                "could not read project directory '{}': {err}",
+                dir.display()
+            ))
+        })?;
+        Ok(FidlProjectLoad {
+            files: project
+                .files
+                .into_iter()
+                .map(|file| FidlFile {
+                    inner: Arc::new(RwLock::new(file)),
+                })
+                .collect(),
+            errors: project
+                .errors
+                .into_iter()
+                .map(|error| FidlLoadError {
+                    path: error.path,
+                    message: error.error.to_string(),
+                })
+                .collect(),
+        })
     }
 
     /// Declares a handle pyclass and the accessor that resolves it.
@@ -810,6 +878,8 @@ mod franca_idl {
     #[pymodule_init]
     fn init(module: &Bound<'_, PyModule>) -> PyResult<()> {
         module.add("StaleNodeError", module.py().get_type::<StaleNodeError>())?;
+        module.add_class::<FidlProjectLoad>()?;
+        module.add_class::<FidlLoadError>()?;
         module.add_class::<FidlInterface>()?;
         module.add_class::<FidlTypeCollection>()?;
         module.add_class::<FidlMethod>()?;

@@ -23,11 +23,35 @@ def _respond_42() -> int:
     :return: Returns 42
     """
 
-def load_fidl_project(dir: Path) -> list[FidlFile]:
+class FidlLoadError:
+    """One file under the project directory that would not load, and why."""
+
+    path: Path
+    message: str
+
+class FidlProjectLoad:
+    """The result of load_fidl_project: what parsed, and what did not."""
+
+    files: list[FidlFile]
+    """The files that parsed successfully."""
+
+    errors: list[FidlLoadError]
+    """Every file that failed, not just the first."""
+
+def load_fidl_project(dir: Path) -> FidlProjectLoad:
     """
     Parses every .fidl file under `dir`.
 
-    Raises ValueError if a file cannot be read or parsed.
+    Raises ValueError only if `dir` itself cannot be read — missing, not a
+    directory, or permission denied. Once the directory is open this never
+    raises: individual file failures are collected in `.errors` and everything
+    that parsed is returned in `.files`.
+
+        result = load_fidl_project("some/dir")
+        for f in result.files:
+            print(f.file_path)
+        for e in result.errors:
+            print(e.path, e.message)
     """
 
 class _Node:

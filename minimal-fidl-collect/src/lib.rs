@@ -39,11 +39,11 @@ pub use enumeration::Enumeration;
 pub use fidl_file::FidlFile;
 pub use fidl_file::FileMember;
 pub use fidl_file::FileError;
-pub use fidl_project::FidlProject;
+pub use fidl_project::{FidlProject, Walk};
 pub use import_model::ImportModel;
 pub use import_namespace::ImportNamespace;
 pub use interface::Interface;
-pub use io::Project;
+pub use io::{FileLoadError, Project};
 pub use method::Method;
 pub use node_ref::{Descendants, NodeRef};
 pub use path::{NodePath, PathSegment};
@@ -821,9 +821,9 @@ typeCollection MyTypeCollection10 {
     #[test]
     fn test_fidl_project_1() {
         let path = Path::new("../");
-        let mut fmt = FidlProject::new(&path).unwrap();
+        let mut fmt = FidlProject::walk(path).unwrap();
         println!("{:?}", fmt);
-        let fidl_file = FidlProject::generate_file(fmt.pop().unwrap());
+        let fidl_file = FidlProject::generate_file(fmt.paths.pop().unwrap());
         println!("{:#?}", fidl_file)
     }
 }

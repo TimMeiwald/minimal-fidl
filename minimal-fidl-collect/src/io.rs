@@ -57,21 +57,70 @@ impl FromStr for FidlFile {
     }
 }
 
-/// Every `.fidl` file under a directory, parsed.
+/// One thing under the project directory that could not be loaded, and why.
+///
+/// The path is attached the same way [`Project::validate`] attaches one to each
+/// diagnostic, so both halves of a load report read alike.
+#[derive(Debug)]
+pub struct FileLoadError {
+    pub path: PathBuf,
+    pub error: FileError,
+}
+
+impl FileLoadError {
+    /// A path that could not be read at all, as opposed to one that read but
+    /// would not parse.
+    pub(crate) fn unreadable(path: impl Into<PathBuf>, error: std::io::Error) -> Self {
+        Self {
+            path: path.into(),
+            error: FileError::CouldNotReadFile(error),
+        }
+    }
+}
+
+impl std::fmt::Display for FileLoadError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.path.display(), self.error)
+    }
+}
+
+impl std::error::Error for FileLoadError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.error)
+    }
+}
+
+/// Every `.fidl` file under a directory, parsed, plus the ones that would not.
 #[derive(Debug)]
 pub struct Project {
     pub files: Vec<FidlFile>,
+    pub errors: Vec<FileLoadError>,
 }
 
 impl Project {
-    /// Parse every `.fidl` file under `dir`. Stops at the first file that fails.
-    pub fn load(dir: impl Into<PathBuf>) -> Result<Self, FileError> {
-        let paths = FidlProject::new(dir).map_err(FileError::CouldNotReadFile)?;
-        let mut files = Vec::with_capacity(paths.len());
-        for path in paths {
-            files.push(FidlFile::from_path(path)?);
+    /// Parse every `.fidl` file under `dir`.
+    ///
+    /// Errors only if `dir` itself cannot be read — missing, not a directory, or
+    /// permission denied. Once the directory is open the load always succeeds:
+    /// files that fail to read, parse, or build a tree land in [`Self::errors`]
+    /// and the rest are returned in [`Self::files`]. One malformed file must not
+    /// hide either the other failures or the files that were fine.
+    pub fn load(dir: impl Into<PathBuf>) -> Result<Self, std::io::Error> {
+        let walk = FidlProject::walk(dir)?;
+        let mut files = Vec::with_capacity(walk.paths.len());
+        let mut errors = walk.errors;
+        for path in walk.paths {
+            match FidlFile::from_path(&path) {
+                Ok(file) => files.push(file),
+                Err(error) => errors.push(FileLoadError { path, error }),
+            }
         }
-        Ok(Self { files })
+        Ok(Self { files, errors })
+    }
+
+    /// True if any file under the directory failed to load.
+    pub fn has_errors(&self) -> bool {
+        !self.errors.is_empty()
     }
 
     pub fn write_all(&self) -> std::io::Result<()> {

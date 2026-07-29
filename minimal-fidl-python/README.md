@@ -19,11 +19,17 @@ It does not support FDEPL files as of now.
 
 # Basic Usage
 ```python
-from franca_idl import FidlFile, load_fidl_project
+from franca_idl import FidlFile, FidlProjectLoad, load_fidl_project
 from pathlib import Path
 
-# To get and parse all .fidl files in a directory
-result: list[FidlFile] = load_fidl_project(Path("<path_to_directory_with_fidl_files>"))
+# To get and parse all .fidl files in a directory. Raises ValueError only if the
+# directory itself cannot be read; a file that will not parse is reported in
+# `.errors` and the rest are still returned.
+result: FidlProjectLoad = load_fidl_project(Path("<path_to_directory_with_fidl_files>"))
+for error in result.errors:
+    print(f"skipped {error.path}: {error.message}")
+for parsed in result.files:
+    print(parsed.file_path)
 
 # To get and parse one fidl file
 fidl_file: FidlFile = FidlFile("<path_to_fidl_file>")

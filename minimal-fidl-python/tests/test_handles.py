@@ -14,7 +14,9 @@ from franca_idl import (
     FidlAnnotation,
     FidlFile,
     FidlInterface,
+    FidlLoadError,
     FidlMethod,
+    FidlProjectLoad,
     StaleNodeError,
     load_fidl_project,
 )
@@ -215,11 +217,40 @@ def test_load_fidl_project(tmp_path: Path):
     )
     (tmp_path / "ignored.txt").write_text("not fidl")
 
-    files = load_fidl_project(tmp_path)
-    assert len(files) == 2
-    names = sorted(i.name for f in files for i in f.interfaces)
+    result = load_fidl_project(tmp_path)
+    assert isinstance(result, FidlProjectLoad)
+    assert result.errors == []
+    assert len(result.files) == 2
+    names = sorted(i.name for f in result.files for i in f.interfaces)
     assert names == ["Greeter", "Other"]
-    assert all(f.file_path is not None for f in files)
+    assert all(f.file_path is not None for f in result.files)
+
+
+def test_load_fidl_project_reports_bad_files_and_keeps_the_good_ones(tmp_path: Path):
+    (tmp_path / "good.fidl").write_text(SRC)
+    (tmp_path / "bad.fidl").write_text("package org.test\ninterface {{{ not fidl\n")
+    (tmp_path / "also-bad.fidl").write_text("}}} neither is this\n")
+
+    result = load_fidl_project(tmp_path)
+
+    assert len(result.files) == 1
+    assert result.files[0].interfaces[0].name == "Greeter"
+
+    assert len(result.errors) == 2, result.errors
+    assert all(isinstance(e, FidlLoadError) for e in result.errors)
+    assert sorted(Path(e.path).name for e in result.errors) == [
+        "also-bad.fidl",
+        "bad.fidl",
+    ]
+    assert all(e.message for e in result.errors)
+
+
+def test_load_fidl_project_raises_for_a_missing_directory(tmp_path: Path):
+    missing = tmp_path / "definitely" / "not" / "here"
+    with pytest.raises(ValueError) as excinfo:
+        load_fidl_project(missing)
+    # This used to return an empty list: silence, not an error.
+    assert str(missing) in str(excinfo.value)
 
 
 def test_repr_is_informative():

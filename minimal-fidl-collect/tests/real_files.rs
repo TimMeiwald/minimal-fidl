@@ -146,6 +146,11 @@ fn the_project_loader_reads_the_whole_directory() {
     let project = Project::load(corpus_dir()).expect("loads the corpus");
     assert!(project.files.len() >= 10);
     assert!(
+        !project.has_errors(),
+        "every file in the corpus loads: {:?}",
+        project.errors
+    );
+    assert!(
         project.files.iter().all(|f| f.path.is_some()),
         "every file loaded from disk knows its path"
     );
