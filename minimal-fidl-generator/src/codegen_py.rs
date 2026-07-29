@@ -78,9 +78,9 @@ impl CodeGenerator for PythonCodeGen {
     // }
     fn generate_project(&mut self, dir: PathBuf) -> Result<(), GeneratorError> {
         let dir_clone = dir.clone();
-        let paths = FidlProject::new(dir);
+        let paths = FidlProject::walk(dir);
         self.project(&dir_clone);
-        for path in paths.unwrap() {
+        for path in paths.unwrap().paths {
             let fidl = FidlProject::generate_file(path.clone())?;
             // This needs to be modified because I want to get each interface and type collection as a
             // seperate file.

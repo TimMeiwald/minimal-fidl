@@ -509,15 +509,46 @@ impl FidlFile {
     pub fn save(&self) -> io::Result<()>;                       // uses self.path
 }
 
-pub struct FidlProject { pub files: Vec<FidlFile> }
-impl FidlProject {
-    pub fn load(dir: impl AsRef<Path>) -> Result<Self, FileError>;
-    pub fn save_all(&self) -> io::Result<()>;
+pub struct FileLoadError { pub path: PathBuf, pub error: FileError }
+
+pub struct Project {
+    pub files: Vec<FidlFile>,
+    pub errors: Vec<FileLoadError>,
+}
+
+impl Project {
+    /// Errors only if `dir` itself cannot be read.
+    pub fn load(dir: impl Into<PathBuf>) -> Result<Self, io::Error>;
+    pub fn has_errors(&self) -> bool;
+    pub fn write_all(&self) -> io::Result<()>;
+    pub fn validate(&self) -> Vec<(Option<PathBuf>, Diagnostic)>;
 }
 ```
 
-`FidlProject` keeps the existing directory walk. Cross-file import resolution is
-deferred but the shape admits it.
+**Loading a directory reports every failure.** Loading used to stop at the first bad
+file, so one malformed `.fidl` hid both the other failures and every file that was
+fine. The contract now has exactly two halves:
+
+- The directory **cannot be read** — missing, not a directory, permission denied →
+  `Err(io::Error)`. `io::Error` is the right type here because it carries the
+  distinction between `NotFound` and `PermissionDenied` that a caller's message wants.
+- The directory **can** be read → always `Ok`. Files that fail to read, parse, or
+  build a tree land in `errors`; the rest are in `files`. However many of each.
+
+A missing directory used to be no error at all: the walk opened with
+`if path.is_dir()`, so a path that did not exist returned `Ok(vec![])` — silence
+rather than a wrong value. `FidlProject::walk` calls `read_dir` on the root up front
+instead, which distinguishes missing, not-a-directory and empty.
+
+`FileLoadError` attaches the path the same way `validate()` does, so both halves of a
+load report read alike.
+
+Unreadable *sub*directories are a reportable problem, not a reason to abandon the
+walk: they become `errors` entries and the readable part of the tree still loads.
+`walk` returns its paths sorted, so a project loads in the same order on every
+platform.
+
+Cross-file import resolution is deferred but the shape admits it.
 
 ---
 
