@@ -48,9 +48,11 @@ impl Structure {
         &mut self,
         field: crate::VariableDeclaration,
     ) -> Result<&mut crate::VariableDeclaration, FileError> {
+        use crate::node::AstNode as _;
         if self.field(&field.name).is_some() {
             return Err(FileError::FieldAlreadyExists(field.name.clone()));
         }
+        self.mark_dirty();
         self.members.push(StructMember::Field(field));
         match self.members.last_mut() {
             Some(StructMember::Field(v)) => Ok(v),
@@ -59,10 +61,12 @@ impl Structure {
     }
 
     pub fn remove_field(&mut self, name: &str) -> Option<crate::VariableDeclaration> {
+        use crate::node::AstNode as _;
         let index = self.members.iter().position(|m| match m {
             StructMember::Field(v) => v.name == name,
             _ => false,
         })?;
+        self.mark_dirty();
         match self.members.remove(index) {
             StructMember::Field(v) => Some(v),
             _ => unreachable!("index came from this variant"),

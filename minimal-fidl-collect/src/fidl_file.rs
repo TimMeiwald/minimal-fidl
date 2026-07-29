@@ -1,5 +1,5 @@
 use core::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::attribute::Attribute;
 use crate::enum_value::EnumValue;
@@ -127,9 +127,32 @@ impl FidlFile {
         })
     }
 
+    /// Marks the returned node dirty — see [`NodeMeta::dirty`].
+    pub fn package_mut(&mut self) -> Option<&mut Package> {
+        use crate::node::AstNode as _;
+        let package = self.members.iter_mut().find_map(|m| match m {
+            FileMember::Package(p) => Some(p),
+            _ => None,
+        })?;
+        package.mark_dirty();
+        Some(package)
+    }
+
     pub fn namespaces(&self) -> impl Iterator<Item = &ImportNamespace> {
         self.members.iter().filter_map(|m| match m {
             FileMember::ImportNamespace(n) => Some(n),
+            _ => None,
+        })
+    }
+
+    /// Marks every yielded node dirty — see [`NodeMeta::dirty`].
+    pub fn namespaces_mut(&mut self) -> impl Iterator<Item = &mut ImportNamespace> {
+        use crate::node::AstNode as _;
+        self.members.iter_mut().filter_map(|m| match m {
+            FileMember::ImportNamespace(n) => {
+                n.mark_dirty();
+                Some(n)
+            }
             _ => None,
         })
     }
@@ -139,6 +162,149 @@ impl FidlFile {
             FileMember::ImportModel(i) => Some(i),
             _ => None,
         })
+    }
+
+    /// Marks every yielded node dirty — see [`NodeMeta::dirty`].
+    pub fn import_models_mut(&mut self) -> impl Iterator<Item = &mut ImportModel> {
+        use crate::node::AstNode as _;
+        self.members.iter_mut().filter_map(|m| match m {
+            FileMember::ImportModel(i) => {
+                i.mark_dirty();
+                Some(i)
+            }
+            _ => None,
+        })
+    }
+
+    // ---- file-level insertion -------------------------------------------
+    //
+    // The grammar is `package (import)* (interface | typeCollection)*`, and it
+    // enforces that order. Appending an import to the end of the member list
+    // would print it after the interfaces and the output would not reparse — so
+    // these compute an insertion point rather than using `push_member`.
+
+    /// How many free-floating comments sit at the top of the file, ahead of any
+    /// declaration. A licence header stays a header.
+    fn leading_comment_count(&self) -> usize {
+        self.members
+            .iter()
+            .take_while(|m| matches!(m, FileMember::Comment(_)))
+            .count()
+    }
+
+    fn is_header_member(member: &FileMember) -> bool {
+        matches!(
+            member,
+            FileMember::Package(_) | FileMember::ImportNamespace(_) | FileMember::ImportModel(_)
+        )
+    }
+
+    /// Where an `import` belongs: after the package and any existing imports,
+    /// before the first interface or type collection.
+    fn import_insert_index(&self) -> usize {
+        match self.members.iter().rposition(Self::is_header_member) {
+            Some(last) => last + 1,
+            None => self.leading_comment_count(),
+        }
+    }
+
+    /// Set the file's package.
+    ///
+    /// Errors if one is already there — the grammar permits exactly one. Replace
+    /// it via [`Self::package_mut`], or remove it first.
+    pub fn add_package(&mut self, package: Package) -> Result<&mut Package, FileError> {
+        use crate::node::AstNode as _;
+        if let Some(existing) = self.package() {
+            return Err(FileError::PackageAlreadyExists(existing.clone()));
+        }
+        let index = self.leading_comment_count();
+        self.mark_dirty();
+        self.members.insert(index, FileMember::Package(package));
+        match &mut self.members[index] {
+            FileMember::Package(p) => Ok(p),
+            _ => unreachable!("just inserted this variant"),
+        }
+    }
+
+    pub fn remove_package(&mut self) -> Option<Package> {
+        use crate::node::AstNode as _;
+        let index = self
+            .members
+            .iter()
+            .position(|m| matches!(m, FileMember::Package(_)))?;
+        self.mark_dirty();
+        match self.members.remove(index) {
+            FileMember::Package(p) => Some(p),
+            _ => unreachable!("index came from this variant"),
+        }
+    }
+
+    /// Add an `import model "..."`.
+    ///
+    /// Infallible: importing the same model twice is redundant but legal, and
+    /// `validate()` does not report it, so there is nothing to reject.
+    pub fn add_import_model(&mut self, import: ImportModel) -> &mut ImportModel {
+        use crate::node::AstNode as _;
+        let index = self.import_insert_index();
+        self.mark_dirty();
+        self.members.insert(index, FileMember::ImportModel(import));
+        match &mut self.members[index] {
+            FileMember::ImportModel(i) => i,
+            _ => unreachable!("just inserted this variant"),
+        }
+    }
+
+    /// The first model import of this path.
+    pub fn import_model(&self, file_path: impl AsRef<Path>) -> Option<&ImportModel> {
+        let wanted = file_path.as_ref();
+        self.import_models().find(|i| i.file_path == wanted)
+    }
+
+    pub fn remove_import_model(&mut self, file_path: impl AsRef<Path>) -> Option<ImportModel> {
+        use crate::node::AstNode as _;
+        let wanted = file_path.as_ref();
+        let index = self.members.iter().position(|m| match m {
+            FileMember::ImportModel(i) => i.file_path == wanted,
+            _ => false,
+        })?;
+        self.mark_dirty();
+        match self.members.remove(index) {
+            FileMember::ImportModel(i) => Some(i),
+            _ => unreachable!("index came from this variant"),
+        }
+    }
+
+    /// Add an `import a.b.* from "..."`. Infallible, as [`Self::add_import_model`].
+    pub fn add_import_namespace(&mut self, namespace: ImportNamespace) -> &mut ImportNamespace {
+        use crate::node::AstNode as _;
+        let index = self.import_insert_index();
+        self.mark_dirty();
+        self.members
+            .insert(index, FileMember::ImportNamespace(namespace));
+        match &mut self.members[index] {
+            FileMember::ImportNamespace(n) => n,
+            _ => unreachable!("just inserted this variant"),
+        }
+    }
+
+    /// The first namespace import read from this file.
+    pub fn namespace(&self, from: impl AsRef<Path>) -> Option<&ImportNamespace> {
+        let wanted = from.as_ref();
+        self.namespaces().find(|n| n.from == wanted)
+    }
+
+    pub fn remove_import_namespace(&mut self, from: impl AsRef<Path>) -> Option<ImportNamespace> {
+        use crate::node::AstNode as _;
+        let wanted = from.as_ref();
+        let index = self.members.iter().position(|m| match m {
+            FileMember::ImportNamespace(n) => n.from == wanted,
+            _ => false,
+        })?;
+        self.mark_dirty();
+        match self.members.remove(index) {
+            FileMember::ImportNamespace(n) => Some(n),
+            _ => unreachable!("index came from this variant"),
+        }
     }
 
     pub fn new(source: String, publisher: &BasicPublisher) -> Result<Self, FileError> {

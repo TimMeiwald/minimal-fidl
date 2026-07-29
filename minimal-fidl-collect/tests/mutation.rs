@@ -2,7 +2,8 @@
 
 use minimal_fidl_collect::{
     Annotated, AstNode, Attribute, Comment, EnumValue, Enumeration, FidlFile, FidlProject,
-    Interface, InterfaceMember, Method, NodeRef, Severity, Structure, TypeDef, VariableDeclaration,
+    ImportModel, ImportNamespace, Interface, InterfaceMember, Method, NodeRef, Package, Severity,
+    Structure, TypeDef, VariableDeclaration,
 };
 
 fn parse(src: &str) -> FidlFile {
@@ -425,4 +426,150 @@ fn a_built_file_survives_validation() {
     for node in file.nodes() {
         assert!(node.id().is_assigned());
     }
+}
+
+// ---- file-level members: package and imports ----------------------------
+//
+// These were the gap `member_mutators!` could not fill: neither a package nor an
+// import has a `name`, so adding one meant `push_member` with a hand-built
+// struct. The order they print in is not cosmetic — see the reparse test below.
+
+#[test]
+fn packages_and_imports_can_be_built_and_added() {
+    // The grammar requires a package, so a package-less tree has to be made by
+    // removing one rather than by parsing a file without one.
+    let mut file = parse(BASE);
+    file.remove_package().expect("BASE has a package");
+    assert!(file.package().is_none());
+
+    file.edit(|f| {
+        f.add_package(Package::parse("org.rebuilt")).unwrap();
+        f.add_import_model(ImportModel::create("other.fidl"));
+        f.add_import_namespace(ImportNamespace::create(["org", "x"], "base.fidl"));
+    });
+
+    assert_eq!(file.package().unwrap().path, vec!["org", "rebuilt"]);
+    assert_eq!(file.import_models().count(), 1);
+    assert_eq!(file.namespaces().count(), 1);
+
+    let printed = file.to_fidl();
+    assert!(printed.contains("package org.rebuilt"), "{printed}");
+    assert!(printed.contains(r#"import model "other.fidl""#), "{printed}");
+    assert!(printed.contains(r#"import org.x.* from "base.fidl""#), "{printed}");
+    FidlFile::from_source(&printed).expect("a rebuilt header still parses");
+}
+
+#[test]
+fn a_second_package_is_rejected() {
+    let mut file = parse(BASE);
+    let err = file
+        .add_package(Package::parse("org.other"))
+        .expect_err("the grammar permits exactly one package");
+    assert!(err.to_string().contains("Package"));
+    assert_eq!(file.package().unwrap().path, vec!["org", "test"]);
+}
+
+#[test]
+fn added_imports_print_where_the_grammar_wants_them() {
+    // The grammar is `package (import)* (interface | typeCollection)*` and it
+    // enforces that order, so appending an import to the end of the member list
+    // would produce a file that no longer parses.
+    let mut file = parse(BASE);
+    file.edit(|f| {
+        f.add_import_model(ImportModel::create("late.fidl"));
+        f.add_import_namespace(ImportNamespace::create(["org", "z"], "late2.fidl"));
+    });
+
+    let printed = file.to_fidl();
+    let import = printed.find("import model").expect("the import printed");
+    let interface = printed.find("interface Greeter").expect("the interface printed");
+    assert!(import < interface, "imports must precede interfaces:\n{printed}");
+
+    FidlFile::from_source(&printed).expect("the edited file must still parse");
+}
+
+#[test]
+fn a_leading_comment_block_stays_above_an_added_package() {
+    // A licence header separated by a blank line is a free-floating comment
+    // member of its own; a package added afterwards has to go below it, not above.
+    let mut file = parse("// licence\n\npackage org.test\ninterface A {}\n");
+    file.remove_package().expect("the package is there to start with");
+    file.edit(|f| {
+        f.add_package(Package::parse("org.rebuilt")).unwrap();
+    });
+
+    let printed = file.to_fidl();
+    assert!(
+        printed.starts_with("// licence\npackage org.rebuilt"),
+        "{printed}"
+    );
+    FidlFile::from_source(&printed).expect("still parses");
+}
+
+#[test]
+fn packages_and_imports_can_be_removed_and_found() {
+    let src = r#"package org.test
+import model "other.fidl"
+import org.x.* from "base.fidl"
+interface A {}
+"#;
+    let mut file = parse(src);
+
+    assert!(file.import_model("other.fidl").is_some());
+    assert!(file.import_model("absent.fidl").is_none());
+    assert!(file.namespace("base.fidl").is_some());
+
+    assert_eq!(
+        file.remove_import_model("other.fidl").unwrap().file_path,
+        std::path::PathBuf::from("other.fidl")
+    );
+    assert!(file.remove_import_model("other.fidl").is_none());
+    assert!(file.remove_import_namespace("base.fidl").is_some());
+    assert_eq!(file.remove_package().unwrap().path, vec!["org", "test"]);
+    assert!(file.package().is_none());
+    assert!(file.remove_package().is_none());
+
+    assert_eq!(file.to_fidl().trim(), "interface A {}");
+    // Nothing is left to reparse — the grammar requires a package — which is
+    // exactly why remove_package() is a deliberate step and not a convenience.
+    assert!(FidlFile::from_source(&file.to_fidl()).is_err());
+}
+
+#[test]
+fn file_level_leaves_are_mutable_in_place() {
+    let src = r#"package org.test
+import model "other.fidl"
+import org.x.* from "base.fidl"
+interface A {}
+"#;
+    let mut file = parse(src);
+
+    file.package_mut().unwrap().path = vec!["org".to_string(), "renamed".to_string()];
+    for import in file.import_models_mut() {
+        import.file_path = "moved.fidl".into();
+    }
+    for namespace in file.namespaces_mut() {
+        namespace.import = vec!["org".to_string(), "y".to_string()];
+    }
+
+    let printed = file.to_fidl();
+    assert!(printed.contains("package org.renamed"), "{printed}");
+    assert!(printed.contains(r#"import model "moved.fidl""#), "{printed}");
+    assert!(printed.contains(r#"import org.y.* from "base.fidl""#), "{printed}");
+    FidlFile::from_source(&printed).expect("still parses");
+}
+
+#[test]
+fn removing_a_member_stops_preserve_from_reprinting_it() {
+    // Mode::Preserve reuses a clean node's original text. A container that just
+    // lost a member still has a span covering it, so removal has to mark the
+    // container dirty or the removed method comes back in the output.
+    let mut file = parse(BASE);
+    file.interface_mut("Greeter")
+        .unwrap()
+        .remove_method("play")
+        .unwrap();
+
+    let printed = file.to_fidl_with(minimal_fidl_collect::Mode::Preserve);
+    assert!(!printed.contains("method play"), "{printed}");
 }

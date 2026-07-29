@@ -45,7 +45,7 @@ pub use import_namespace::ImportNamespace;
 pub use interface::Interface;
 pub use io::Project;
 pub use method::Method;
-pub use node_ref::{Descendants, NodeRef};
+pub use node_ref::{Descendants, NodeRef, NodeRefMut};
 pub use path::{NodePath, PathSegment};
 pub use print::Mode;
 pub use diff::{diff, Change, DiffOptions};

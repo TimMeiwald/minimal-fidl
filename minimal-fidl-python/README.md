@@ -34,3 +34,55 @@ for i in fidl_file.interfaces:
     print(f"Type: {type(i)}")
 ```
 
+# Editing a file
+
+Every object you read out of a file is a *handle* — a reference to the file plus a
+node id — so reading is cheap and edits are visible through handles you already
+hold. Nodes you want to *create* are described by a `New*` class:
+
+```python
+from franca_idl import FidlFile, NewMethod, NewParameter
+
+f = FidlFile("player.fidl")
+iface = f.interfaces[0]
+
+play = iface.add_method(NewMethod("play",
+                                 inputs=[NewParameter("track", "UInt32")],
+                                 outputs=[NewParameter("ok", "Boolean")]))
+play.set_annotation("description", " start playback")
+iface.remove_method("stop")
+
+print(f.validate())        # [] means the file is sound
+f.save(preserve=True)      # untouched parts of the file come back byte for byte
+```
+
+`preserve=True` reprints only what you changed, so an edit shows up as a minimal
+diff in a file people also hand-edit. `to_fidl()` gives you the text instead of
+writing it.
+
+# Comparing two revisions
+
+```python
+old = FidlFile("player.fidl")
+new = FidlFile("player.new.fidl")
+
+for change in old.diff(new):
+    if change.change_type == "removed":
+        print(f"breaking: {change}")
+```
+
+Each change carries a `change_type` (`"added"`, `"removed"`, `"modified"`,
+`"moved"`), the `path` to the node, and whichever of `name`, `field`, `before`,
+`after`, `from_index` and `to_index` apply.
+
+# Walking the tree
+
+```python
+for node in f.nodes():
+    if node.kind != "file" and node.annotation("deprecated"):
+        print(node.node_path)
+```
+
+Comments and annotations are nodes too, so nothing in the file is invisible, and a
+file read in and written back out keeps its comments and blank-line grouping.
+

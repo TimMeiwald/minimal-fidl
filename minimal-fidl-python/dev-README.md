@@ -31,6 +31,11 @@ uv run maturin build --release
 - The wheel has no runtime Python dependencies — it is the compiled extension and
   nothing else. Everything under `[dependency-groups]` in `pyproject.toml` is dev
   tooling only.
-- `franca_idl.pyi` is the type stub, and has to be kept in step with
-  `src/lib.rs` by hand. Nothing enforces it.
+- `franca_idl.pyi` is the type stub and is still written by hand, but
+  `tests/test_stub.py` now checks it against the module in both directions: a stub
+  entry that does not exist fails, and so does a public member the stub omits. Add
+  to the stub in the same commit as the method.
+- New pyclasses produced by the `handle!` macro have to be registered by hand in
+  `#[pymodule_init]` — `#[pymodule]` cannot see them. Without that they work as
+  return values but cannot be imported or used with `isinstance`.
 - The pyo3 version and its `abi3-py38` feature live in `Cargo.toml`.

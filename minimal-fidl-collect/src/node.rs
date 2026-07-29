@@ -30,6 +30,16 @@ impl NodeId {
     pub fn get(self) -> u32 {
         self.0
     }
+
+    /// Rebuild an id from the number [`Self::get`] handed out.
+    ///
+    /// Ids are per-file counters, so one is only meaningful against the file it
+    /// came from; anywhere else it simply fails to resolve. Exists for callers
+    /// that have to round-trip an id through a numeric type — the Python binding
+    /// exposes `node.id` as an `int`.
+    pub fn from_raw(value: u32) -> Self {
+        Self(value)
+    }
 }
 
 impl Default for NodeId {
@@ -397,9 +407,11 @@ macro_rules! member_mutators {
     ($enum:ident, $variant:ident, $ty:ty, $add:ident, $remove:ident, $err:ident, $existing:ident) => {
         /// Append a node, erroring if one of that name is already present.
         pub fn $add(&mut self, value: $ty) -> Result<&mut $ty, $crate::FileError> {
+            use $crate::node::AstNode as _;
             if let Some(existing) = self.$existing(&value.name) {
                 return Err($crate::FileError::$err(existing.clone(), value));
             }
+            self.mark_dirty();
             self.members.push($enum::$variant(value));
             match self.members.last_mut() {
                 Some($enum::$variant(v)) => Ok(v),
@@ -408,11 +420,17 @@ macro_rules! member_mutators {
         }
 
         /// Remove the node of this name, returning it. `None` if absent.
+        ///
+        /// Marks the container dirty: its span still covers the text of the node
+        /// that just left, so `Mode::Preserve` must re-print it rather than reuse
+        /// the original bytes.
         pub fn $remove(&mut self, name: &str) -> Option<$ty> {
+            use $crate::node::AstNode as _;
             let index = self.members.iter().position(|m| match m {
                 $enum::$variant(v) => v.name == name,
                 _ => false,
             })?;
+            self.mark_dirty();
             match self.members.remove(index) {
                 $enum::$variant(v) => Some(v),
                 _ => unreachable!("index came from this variant"),
@@ -431,17 +449,23 @@ macro_rules! container_ops {
 
         /// Append a member of any kind, keeping it last in source order.
         pub fn push_member(&mut self, member: $enum) {
+            use $crate::node::AstNode as _;
+            self.mark_dirty();
             self.members.push(member);
         }
 
         /// Insert at `index`, clamped to the end.
         pub fn insert_member_at(&mut self, index: usize, member: $enum) {
+            use $crate::node::AstNode as _;
             let index = index.min(self.members.len());
+            self.mark_dirty();
             self.members.insert(index, member);
         }
 
         pub fn remove_member_at(&mut self, index: usize) -> Option<$enum> {
+            use $crate::node::AstNode as _;
             if index < self.members.len() {
+                self.mark_dirty();
                 Some(self.members.remove(index))
             } else {
                 None
@@ -453,9 +477,11 @@ macro_rules! container_ops {
         /// Because order is intrinsic to the member list, this is a plain
         /// `remove`+`insert` — there are no sidecar indices to repair (§1.1).
         pub fn move_member(&mut self, from: usize, to: usize) -> bool {
+            use $crate::node::AstNode as _;
             if from >= self.members.len() || to >= self.members.len() {
                 return false;
             }
+            self.mark_dirty();
             let member = self.members.remove(from);
             self.members.insert(to, member);
             true
