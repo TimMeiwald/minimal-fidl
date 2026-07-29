@@ -12,7 +12,7 @@ use minimal_fidl_collect::{annotation, enum_value, fidl_file, FidlProject};
 use minimal_fidl_collect::{
     attribute::{self, Attribute},
     enumeration::Enumeration,
-    fidl_file::FidlFileRs,
+    fidl_file::FidlFile,
     interface::Interface,
     method::Method,
     structure::Structure,
@@ -67,7 +67,7 @@ impl CodeGenerator for PythonCodeGen {
         Ok(())
     }
 
-    // fn generate_file(&mut self, path: PathBuf, fidl: FidlFileRs) -> Result<(), GeneratorError> {
+    // fn generate_file(&mut self, path: PathBuf, fidl: FidlFile) -> Result<(), GeneratorError> {
     //     let file = self.file(path.clone(), &fidl);
     //     let mut str: String = "".to_string();
 
@@ -159,11 +159,11 @@ impl PythonCodeGen {
             .insert(dir.with_file_name(path), comm_handler);
     }
 
-    fn file(&mut self, path: PathBuf, file: &FidlFileRs) -> () {
+    fn file(&mut self, path: PathBuf, file: &FidlFile) -> () {
         let init_path = path.clone().join("__init__.py");
         self.python_code.insert(init_path, Vec::new());
 
-        for type_collection in &file.type_collections {
+        for type_collection in file.type_collections() {
             let type_collection_name = &type_collection.name;
             let x = self.type_collection(&type_collection);
             let mut p = path.clone();
@@ -171,7 +171,7 @@ impl PythonCodeGen {
             p.set_extension(".py");
             self.python_code.insert(p, x);
         }
-        for interface in &file.interfaces {
+        for interface in file.interfaces() {
             let interface_name = &interface.name;
             let x = self.interface(&interface);
             let mut p = path.clone();
@@ -252,15 +252,15 @@ impl PythonCodeGen {
         );
         res.push(header);
         res.extend(self.version(&type_collection.version));
-        for typedef in &type_collection.typedefs {
+        for typedef in type_collection.typedefs() {
             let typedef: Vec<IndentedString> = self.typedef(typedef);
             res.extend(typedef)
         }
-        for structure in &type_collection.structures {
+        for structure in type_collection.structures() {
             let structure: Vec<IndentedString> = self.structure(structure);
             res.extend(structure)
         }
-        for enumeration in &type_collection.enumerations {
+        for enumeration in type_collection.enumerations() {
             let enumeration: Vec<IndentedString> = self.enumeration(enumeration);
             res.extend(enumeration)
         }
@@ -308,23 +308,23 @@ impl PythonCodeGen {
             ));
         }
         res.extend(self.version(&interface.version));
-        for typedef in &interface.typedefs {
+        for typedef in interface.typedefs() {
             let typedef: Vec<IndentedString> = self.typedef(typedef);
             res.extend(typedef)
         }
-        for attribute in &interface.attributes {
+        for attribute in interface.attributes() {
             let attr: Vec<IndentedString> = self.attribute(attribute);
             res.extend(attr);
         }
-        for method in &interface.methods {
+        for method in interface.methods() {
             let method: Vec<IndentedString> = self.method(method);
             res.extend(method)
         }
-        for structure in &interface.structures {
+        for structure in interface.structures() {
             let structure: Vec<IndentedString> = self.structure(structure);
             res.extend(structure)
         }
-        for enumeration in &interface.enumerations {
+        for enumeration in interface.enumerations() {
             let enumeration: Vec<IndentedString> = self.enumeration(enumeration);
             res.extend(enumeration)
         }
@@ -383,7 +383,7 @@ impl PythonCodeGen {
 
         res.push(header);
 
-        for var_dec in &structure.contents {
+        for var_dec in structure.fields() {
             if var_dec.is_array {
                 let var_dec = format!("{}: List[{}]", var_dec.name, var_dec.type_n);
                 res.push(IndentedString::new(1, FidlType::Structure, var_dec));
@@ -414,7 +414,7 @@ impl PythonCodeGen {
     fn method(&self, method: &Method) -> Vec<IndentedString> {
         let mut input_params = "".to_string();
         let id = Self::method_and_interface_split_annotation_content(&method.annotations);
-        for param in &method.input_parameters {
+        for param in method.input_parameters() {
             input_params += &param.name;
             input_params += ": ";
             input_params += &param.type_n;
@@ -425,17 +425,17 @@ impl PythonCodeGen {
         }
 
         let mut output_params = "".to_string();
-        match method.output_parameters.len() {
+        match method.output_parameters().count() {
             0 => {
                 output_params += "()";
             }
             1 => {
-                let single_param = &method.output_parameters[0];
+                let single_param = method.output_parameters().next().expect("len checked above");
                 output_params = format!("{}", single_param.type_n);
             }
             e => {
                 output_params.push('(');
-                for param in &method.output_parameters {
+                for param in method.output_parameters() {
                     output_params += &param.type_n;
                     output_params += ", "
                 }
@@ -470,7 +470,7 @@ impl PythonCodeGen {
         let mut exists_already: HashMap<u64, ()> = HashMap::new();
 
         // Assign all hardcoded values.
-        for enum_value in &enumeration.values {
+        for enum_value in enumeration.values() {
             match enum_value.value {
                 Some(value) => {
                     enum_name_value.insert(enum_value.name.clone(), value);
@@ -487,7 +487,7 @@ impl PythonCodeGen {
         }
 
         let mut count: u64 = 0;
-        for enum_value in &enumeration.values {
+        for enum_value in enumeration.values() {
             match enum_value.value {
                 Some(value) => {
                     // Do nothing since this has already been handled.
@@ -587,7 +587,7 @@ impl PythonCodeGen {
             format!("class {}(u{size}IntEnum):", enumeration.name),
         );
         res.push(header);
-        for enum_value in &enumeration.values {
+        for enum_value in enumeration.values() {
             let value = enumeration_map
                 .get(&enum_value.name)
                 .expect("We expect them to exist since we put them there in the gather function");

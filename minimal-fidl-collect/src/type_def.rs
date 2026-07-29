@@ -1,14 +1,10 @@
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
-};
 
-use crate::{annotation::{annotation_constructor, Annotation}, fidl_file::FileError, type_ref::TypeRef, VariableDeclaration};
-use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
+use crate::{annotation::{annotation_constructor, Annotation}, fidl_file::FileError, type_ref::TypeRef};
+use minimal_fidl_parser::{BasicPublisher, Node, Rules};
+use crate::node::{impl_ast_node, trailing_comments, NodeMeta};
 #[derive(Debug, Clone)]
 pub struct TypeDef {
-    start_position: u32,
-    end_position: u32,
+    pub meta: NodeMeta,
     pub annotations: Vec<Annotation>,
     pub name: String,
     pub type_n: String,
@@ -53,8 +49,10 @@ impl TypeDef {
             type_n: type_n?,
             is_array: is_array,
             annotations,
-            start_position: node.start_position,
-            end_position: node.end_position,
+            meta: NodeMeta {
+                trailing_comments: trailing_comments(source, publisher, node),
+                ..NodeMeta::from_cst(node)
+            },
         })
     }
 
@@ -68,3 +66,5 @@ impl TypeDef {
         Ok(())
     }
 }
+
+impl_ast_node!(TypeDef);

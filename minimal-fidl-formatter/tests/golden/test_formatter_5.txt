@@ -1,0 +1,4 @@
+package org.javaohjavawhyareyouso
+interface endOfPlaylist {
+    method thing {}
+}

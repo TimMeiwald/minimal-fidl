@@ -1,0 +1,9 @@
+package org.javaohjavawhyareyouso
+interface endOfPlaylist {
+    method thing {
+        in {
+            param param
+            param3 param3
+        }
+    }
+}

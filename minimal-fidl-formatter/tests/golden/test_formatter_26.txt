@@ -1,0 +1,14 @@
+package org.javaohjavawhyareyouso
+<** @Annotation: block **>
+interface endOfPlaylist {
+    method whatever {
+        in {
+            param1 param1
+            param2 param2
+        }
+        out {
+            param1 param1
+            param2 param2
+        }
+    }
+}

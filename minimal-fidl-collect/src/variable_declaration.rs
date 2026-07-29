@@ -1,14 +1,10 @@
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
-};
 
 use crate::{annotation::{annotation_constructor, Annotation}, fidl_file::FileError, type_ref::TypeRef};
-use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
+use minimal_fidl_parser::{BasicPublisher, Node, Rules};
+use crate::node::{impl_ast_node, trailing_comments, NodeMeta};
 #[derive(Debug, Clone)]
 pub struct VariableDeclaration {
-    start_position: u32,
-    end_position: u32,
+    pub meta: NodeMeta,
     pub annotations: Vec<Annotation>,
     pub type_n: String,
     pub name: String,
@@ -55,8 +51,10 @@ impl VariableDeclaration {
             type_n: type_n?,
             annotations,
             is_array,
-            start_position: node.start_position,
-            end_position: node.end_position,
+            meta: NodeMeta {
+                trailing_comments: trailing_comments(source, publisher, node),
+                ..NodeMeta::from_cst(node)
+            },
         })
     }
 
@@ -80,3 +78,5 @@ impl VariableDeclaration {
         }
     }
 }
+
+impl_ast_node!(VariableDeclaration);

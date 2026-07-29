@@ -1,10 +1,6 @@
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
-};
 
 use crate::fidl_file::FileError;
-use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
+use minimal_fidl_parser::{BasicPublisher, Node, Rules};
 #[derive(Debug, Clone)]
 pub struct TypeRef {
     pub name: String,

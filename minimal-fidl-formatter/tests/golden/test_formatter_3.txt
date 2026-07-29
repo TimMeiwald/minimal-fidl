@@ -1,0 +1,7 @@
+package org.javaohjavawhyareyouso
+interface endOfPlaylist {
+    version {
+        major 25
+        minor 60
+    }
+}

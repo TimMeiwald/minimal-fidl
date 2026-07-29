@@ -1,0 +1,29 @@
+package org.javaohjavawhyareyouso
+interface endOfPlaylist {
+    version {
+        major 25
+        minor 60
+    }
+    struct thing {
+        param20 param20
+    }
+    attribute uint8 thing
+    method thing {
+        in {
+            param param
+        }
+        out {
+            param2 param2
+            org.param3 param3
+        }
+    }
+    method thing {
+        in {
+            param param
+        }
+        out {
+            param2 param2
+            org.param3 param3
+        }
+    }
+}

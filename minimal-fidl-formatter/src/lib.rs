@@ -1,5 +1,4 @@
 mod formatter;
-mod indented_string;
 pub use formatter::Formatter;
 pub use formatter::FormatterError;
 

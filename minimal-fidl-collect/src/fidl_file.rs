@@ -1,11 +1,13 @@
 use core::fmt;
-use std::fs;
 use std::path::PathBuf;
 
 use crate::attribute::Attribute;
 use crate::enum_value::EnumValue;
 use crate::enumeration::Enumeration;
 use crate::method::Method;
+use crate::node::{
+    impl_ast_node, sorted_children, Comment, MemberBuilder, MemberEnum, NodeIdGen, NodeMeta,
+};
 use crate::structure::Structure;
 use crate::type_def::TypeDef;
 use crate::version::Version;
@@ -14,10 +16,7 @@ use crate::ImportNamespace;
 use crate::Interface;
 use crate::Package;
 use crate::TypeCollection;
-use minimal_fidl_parser::{
-    BasicContext, Context, Source, _var_name, grammar, BasicPublisher, Key, Rules, RULES_SIZE,
-};
-use std::cell::RefCell;
+use minimal_fidl_parser::{BasicPublisher, Key, Rules};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -62,112 +61,218 @@ pub enum FileError {
     TypeCollectionRequiresAName(String),
 }
 
-pub struct FidlFileRs {
-    pub source: String,
-    pub package: Option<Package>,
-    pub namespaces: Vec<ImportNamespace>,
-    pub import_models: Vec<ImportModel>,
-    pub interfaces: Vec<Interface>,
-    pub type_collections: Vec<TypeCollection>,
+
+/// An ordered child of a [`FidlFile`].
+#[derive(Debug, Clone)]
+pub enum FileMember {
+    Package(Package),
+    ImportNamespace(ImportNamespace),
+    ImportModel(ImportModel),
+    Interface(Interface),
+    TypeCollection(TypeCollection),
+    Comment(Comment),
 }
 
-impl fmt::Debug for FidlFileRs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // The below is some kind of magic I don't fully understand but basically
-        // it let's me print just specific fields(the ones deifned in SymbolTable below) and
-        // not print source or BasicPublisher
-        #[derive(Debug)]
-        struct FidlFileRs<'a> {
-            package: &'a Option<Package>,
-            namespaces: &'a Vec<ImportNamespace>,
-            import_models: &'a Vec<ImportModel>,
-            interfaces: &'a Vec<Interface>,
-            type_collections: &'a Vec<TypeCollection>,
-        }
-        // Below somehow allows me to use the internals of SymbolTable without explicitly using namespace: self.namespace
-        // In a SymbolTableRepr construction.
-        let Self {
-            source: _,
-            package,
-            namespaces,
-            import_models,
-            interfaces,
-            type_collections,
-        } = self;
-        fmt::Debug::fmt(
-            &FidlFileRs {
-                package,
-                namespaces,
-                import_models,
-                interfaces,
-                type_collections,
-            },
-            f,
-        )
+impl MemberEnum for FileMember {
+    fn from_comment(comment: Comment) -> Self {
+        FileMember::Comment(comment)
     }
 }
 
-impl FidlFileRs {
+/// A parsed `.fidl` file.
+///
+/// Members are held in a single ordered list; the typed accessors below filter
+/// it, so they can never disagree with source order. See `DESIGN.md` §4.
+pub struct FidlFile {
+    pub meta: NodeMeta,
+    /// The source this file was parsed from. Goes stale once the tree is edited;
+    /// spans are only meaningful against this string.
+    pub source: String,
+    /// Set by [`crate::FidlProject::generate_file`], used by `save()` later.
+    pub path: Option<PathBuf>,
+    pub members: Vec<FileMember>,
+    ids: NodeIdGen,
+}
+
+impl_ast_node!(FidlFile);
+
+impl FidlFile {
+    crate::member_accessors!(
+        FileMember,
+        Interface,
+        Interface,
+        interfaces,
+        interfaces_mut,
+        interface,
+        interface_mut
+    );
+    crate::member_accessors!(
+        FileMember,
+        TypeCollection,
+        TypeCollection,
+        type_collections,
+        type_collections_mut,
+        type_collection,
+        type_collection_mut
+    );
+
+    crate::container_ops!(FileMember);
+    crate::member_mutators!(FileMember, Interface, Interface, add_interface, remove_interface, InterfaceAlreadyExists, interface);
+    crate::member_mutators!(FileMember, TypeCollection, TypeCollection, add_type_collection, remove_type_collection, TypeCollectionAlreadyExists, type_collection);
+
+    pub fn package(&self) -> Option<&Package> {
+        self.members.iter().find_map(|m| match m {
+            FileMember::Package(p) => Some(p),
+            _ => None,
+        })
+    }
+
+    pub fn namespaces(&self) -> impl Iterator<Item = &ImportNamespace> {
+        self.members.iter().filter_map(|m| match m {
+            FileMember::ImportNamespace(n) => Some(n),
+            _ => None,
+        })
+    }
+
+    pub fn import_models(&self) -> impl Iterator<Item = &ImportModel> {
+        self.members.iter().filter_map(|m| match m {
+            FileMember::ImportModel(i) => Some(i),
+            _ => None,
+        })
+    }
 
     pub fn new(source: String, publisher: &BasicPublisher) -> Result<Self, FileError> {
-        let mut resp = Self {
-            source,
-            package: None,
-            namespaces: Vec::new(),
-            import_models: Vec::new(),
-            interfaces: Vec::new(),
-            type_collections: Vec::new(),
-        };
-        let result = resp.create_symbol_table(&publisher);
-        match result {
-            Ok(()) => Ok(resp),
-            Err(err) => Err(err),
-        }
-    }
-
-    fn create_symbol_table(&mut self, publisher: &BasicPublisher) -> Result<(), FileError> {
         let root_node = publisher.get_node(Key(0));
         debug_assert_eq!(root_node.rule, Rules::Grammar);
-        let root_node_children = root_node.get_children();
-        debug_assert_eq!(root_node_children.len(), 1);
-        let grammar_node_key = root_node_children[0];
-        let grammar_node = publisher.get_node(grammar_node_key);
-        for child in grammar_node.get_children() {
-            let child = publisher.get_node(*child);
+        let root_children = root_node.get_children();
+        debug_assert_eq!(root_children.len(), 1);
+        let grammar_node = publisher.get_node(root_children[0]);
+
+        let mut builder: MemberBuilder<FileMember> =
+            MemberBuilder::new(&source, grammar_node.start_position, true);
+
+        for child in sorted_children(publisher, grammar_node) {
             match child.rule {
+                Rules::comment | Rules::multiline_comment => builder.comment(child),
+                Rules::open_bracket | Rules::close_bracket | Rules::annotation_block => {}
                 Rules::package => {
-                    let package = Package::new(&self.source, &publisher, child)?;
-                    package.push_if_not_exists_else_err(&mut self.package)?;
+                    let pkg = Package::new(&source, publisher, child)?;
+                    builder.member(child, pkg, FileMember::Package);
                 }
                 Rules::import_namespace => {
-                    let import_namespace = ImportNamespace::new(&self.source, &publisher, child)?;
-                    self.namespaces.push(import_namespace);
+                    let ns = ImportNamespace::new(&source, publisher, child)?;
+                    builder.member(child, ns, FileMember::ImportNamespace);
                 }
                 Rules::import_model => {
-                    let import_model = ImportModel::new(&self.source, &publisher, child)?;
-                    self.import_models.push(import_model);
+                    let im = ImportModel::new(&source, publisher, child)?;
+                    builder.member(child, im, FileMember::ImportModel);
                 }
                 Rules::interface => {
-                    let interface = Interface::new(&self.source, &publisher, child)?;
-                    interface.push_if_not_exists_else_err(&mut self.interfaces)?;
+                    let iface = Interface::new(&source, publisher, child)?;
+                    builder.member(child, iface, FileMember::Interface);
                 }
                 Rules::type_collection => {
-                    let type_collection = TypeCollection::new(&self.source, &publisher, child)?;
-                    type_collection.push_if_not_exists_else_err(&mut self.type_collections)?;
+                    let tc = TypeCollection::new(&source, publisher, child)?;
+                    builder.member(child, tc, FileMember::TypeCollection);
                 }
-                Rules::comment
-                | Rules::multiline_comment
-                | Rules::open_bracket
-                | Rules::annotation_block
-                | Rules::close_bracket => {}
                 rule => {
                     return Err(FileError::UnexpectedNode(
                         rule,
-                        "SymblTable::create_symbol_table".to_string(),
+                        "FidlFile::new".to_string(),
                     ));
                 }
             }
         }
-        Ok(())
+        let (members, header_comments) = builder.finish();
+        let mut meta = NodeMeta::from_cst(grammar_node);
+        meta.header_comments = header_comments;
+
+        let mut file = Self {
+            meta,
+            source,
+            path: None,
+            members,
+            ids: NodeIdGen::new(),
+        };
+        file.assign_ids();
+        Ok(file)
+    }
+
+}
+
+impl fmt::Debug for FidlFile {
+    /// Prints the tree without the `source` string, which would drown everything else.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FidlFile")
+            .field("path", &self.path)
+            .field("members", &self.members)
+            .finish()
+    }
+}
+
+/// Gives every node a fresh [`NodeId`].
+///
+/// Runs once after construction. Phase 3 replaced a hand-written 130-line walk
+/// with this; adding a node type now only requires touching `visit.rs`.
+struct AssignIds {
+    ids: NodeIdGen,
+    /// When set, nodes that already have an id keep it.
+    only_unassigned: bool,
+}
+
+impl crate::visit::VisitMut for AssignIds {
+    fn visit_comment(&mut self, node: &mut Comment) {
+        if !self.only_unassigned || !node.id.is_assigned() {
+            node.id = self.ids.next_id();
+        }
+    }
+
+    fn visit_meta(&mut self, meta: &mut NodeMeta) {
+        if !self.only_unassigned || !meta.id.is_assigned() {
+            meta.id = self.ids.next_id();
+        }
+        crate::visit::walk_meta(self, meta);
+    }
+}
+
+impl FidlFile {
+    fn assign_ids(&mut self) {
+        use crate::visit::VisitMut;
+        let mut assigner = AssignIds {
+            ids: std::mem::replace(&mut self.ids, NodeIdGen::new()),
+            only_unassigned: false,
+        };
+        assigner.visit_file(self);
+        self.ids = assigner.ids;
+    }
+
+    /// Give ids to nodes that do not have one yet.
+    ///
+    /// Builders produce nodes with [`NodeId::UNASSIGNED`], so anything inserted
+    /// into the tree needs this before it can be addressed by id or path. Existing
+    /// ids are left alone, so handles held across the call stay valid. Idempotent.
+    pub fn assign_missing_ids(&mut self) {
+        use crate::visit::VisitMut;
+        let mut assigner = AssignIds {
+            ids: std::mem::replace(&mut self.ids, NodeIdGen::new()),
+            only_unassigned: true,
+        };
+        assigner.visit_file(self);
+        self.ids = assigner.ids;
+    }
+
+    /// Run an edit and then hand out ids to whatever it inserted.
+    ///
+    /// Preferred over calling [`Self::assign_missing_ids`] by hand, which is easy
+    /// to forget after a structural change.
+    pub fn edit<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+        let result = f(self);
+        self.assign_missing_ids();
+        result
+    }
+
+    /// Number of nodes that have been assigned an id.
+    pub fn node_count(&self) -> u32 {
+        self.ids.peek().get().saturating_sub(1)
     }
 }

@@ -6,7 +6,7 @@ use crate::FidlType;
 use minimal_fidl_collect::{
     attribute::{self, Attribute},
     enumeration::Enumeration,
-    fidl_file::FidlFileRs,
+    fidl_file::FidlFile,
     interface::Interface,
     method::Method,
     structure::Structure,
@@ -127,7 +127,7 @@ impl RustCodeGen {
         res
     }
 
-    fn file(&self, file: &FidlFileRs) -> Vec<IndentedString> {
+    fn file(&self, file: &FidlFile) -> Vec<IndentedString> {
         let mut res: Vec<IndentedString> = Vec::new();
 
         // Below is temporary, file should really be called by and from project not this way around.
@@ -135,11 +135,11 @@ impl RustCodeGen {
         res.extend(self.project(&dir_path));
         // End temporary
 
-        for type_collection in &file.type_collections {
+        for type_collection in file.type_collections() {
             let x = self.type_collection(&type_collection);
             res.extend(x);
         }
-        for interface in &file.interfaces {
+        for interface in file.interfaces() {
             let x = self.interface(&interface);
             res.extend(x);
         }
@@ -210,7 +210,7 @@ impl RustCodeGen {
         ));
 
         res.extend(self.version(&type_collection.version));
-        for typedef in &type_collection.typedefs {
+        for typedef in type_collection.typedefs() {
             let typedef: Vec<IndentedString> = self
                 .typedef(typedef, true)
                 .into_iter()
@@ -218,7 +218,7 @@ impl RustCodeGen {
                 .collect();
             res.extend(typedef)
         }
-        for structure in &type_collection.structures {
+        for structure in type_collection.structures() {
             let structure: Vec<IndentedString> = self
                 .structure(structure, true)
                 .into_iter()
@@ -226,7 +226,7 @@ impl RustCodeGen {
                 .collect();
             res.extend(structure)
         }
-        for enumeration in &type_collection.enumerations {
+        for enumeration in type_collection.enumerations() {
             let enumeration: Vec<IndentedString> = self
                 .enumeration(enumeration, true)
                 .into_iter()
@@ -266,7 +266,7 @@ impl RustCodeGen {
         ));
 
         res.extend(self.version(&interface.version));
-        for typedef in &interface.typedefs {
+        for typedef in interface.typedefs() {
             let typedef: Vec<IndentedString> = self
                 .typedef(typedef, false)
                 .into_iter()
@@ -274,7 +274,7 @@ impl RustCodeGen {
                 .collect();
             res.extend(typedef)
         }
-        for attribute in &interface.attributes {
+        for attribute in interface.attributes() {
             let attr: Vec<IndentedString> = self
                 .attribute(attribute)
                 .into_iter()
@@ -282,7 +282,7 @@ impl RustCodeGen {
                 .collect();
             res.extend(attr);
         }
-        for method in &interface.methods {
+        for method in interface.methods() {
             let method: Vec<IndentedString> = self
                 .method(method)
                 .into_iter()
@@ -290,7 +290,7 @@ impl RustCodeGen {
                 .collect();
             res.extend(method)
         }
-        for structure in &interface.structures {
+        for structure in interface.structures() {
             let structure: Vec<IndentedString> = self
                 .structure(structure, false)
                 .into_iter()
@@ -298,7 +298,7 @@ impl RustCodeGen {
                 .collect();
             res.extend(structure)
         }
-        for enumeration in &interface.enumerations {
+        for enumeration in interface.enumerations() {
             let enumeration: Vec<IndentedString> = self
                 .enumeration(enumeration, false)
                 .into_iter()
@@ -368,7 +368,7 @@ impl RustCodeGen {
         }
 
         res.push(header);
-        for var_dec in &structure.contents {
+        for var_dec in structure.fields() {
             if var_dec.is_array {
                 let var_dec = format!("pub {}: [{}; 0],", var_dec.name, var_dec.type_n);
                 res.push(IndentedString::new(1, FidlType::Structure, var_dec));
@@ -392,7 +392,7 @@ impl RustCodeGen {
 
     fn method(&self, method: &Method) -> Vec<IndentedString> {
         let mut input_params = "".to_string();
-        for param in &method.input_parameters {
+        for param in method.input_parameters() {
             input_params += &param.name;
             input_params += ": ";
             input_params += &param.type_n;
@@ -403,17 +403,17 @@ impl RustCodeGen {
         }
 
         let mut output_params = "".to_string();
-        match method.output_parameters.len() {
+        match method.output_parameters().count() {
             0 => {
                 output_params += "()";
             }
             1 => {
-                let single_param = &method.output_parameters[0];
+                let single_param = method.output_parameters().next().expect("len checked above");
                 output_params = format!("{}", single_param.type_n);
             }
             e => {
                 output_params.push('(');
-                for param in &method.output_parameters {
+                for param in method.output_parameters() {
                     output_params += &param.type_n;
                     output_params += ", "
                 }
@@ -463,7 +463,7 @@ impl RustCodeGen {
             );
         }
         res.push(header);
-        for enum_value in &enumeration.values {
+        for enum_value in enumeration.values() {
             let var_dec: String;
             match enum_value.value {
                 Some(value) => {

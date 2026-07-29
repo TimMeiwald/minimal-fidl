@@ -1,0 +1,133 @@
+package org.javaohjavawhyareyouso //Comment
+//Comment
+//Comment
+<** @Annotation: block **>
+interface endOfPlaylist {
+    //Comment
+    //Comment
+    version {
+        major 25
+        minor 60
+        //Comment
+        //Comment
+        //Comment
+        //Comment
+    }
+    //Comment
+    //Comment
+    <**
+        @Annotation: block//Comment
+        @WegotsMore: of these annations
+    **>
+    struct thing {
+        //Comment
+        //Comment
+        //Comment
+        <** @Annotation: block **>
+        p1 p1 //Comment
+        p2 p2 //Comment
+        //Comment
+    }
+    //Comment
+    //Comment
+    <** @Annotation: block **>
+    attribute uint8 thing //Comment
+    //Comment
+    //Comment
+    <** @Annotation: block **>
+    method thing {
+        //Comment
+        //Comment
+        //Comment
+        <** @Annotation: block **>
+        in {
+            //Comment
+            //Comment
+            //Comment
+            <** @Annotation: block **>
+            param param //Comment
+            //Comment
+        }
+        //Comment
+        //Comment
+        <** @Annotation: block **>
+        out {
+            //Comment
+
+            //Comment
+            param2 param2 //Comment
+            //Comment
+            <** @Annotation: block **>
+            org.param3 param3 //Comment
+            //Comment
+        }
+    } //Comment
+    //Comment
+    //Comment
+    <** @Annotation: block **>
+    method thing {
+        //Comment
+        //Comment
+        //Comment
+        <** @Annotation: block **>
+        in {
+            //Comment
+            param param //Comment
+            //Comment
+        }
+        //Comment
+        //Comment
+        <** @Annotation: block **>
+        out {
+            //Comment
+            param2 param2 //Comment
+            org.param3 param3 //Comment
+            //Comment
+        }
+    } //Comment
+    //Comment
+    //Comment
+    <** @Annotation: block **>
+    typedef aTypedef is Int16 //Comment
+    //Comment
+    //Comment
+    <** @Annotation: block **>
+    enumeration aEnum {
+        //Comment
+        A = 3 //Comment
+        B //Comment
+        //Comment
+        C //Comment
+        //Comment
+        D //Comment
+        E = 10 //Comment
+        //Comment
+    }
+    //Comment
+    //Comment
+}
+//Comment
+<** @Annotation: block **>
+typeCollection {
+    //Comment
+    //Comment
+    typedef aTypedef is Int16 //Comment
+    //Comment
+    enumeration aEnum {
+        A = 3 //Comment
+        B //Comment
+        C
+
+        //Comment
+        D
+        E = 10
+    }
+
+    //Comment
+    struct thing {
+        //Comment
+        p1 p1 //Comment
+        //Comment
+        p2 p2 //Comment
+    }
+}

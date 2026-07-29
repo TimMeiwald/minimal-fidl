@@ -1,64 +1,119 @@
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
-};
-
 use crate::{
-    annotation::{annotation_constructor, Annotation}, attribute::{self, Attribute}, enumeration::{self, Enumeration}, fidl_file::FileError, method::Method, structure::Structure, type_def::TypeDef, Version
+    annotation::{annotation_constructor, Annotation},
+    enumeration::Enumeration,
+    fidl_file::FileError,
+    node::{impl_ast_node, sorted_children, Comment, MemberBuilder, MemberEnum, NodeMeta},
+    structure::Structure,
+    type_def::TypeDef,
+    Version,
 };
-use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
+use minimal_fidl_parser::{BasicPublisher, Node, Rules};
+
+/// An ordered child of a [`TypeCollection`].
+#[derive(Debug, Clone)]
+pub enum TypeCollectionMember {
+    TypeDef(TypeDef),
+    Structure(Structure),
+    Enumeration(Enumeration),
+    Comment(Comment),
+}
+
+impl MemberEnum for TypeCollectionMember {
+    fn from_comment(comment: Comment) -> Self {
+        TypeCollectionMember::Comment(comment)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct TypeCollection {
-    start_position: u32,
-    end_position: u32,
+    pub meta: NodeMeta,
     pub annotations: Vec<Annotation>,
+    /// Empty for an anonymous `typeCollection { ... }`, which the grammar allows.
+    /// Use [`TypeCollection::is_anonymous`] rather than testing for `""`.
     pub name: String,
     pub version: Option<Version>,
-    pub typedefs: Vec<TypeDef>,
-    pub structures: Vec<Structure>,
-    pub enumerations: Vec<Enumeration>,
+    /// Typedefs, structs, enums and comments, in source order.
+    pub members: Vec<TypeCollectionMember>,
 }
+
+impl_ast_node!(TypeCollection);
+
 impl TypeCollection {
+    /// An unnamed `typeCollection { ... }`. Legal, but nothing can refer to it.
+    pub fn is_anonymous(&self) -> bool {
+        self.name.is_empty()
+    }
+
+    crate::member_accessors!(
+        TypeCollectionMember,
+        TypeDef,
+        TypeDef,
+        typedefs,
+        typedefs_mut,
+        typedef,
+        typedef_mut
+    );
+    crate::member_accessors!(
+        TypeCollectionMember,
+        Structure,
+        Structure,
+        structures,
+        structures_mut,
+        structure,
+        structure_mut
+    );
+    crate::member_accessors!(
+        TypeCollectionMember,
+        Enumeration,
+        Enumeration,
+        enumerations,
+        enumerations_mut,
+        enumeration,
+        enumeration_mut
+    );
+
+    crate::container_ops!(TypeCollectionMember);
+    crate::member_mutators!(TypeCollectionMember, TypeDef, TypeDef, add_typedef, remove_typedef, TypeDefAlreadyExists, typedef);
+    crate::member_mutators!(TypeCollectionMember, Structure, Structure, add_structure, remove_structure, StructAlreadyExists, structure);
+    crate::member_mutators!(TypeCollectionMember, Enumeration, Enumeration, add_enumeration, remove_enumeration, EnumerationAlreadyExists, enumeration);
+
     pub fn new(source: &str, publisher: &BasicPublisher, node: &Node) -> Result<Self, FileError> {
         debug_assert_eq!(node.rule, Rules::type_collection);
-        let mut name: String = "".to_string(); // Cos the type collection name can be seemingly empty.
+        // The grammar permits `typeCollection { ... }` with no name at all.
+        let mut name: String = String::new();
         let mut version: Option<Version> = None;
-        let mut structures: Vec<Structure> = Vec::new();
-        let mut typedefs: Vec<TypeDef> = Vec::new();
-        let mut enumerations: Vec<Enumeration> = Vec::new();
         let mut annotations: Vec<Annotation> = Vec::new();
+        let mut builder: MemberBuilder<TypeCollectionMember> =
+            MemberBuilder::new(source, node.start_position, false);
 
-        for child in node.get_children() {
-            let child = publisher.get_node(*child);
+        for child in sorted_children(publisher, node) {
             match child.rule {
+                Rules::comment | Rules::multiline_comment => builder.comment(child),
+                Rules::open_bracket => builder.open_body(child),
+                Rules::close_bracket => {}
                 Rules::variable_name => {
-                    let name_str = Self::variable_name(source, publisher, child);
-                    name = name_str;
-                }
-                Rules::version => {
-                    let ver = Version::new(source, publisher, child)?;
-                    ver.push_if_not_exists_else_err(&mut version)?;
-                }
-                Rules::structure => {
-                    let structure = Structure::new(source, publisher, child)?;
-                    structure.push_if_not_exists_else_err(&mut structures)?;
-                }
-                Rules::typedef => {
-                    let typedef = TypeDef::new(source, publisher, child)?;
-                    typedef.push_if_not_exists_else_err(&mut typedefs)?;
-                }
-                Rules::enumeration => {
-                    let enumeration = Enumeration::new(source, publisher, child)?;
-                    enumeration.push_if_not_exists_else_err(&mut enumerations)?;
+                    name = child.get_string(source);
                 }
                 Rules::annotation_block => {
                     annotations = annotation_constructor(source, publisher, child)?;
                 }
-
-                Rules::comment
-                | Rules::multiline_comment
-                | Rules::open_bracket
-                | Rules::close_bracket => {}
+                Rules::version => {
+                    let ver = Version::new(source, publisher, child)?;
+                    let ver = builder.attach(child, ver);
+                    ver.push_if_not_exists_else_err(&mut version)?;
+                }
+                Rules::typedef => {
+                    let typedef = TypeDef::new(source, publisher, child)?;
+                    builder.member(child, typedef, TypeCollectionMember::TypeDef);
+                }
+                Rules::structure => {
+                    let structure = Structure::new(source, publisher, child)?;
+                    builder.member(child, structure, TypeCollectionMember::Structure);
+                }
+                Rules::enumeration => {
+                    let enumeration = Enumeration::new(source, publisher, child)?;
+                    builder.member(child, enumeration, TypeCollectionMember::Enumeration);
+                }
                 rule => {
                     return Err(FileError::UnexpectedNode(
                         rule,
@@ -67,24 +122,19 @@ impl TypeCollection {
                 }
             }
         }
-        if name.len() == 0 {
-            return Err(FileError::TypeCollectionRequiresAName(source.to_string()));
-        }
-        Ok(Self {
+        let (members, header_comments) = builder.finish();
+        let mut meta = NodeMeta::from_cst(node);
+        meta.header_comments = header_comments;
+        let type_collection = Self {
+            meta,
             annotations,
             name,
             version,
-            structures,
-            typedefs,
-            enumerations,
-            start_position: node.start_position,
-            end_position: node.end_position,
-        })
+            members,
+        };
+        Ok(type_collection)
     }
 
-    fn variable_name(source: &str, _publisher: &BasicPublisher, node: &Node) -> String {
-        node.get_string(source)
-    }
 
     pub fn push_if_not_exists_else_err(
         self,

@@ -29,6 +29,6 @@ def test_project():
             print(f"Version: {iface.version}")
 
 
-    for fidl_file in result:
-        print(fidl_file.__str__() + "\n\n\n")
-    assert 0 == 1
+    # Was `assert 0 == 1`, a debug leftover that forced pytest to show the printed
+    # output. It made the suite permanently red; assert what the test is for.
+    assert all(fidl_file.file_path is not None for fidl_file in result)

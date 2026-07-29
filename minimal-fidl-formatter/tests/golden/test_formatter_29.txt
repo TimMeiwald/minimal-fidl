@@ -1,0 +1,17 @@
+//Comment
+package org.javaohjavawhyareyouso
+<** @Annotation: block **>
+interface endOfPlaylist {
+    <** @Annotation: block **>
+    method thing {
+        <** @Annotation: block **>
+        in {
+            param param
+        }
+        <** @Annotation: block **>
+        out {
+            param2 param2
+            org.param3 param3
+        }
+    }
+}

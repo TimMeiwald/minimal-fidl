@@ -1,0 +1,2 @@
+// minimal content for a Franca IDL file
+package testcases
