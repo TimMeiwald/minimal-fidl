@@ -1,3 +1,6 @@
+pub mod annotated;
+pub mod builder;
+pub mod diff;
 pub mod annotation;
 pub mod attribute;
 pub mod enum_value;
@@ -7,7 +10,12 @@ pub mod fidl_project;
 pub mod import_model;
 pub mod import_namespace;
 pub mod interface;
+pub mod io;
 pub mod method;
+pub mod node;
+pub mod node_ref;
+pub mod path;
+pub mod print;
 pub mod package;
 pub mod structure;
 pub mod type_collection;
@@ -15,18 +23,36 @@ pub mod type_def;
 pub mod type_ref;
 pub mod variable_declaration;
 pub mod version;
+pub mod validate;
+pub mod visit;
+pub use annotated::Annotated;
 pub use annotation::annotation_constructor;
 pub use annotation::Annotation;
+pub use enumeration::EnumMember;
+pub use interface::InterfaceMember;
+pub use method::{ParamList, ParamMember};
+pub use structure::StructMember;
+pub use type_collection::TypeCollectionMember;
 pub use attribute::Attribute;
 pub use enum_value::EnumValue;
 pub use enumeration::Enumeration;
-pub use fidl_file::FidlFileRs;
+pub use fidl_file::FidlFile;
+pub use fidl_file::FileMember;
 pub use fidl_file::FileError;
 pub use fidl_project::FidlProject;
 pub use import_model::ImportModel;
 pub use import_namespace::ImportNamespace;
 pub use interface::Interface;
+pub use io::Project;
 pub use method::Method;
+pub use node_ref::{Descendants, NodeRef};
+pub use path::{NodePath, PathSegment};
+pub use print::Mode;
+pub use diff::{diff, Change, DiffOptions};
+pub use validate::{Diagnostic, Severity};
+pub use visit::VisitMut;
+pub use builder::{EnumerationBuilder, InterfaceBuilder, MethodBuilder, StructureBuilder, TypeCollectionBuilder};
+pub use node::{AstNode, Comment, CommentKind, LayoutEq, NodeId, NodeIdGen, NodeMeta, Span};
 pub use package::Package;
 pub use structure::Structure;
 pub use type_collection::TypeCollection;
@@ -34,10 +60,12 @@ pub use type_def::TypeDef;
 pub use type_ref::TypeRef;
 pub use variable_declaration::VariableDeclaration;
 pub use version::Version;
+#[cfg(test)]
+mod shared_test;
 
 #[cfg(test)]
 mod tests {
-    use crate::{FidlFileRs, FidlProject};
+    use crate::{FidlFile, FidlProject};
     use minimal_fidl_parser::{
         BasicContext, BasicPublisher, Context, Key, Rules, Source, _var_name, grammar, RULES_SIZE,
     };
@@ -71,7 +99,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("{:?}", output);
         println!(
@@ -88,7 +116,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("{:?}", output);
         println!(
@@ -103,7 +131,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!(
             "Formatted:\n\n{:#?}",
@@ -117,7 +145,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -129,10 +157,15 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
-        let output = fmt;
-        let err = output.unwrap_err();
-        println!("Err: {:?}", err)
+        // Duplicate names are reported by validate(), not by construction: a tool
+        // that edits .fidl files must be able to load a file in order to fix it.
+        let file = FidlFile::new(src, &publisher).expect("a duplicate name still builds a tree");
+        let diagnostics = file.validate();
+        assert!(
+            !diagnostics.is_empty(),
+            "validate() should report the duplicate"
+        );
+        println!("Diagnostics:\n\n{diagnostics:#?}");
     }
 
     #[test]
@@ -143,7 +176,7 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -155,9 +188,15 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
-        let output = fmt;
-        println!("Formatted:\n\n{:#?}", output.unwrap_err());
+        // Duplicate names are reported by validate(), not by construction: a tool
+        // that edits .fidl files must be able to load a file in order to fix it.
+        let file = FidlFile::new(src, &publisher).expect("a duplicate name still builds a tree");
+        let diagnostics = file.validate();
+        assert!(
+            !diagnostics.is_empty(),
+            "validate() should report the duplicate"
+        );
+        println!("Diagnostics:\n\n{diagnostics:#?}");
     }
 
     #[test]
@@ -168,9 +207,15 @@ mod tests {
             .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
-        let output = fmt;
-        println!("Formatted:\n\n{}", output.unwrap_err());
+        // Duplicate names are reported by validate(), not by construction: a tool
+        // that edits .fidl files must be able to load a file in order to fix it.
+        let file = FidlFile::new(src, &publisher).expect("a duplicate name still builds a tree");
+        let diagnostics = file.validate();
+        assert!(
+            !diagnostics.is_empty(),
+            "validate() should report the duplicate"
+        );
+        println!("Diagnostics:\n\n{diagnostics:#?}");
     }
 
     #[test]
@@ -180,7 +225,7 @@ mod tests {
 }   ".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -192,7 +237,7 @@ mod tests {
 attribute uint16 thing2}   ".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -204,9 +249,15 @@ attribute uint16 thing2}   ".to_string();
 attribute uint16 thing}   ".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
-        let output = fmt;
-        println!("Formatted:\n\n{}", output.unwrap_err());
+        // Duplicate names are reported by validate(), not by construction: a tool
+        // that edits .fidl files must be able to load a file in order to fix it.
+        let file = FidlFile::new(src, &publisher).expect("a duplicate name still builds a tree");
+        let diagnostics = file.validate();
+        assert!(
+            !diagnostics.is_empty(),
+            "validate() should report the duplicate"
+        );
+        println!("Diagnostics:\n\n{diagnostics:#?}");
     }
 
     #[test]
@@ -220,7 +271,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -234,9 +285,15 @@ attribute uint16 thing}   ".to_string();
 }	".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
-        let output = fmt;
-        println!("Formatted:\n\n{:#?}", output.unwrap_err());
+        // Duplicate names are reported by validate(), not by construction: a tool
+        // that edits .fidl files must be able to load a file in order to fix it.
+        let file = FidlFile::new(src, &publisher).expect("a duplicate name still builds a tree");
+        let diagnostics = file.validate();
+        assert!(
+            !diagnostics.is_empty(),
+            "validate() should report the duplicate"
+        );
+        println!("Diagnostics:\n\n{diagnostics:#?}");
     }
     #[test]
     #[should_panic] // Temporary because parser will fail instead,
@@ -259,7 +316,7 @@ attribute uint16 thing}   ".to_string();
 }	".to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -272,9 +329,15 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
-        let output = fmt;
-        println!("Formatted:\n\n{:#?}", output.unwrap_err());
+        // Duplicate names are reported by validate(), not by construction: a tool
+        // that edits .fidl files must be able to load a file in order to fix it.
+        let file = FidlFile::new(src, &publisher).expect("a duplicate name still builds a tree");
+        let diagnostics = file.validate();
+        assert!(
+            !diagnostics.is_empty(),
+            "validate() should report the duplicate"
+        );
+        println!("Diagnostics:\n\n{diagnostics:#?}");
     }
     #[test]
     #[should_panic] // Temporary because parser will fail instead,
@@ -288,7 +351,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap_err());
     }
@@ -385,7 +448,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         //println!("Formatted:\n\n{:#?}", output.unwrap());
         output.unwrap();
@@ -492,7 +555,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt.unwrap();
         println!("Formatted:\n\n{:#?}", output);
         output;
@@ -602,7 +665,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         //println!("Formatted:\n\n{:?}", output.unwrap());
         output.unwrap();
@@ -623,7 +686,7 @@ attribute uint16 thing}   ".to_string();
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }
@@ -750,7 +813,7 @@ typeCollection MyTypeCollection10 {
         .to_string();
         let publisher = parse(&src).unwrap();
         //        publisher.print(Key(0), Some(true));
-        let fmt = FidlFileRs::new(src, &publisher);
+        let fmt = FidlFile::new(src, &publisher);
         let output = fmt;
         println!("Formatted:\n\n{:#?}", output.unwrap());
     }

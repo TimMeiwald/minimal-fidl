@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 minimal-fidl-parser = {path = "../minimal-fidl-parser"}
+minimal-fidl-collect = {path = "../minimal-fidl-collect"}
 thiserror = "2.0.11"
 
 

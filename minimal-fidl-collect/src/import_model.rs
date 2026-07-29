@@ -1,12 +1,14 @@
 use std::{
-    path::{Path, PathBuf},
+    path::PathBuf,
     str::FromStr,
 };
 
 use crate::fidl_file::FileError;
-use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
-#[derive(Debug)]
+use minimal_fidl_parser::{BasicPublisher, Node, Rules};
+use crate::node::{impl_ast_node, trailing_comments, NodeMeta};
+#[derive(Debug, Clone)]
 pub struct ImportModel {
+    pub meta: NodeMeta,
     pub file_path: PathBuf,
 }
 impl ImportModel {
@@ -34,7 +36,13 @@ impl ImportModel {
             }
         }
         Ok(Self {
+            meta: NodeMeta {
+                trailing_comments: trailing_comments(source, publisher, node),
+                ..NodeMeta::from_cst(node)
+            },
             file_path: filepath?,
         })
     }
 }
+
+impl_ast_node!(ImportModel);

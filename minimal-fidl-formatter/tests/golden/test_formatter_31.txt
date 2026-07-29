@@ -1,0 +1,38 @@
+/** MultiLine Comment **/
+package org.javaohjavawhyareyouso
+/** MultiLine Comment **/
+/** MultiLine Comment **/
+/** MultiLine Comment **/
+<** @Annotation: block **>
+interface endOfPlaylist {
+    /** MultiLine Comment **/
+    /** MultiLine Comment **/
+    /** MultiLine Comment **/
+    /** MultiLine Comment **/
+    <** @Annotation: block **>
+    method thing {
+        /** MultiLine Comment **/
+        /** MultiLine Comment **/
+        /** MultiLine Comment **/
+        <** @Annotation: block **>
+        in {
+            /** MultiLine Comment **/
+            param param
+            /** MultiLine Comment **/
+        }
+        /** MultiLine Comment **/
+        /** MultiLine Comment **/
+        /** MultiLine Comment **/
+        <** @Annotation: block **>
+        out {
+            /** MultiLine Comment **/
+            param2 param2
+            /** MultiLine Comment **/
+            org.param3 param3
+            /** MultiLine Comment **/
+            /** MultiLine Comment **/
+        } /** MultiLine Comment **/
+    }
+    /** MultiLine Comment **/
+    /** MultiLine Comment **/
+}

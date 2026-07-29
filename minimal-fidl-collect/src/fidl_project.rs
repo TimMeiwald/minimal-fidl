@@ -4,7 +4,7 @@ use minimal_fidl_parser::{
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 
-use crate::fidl_file::{FidlFileRs, FileError};
+use crate::fidl_file::{FidlFile, FileError};
 
 #[derive(Debug)]
 pub struct FidlProject {}
@@ -14,16 +14,16 @@ impl FidlProject {
         Ok(files?)
     }
 
-    pub fn generate_file_from_string(src: String) -> Result<FidlFileRs, FileError> {
+    pub fn generate_file_from_string(src: String) -> Result<FidlFile, FileError> {
         let publisher = Self::parse(&src);
         let publisher: BasicPublisher = match publisher {
             None => return Err(FileError::CouldNotParseSourceString(src)),
             Some(res) => res,
         };
-        Ok(FidlFileRs::new(src, &publisher)?)
+        Ok(FidlFile::new(src, &publisher)?)
     }
 
-    pub fn generate_file(path: impl Into<PathBuf>) -> Result<FidlFileRs, FileError> {
+    pub fn generate_file(path: impl Into<PathBuf>) -> Result<FidlFile, FileError> {
         let path = path.into();
         let src = std::fs::read_to_string(&path);
         let src: String = match src {
@@ -35,7 +35,9 @@ impl FidlProject {
             None => return Err(FileError::CouldNotParseFile(path.clone())),
             Some(res) => res,
         };
-        Ok(FidlFileRs::new(src, &publisher)?)
+        let mut file = FidlFile::new(src, &publisher)?;
+        file.path = Some(path);
+        Ok(file)
     }
 
     fn parse(input: &str) -> Option<BasicPublisher> {

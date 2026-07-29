@@ -1,0 +1,5 @@
+package org.javaohjavawhyareyouso
+import model "Astronomy_t.fidl"
+import org.franca.omgidl.* from "OMGIDLBase.fidl" // This is a comment
+// This is a comment
+interface endOfPlaylist {}

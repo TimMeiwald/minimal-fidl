@@ -1,14 +1,10 @@
-use std::{
-    path::{Path, PathBuf},
-    str::FromStr,
-};
 
 use crate::fidl_file::FileError;
-use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
+use minimal_fidl_parser::{BasicPublisher, Node, Rules};
+use crate::node::{impl_ast_node, trailing_comments, NodeMeta};
 #[derive(Debug, Clone)]
 pub struct Version {
-    start_position: u32,
-    end_position: u32,
+    pub meta: NodeMeta,
     pub major: Option<u32>,
     pub minor: Option<u32>,
 }
@@ -42,8 +38,10 @@ impl Version {
         Ok(Self {
             major,
             minor,
-            start_position: node.start_position,
-            end_position: node.end_position,
+            meta: NodeMeta {
+                trailing_comments: trailing_comments(source, publisher, node),
+                ..NodeMeta::from_cst(node)
+            },
         })
     }
 
@@ -81,7 +79,7 @@ impl Version {
 
         match value {
             Ok(integer) => return Ok(integer),
-            Err(e) => {}
+            Err(_e) => {}
         };
         let hex_input = input.strip_prefix("0x");
         match hex_input {
@@ -126,3 +124,5 @@ impl Version {
         }
     }
 }
+
+impl_ast_node!(Version);

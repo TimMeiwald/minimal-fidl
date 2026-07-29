@@ -1,7 +1,9 @@
 use crate::fidl_file::FileError;
-use minimal_fidl_parser::{BasicPublisher, Key, Node, Rules};
+use minimal_fidl_parser::{BasicPublisher, Node, Rules};
+use crate::node::{impl_ast_node, trailing_comments, NodeMeta};
 #[derive(Debug, Clone)]
 pub struct Package {
+    pub meta: NodeMeta,
     pub path: Vec<String>,
 }
 impl Package {
@@ -23,7 +25,13 @@ impl Package {
                 }
             }
         }
-        Ok(Self { path: path? })
+        Ok(Self {
+            meta: NodeMeta {
+                trailing_comments: trailing_comments(source, publisher, node),
+                ..NodeMeta::from_cst(node)
+            },
+            path: path?,
+        })
     }
     pub fn push_if_not_exists_else_err(
         self,
@@ -42,3 +50,5 @@ impl Package {
         }
     }
 }
+
+impl_ast_node!(Package);

@@ -1,0 +1,52 @@
+package org.javaohjavawhyareyouso
+interface endOfPlaylist {
+    version {
+        major 25
+        minor 60
+    }
+    struct thing {
+        p1 p1
+        p2 p2
+    }
+    attribute uint8 thing
+    method thing {
+        in {
+            param param
+        }
+        out {
+            param2 param2
+            org.param3 param3
+        }
+    }
+    method thing {
+        in {
+            param param
+        }
+        out {
+            param2 param2
+            org.param3 param3
+        }
+    }
+    typedef aTypedef is Int16
+    enumeration aEnum {
+        A = 3
+        B
+        C
+        D
+        E = 10
+    }
+}
+typeCollection {
+    typedef aTypedef is Int16
+    enumeration aEnum {
+        A = 3
+        B
+        C
+        D
+        E = 10 // Tis a comment 
+    }
+    struct thing {
+        p1 p1
+        p2 p2
+    }
+}

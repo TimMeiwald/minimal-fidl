@@ -1,0 +1,10 @@
+// This do be a comment
+package org.javaohjavawhyareyouso // This do be a comment2
+
+interface endOfPlaylist {
+    // This do be a comment
+}
+
+interface endOfPlaylist {
+    // This do be a comment
+}

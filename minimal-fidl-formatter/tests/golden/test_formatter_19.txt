@@ -1,0 +1,4 @@
+package org.javaohjavawhyareyouso
+import model "Astronomy_t.fidl"
+// This is a comment
+interface endOfPlaylist {}

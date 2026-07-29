@@ -1,0 +1,71 @@
+package org.javaohjavawhyareyouso
+<** @Annotation: block **>
+interface endOfPlaylist {
+    version {
+        major 25
+        minor 60
+    }
+    <**
+        @Annotation: block
+        @WegotsMore: of these annations
+    **>
+    struct thing {
+        <** @Annotation: block **>
+        p1 p1
+        p2 p2
+    }
+    <** @Annotation: block **>
+    attribute uint8 thing
+    <** @Annotation: block **>
+    method thing {
+        <** @Annotation: block **>
+        in {
+            <** @Annotation: block **>
+            param param
+        }
+        <** @Annotation: block **>
+        out {
+            param2 param2
+            <** @Annotation: block **>
+            org.param3 param3
+        }
+    }
+    <** @Annotation: block **>
+    method thing {
+        <** @Annotation: block **>
+        in {
+            param param
+        }
+        <** @Annotation: block **>
+        out {
+            param2 param2
+            org.param3 param3
+        }
+    }
+    <** @Annotation: block **>
+    typedef aTypedef is Int16
+    <** @Annotation: block **>
+    enumeration aEnum {
+        A = 3
+        B
+        C
+        D
+        E = 10
+    }
+}
+<** @Annotation: block **>
+typeCollection {
+    typedef aTypedef is Int16
+    enumeration aEnum {
+        A = 3
+        B
+        C
+        D
+        E = 10
+    }
+
+    struct thing {
+        p1 p1
+        p2 p2
+    }
+}
